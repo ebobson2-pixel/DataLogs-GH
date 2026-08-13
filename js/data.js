@@ -71,6 +71,24 @@ function validateGhanaNumber(value, network) {
   return { ok: true, pretty: `${local.slice(0, 3)} ${local.slice(3, 6)} ${local.slice(6)}` };
 }
 
+function orderSourceLabel(order) {
+  if (order.agent_store_id) {
+    const name = order.agent_stores?.name;
+    return name ? `Agent store · ${name}` : "Agent store";
+  }
+  if (order.pricing_tier === "agent") return "Agent wholesale";
+  return "Main website";
+}
+
+function formatOrderDateTime(iso) {
+  const d = new Date(iso);
+  return {
+    date: d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" }),
+    time: d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" }),
+    full: d.toLocaleString(),
+  };
+}
+
 function slugify(text) {
   return text
     .toLowerCase()

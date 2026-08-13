@@ -268,6 +268,14 @@ const DataLogsAPI = (() => {
     return data;
   }
 
+  async function trackOrdersByPhone(phone) {
+    const { data, error } = await client.rpc("track_orders_by_phone", {
+      p_phone: phone,
+    });
+    if (error) throw error;
+    return data || [];
+  }
+
   function storePublicUrl(slug) {
     if (window.location.pathname.includes("/agent/") || window.location.pathname.includes("/admin/")) {
       return new URL(`../store.html?s=${encodeURIComponent(slug)}`, window.location.href).href;
@@ -303,6 +311,7 @@ const DataLogsAPI = (() => {
     requestWithdrawal,
     getAgentStorePrices,
     setAgentPackageProfit,
+    trackOrdersByPhone,
     storePublicUrl,
   };
 })();

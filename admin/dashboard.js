@@ -92,12 +92,12 @@
     document.getElementById("stat-revenue").textContent = formatCedi(revenue);
 
     document.getElementById("overview-orders").innerHTML = orders.length
-      ? `<div class="table-wrap"><table class="orders-table"><thead><tr><th>Code</th><th>Package</th><th>Paid</th><th>Delivery</th></tr></thead><tbody>${orders
+      ? `<div class="table-wrap"><table class="orders-table"><thead><tr><th>Code</th><th>Source</th><th>Package</th><th>Paid</th><th>Delivery</th><th>Date</th><th>Time</th></tr></thead><tbody>${orders
           .slice(0, 8)
-          .map(
-            (o) =>
-              `<tr><td>${o.order_code}</td><td>${NETWORKS[o.network]?.name || o.network} ${o.gb}GB</td><td>${formatCedi(o.amount_paid)}</td><td>${o.delivery_status}</td></tr>`
-          )
+          .map((o) => {
+            const when = formatOrderDateTime(o.created_at);
+            return `<tr><td>${o.order_code}</td><td>${orderSourceLabel(o)}</td><td>${NETWORKS[o.network]?.name || o.network} ${o.gb}GB</td><td>${formatCedi(o.amount_paid)}</td><td>${o.delivery_status}</td><td>${when.date}</td><td>${when.time}</td></tr>`;
+          })
           .join("")}</tbody></table></div>`
       : `<div class="empty-state">No orders yet.</div>`;
 
@@ -121,14 +121,15 @@
     document.getElementById("orders-body").innerHTML = orders
       .map((o) => {
         const buyer = o.profiles ? o.profiles.full_name || o.profiles.email : "Guest";
+        const when = formatOrderDateTime(o.created_at);
         return `
         <tr>
           <td>${o.order_code}</td>
+          <td>${orderSourceLabel(o)}</td>
           <td>${buyer}</td>
           <td>${NETWORKS[o.network]?.name || o.network} ${o.gb} GB</td>
           <td>${o.recipient_number}</td>
           <td>${formatCedi(o.amount_paid)}</td>
-          <td>${o.pricing_tier}</td>
           <td>${o.payment_status}</td>
           <td>
             <select data-delivery="${o.id}">
@@ -137,7 +138,8 @@
                 .join("")}
             </select>
           </td>
-          <td>${new Date(o.created_at).toLocaleString()}</td>
+          <td>${when.date}</td>
+          <td>${when.time}</td>
         </tr>`;
       })
       .join("");

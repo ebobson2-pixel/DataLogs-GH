@@ -831,3 +831,160 @@ textarea:focus {
     padding-top: 40px;
   }
 }
+
+/* Floating order tracker */
+#order-tracker-root {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 90;
+  font-family: var(--font-body);
+}
+
+.track-fab {
+  border: 0;
+  border-radius: 999px;
+  padding: 14px 18px;
+  background: var(--yellow);
+  color: var(--ink);
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 12px 30px var(--yellow-glow);
+}
+
+.track-panel {
+  position: absolute;
+  right: 0;
+  bottom: 58px;
+  width: min(360px, calc(100vw - 28px));
+  background: #141414;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 16px;
+  box-shadow: var(--shadow);
+  color: var(--text);
+}
+
+.track-panel-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.track-panel-head p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
+.track-close {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 1.4rem;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.track-form {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+}
+
+.track-form input {
+  width: 100%;
+  background: #101010;
+  border: 1px solid var(--line);
+  color: var(--text);
+  border-radius: 12px;
+  padding: 11px 12px;
+}
+
+.track-error {
+  color: var(--danger);
+  font-size: 0.85rem;
+  margin: 10px 0 0;
+}
+
+.track-results {
+  margin-top: 12px;
+  display: grid;
+  gap: 10px;
+  max-height: 320px;
+  overflow: auto;
+}
+
+.track-empty {
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.track-card {
+  background: #101010;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 12px;
+}
+
+.track-card p {
+  margin: 6px 0 0;
+  font-size: 0.9rem;
+}
+
+.track-card-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  align-items: center;
+}
+
+.track-status {
+  text-transform: capitalize;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: var(--yellow-soft);
+  color: var(--yellow);
+}
+
+.track-card.is-delivered .track-status {
+  background: rgba(125, 255, 154, 0.14);
+  color: var(--success);
+}
+
+.track-card.is-failed .track-status {
+  background: rgba(255, 107, 107, 0.14);
+  color: var(--danger);
+}
+
+.track-meta {
+  color: var(--muted) !important;
+  font-size: 0.8rem !important;
+}
+
+.store-body .track-panel {
+  background: #fff;
+  border-color: var(--store-line, #d7e2dc);
+  color: var(--store-ink, #14201b);
+}
+
+.store-body .track-form input {
+  background: #f8faf9;
+  border-color: var(--store-line, #d7e2dc);
+  color: var(--store-ink, #14201b);
+}
+
+.store-body .track-fab {
+  background: var(--store-accent, #0f766e);
+  color: #fff;
+  box-shadow: 0 12px 28px rgba(15, 118, 110, 0.28);
+}
+
+.store-body .track-card {
+  background: #f8faf9;
+  border-color: var(--store-line, #d7e2dc);
+}
