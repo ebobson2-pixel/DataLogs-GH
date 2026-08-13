@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin dashboard — DataLogs GH</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/styles.css">
+  <link rel="stylesheet" href="../css/agent.css">
+</head>
+<body class="dash-body">
+  <div class="dash-shell" id="dash-shell">
+    <aside class="dash-sidebar" aria-label="Admin navigation">
+      <div class="side-top">
+        <a class="side-brand" href="../index.html">
+          <span class="logo-mark">DL</span>
+          <span class="brand-text">Admin <span>GH</span></span>
+        </a>
+        <button class="collapse-btn" id="collapse-btn" type="button" title="Collapse sidebar" aria-label="Collapse sidebar">«</button>
+      </div>
+      <nav class="side-nav">
+        <button class="side-link active" type="button" data-panel="overview"><span class="side-ico">⌂</span><span class="side-label">Overview</span></button>
+        <button class="side-link" type="button" data-panel="packages"><span class="side-ico">▣</span><span class="side-label">Packages</span></button>
+        <button class="side-link" type="button" data-panel="orders"><span class="side-ico">☰</span><span class="side-label">Orders</span></button>
+        <button class="side-link" type="button" data-panel="users"><span class="side-ico">☺</span><span class="side-label">Users</span></button>
+        <button class="side-link" type="button" data-panel="stores"><span class="side-ico">◎</span><span class="side-label">Stores</span></button>
+      </nav>
+      <div class="side-foot">
+        <div class="side-user">
+          <div class="avatar" id="user-avatar">A</div>
+          <div class="side-user-meta">
+            <strong id="user-name">Admin</strong>
+            <span id="user-email">—</span>
+          </div>
+        </div>
+        <button class="side-link" type="button" id="logout-btn"><span class="side-ico">→</span><span class="logout-label">Sign out</span></button>
+      </div>
+    </aside>
+
+    <div class="dash-main">
+      <header class="dash-topbar">
+        <div style="display:flex;align-items:center;gap:12px">
+          <button class="mobile-menu-btn" id="mobile-menu-btn" type="button" aria-label="Open menu">☰</button>
+          <div>
+            <h1 id="panel-title">Overview</h1>
+            <p id="panel-sub">Control center</p>
+          </div>
+        </div>
+        <a class="btn btn-ghost" href="../index.html">View site</a>
+      </header>
+
+      <main class="dash-content">
+        <section class="dash-panel active" data-panel-view="overview">
+          <div class="stat-grid">
+            <article class="stat-card"><span>Users</span><strong id="stat-users">0</strong></article>
+            <article class="stat-card"><span>Packages</span><strong id="stat-packages">0</strong></article>
+            <article class="stat-card"><span>Orders</span><strong id="stat-orders">0</strong></article>
+            <article class="stat-card"><span>Revenue</span><strong id="stat-revenue">GH₵ 0.00</strong></article>
+          </div>
+          <div class="panel-card">
+            <h3>Latest orders</h3>
+            <div id="overview-orders" class="empty-state">Loading…</div>
+          </div>
+        </section>
+
+        <section class="dash-panel" data-panel-view="packages">
+          <div class="panel-card">
+            <h3>Add / edit package</h3>
+            <form class="form" id="package-form">
+              <input type="hidden" name="id" id="package-id">
+              <div class="split" style="grid-template-columns:1fr 1fr;gap:12px">
+                <label>Network
+                  <select name="network" required>
+                    <option value="mtn">MTN</option>
+                    <option value="airteltigo">AirtelTigo</option>
+                    <option value="telecel">Telecel</option>
+                  </select>
+                </label>
+                <label>Size (GB)<input type="number" name="gb" min="0.1" step="0.1" required placeholder="e.g. 5"></label>
+                <label>Public price (GH₵)<input type="number" name="retail_price" min="0" step="0.01" required></label>
+                <label>Agent price (GH₵)<input type="number" name="agent_price" min="0" step="0.01" required></label>
+              </div>
+              <p class="hint" style="margin-top:10px">Validity is always set to <strong>Non expiry</strong>. Active status, sort order and tags are applied automatically.</p>
+              <p class="error" id="package-error" hidden></p>
+              <div class="hero-actions">
+                <button class="btn btn-primary" type="submit">Save package</button>
+                <button class="btn btn-ghost" type="button" id="package-reset">Clear form</button>
+              </div>
+            </form>
+          </div>
+          <div class="panel-card">
+            <h3>All packages</h3>
+            <div class="table-wrap">
+              <table class="orders-table">
+                <thead>
+                  <tr>
+                    <th>Network</th><th>GB</th><th>Public</th><th>Agent</th><th>Validity</th><th></th>
+                  </tr>
+                </thead>
+                <tbody id="packages-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section class="dash-panel" data-panel-view="orders">
+          <div class="panel-card">
+            <h3>All orders</h3>
+            <div class="table-wrap">
+              <table class="orders-table">
+                <thead>
+                  <tr>
+                    <th>Code</th><th>Buyer</th><th>Package</th><th>Number</th><th>Paid</th><th>Tier</th><th>Payment</th><th>Delivery</th><th>When</th>
+                  </tr>
+                </thead>
+                <tbody id="orders-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section class="dash-panel" data-panel-view="users">
+          <div class="panel-card">
+            <h3>Users & roles</h3>
+            <div class="table-wrap">
+              <table class="orders-table">
+                <thead>
+                  <tr>
+                    <th>Name</th><th>Email</th><th>Phone</th><th>Role</th><th>Joined</th>
+                  </tr>
+                </thead>
+                <tbody id="users-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section class="dash-panel" data-panel-view="stores">
+          <div class="panel-card">
+            <h3>Agent stores</h3>
+            <div class="table-wrap">
+              <table class="orders-table">
+                <thead>
+                  <tr>
+                    <th>Store</th><th>Slug</th><th>Agent</th><th>Published</th><th>Updated</th>
+                  </tr>
+                </thead>
+                <tbody id="stores-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../js/config.js"></script>
+  <script src="../js/data.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="dashboard.js"></script>
+</body>
+</html>

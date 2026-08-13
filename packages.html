@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>All data packages — DataLogs GH</title>
+  <meta name="description" content="Browse MTN, AirtelTigo and Telecel data packages in GB. Tap to buy.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body data-page="packages">
+  <div id="site-header"></div>
+  <main id="main">
+    <section class="page-hero">
+      <div class="wrap">
+        <p class="kicker">Shop</p>
+        <h1>Every bundle, one quiet shelf.</h1>
+        <p>Filter by network, tap the size you need, then enter the recipient number. Payment and delivery are mocked for this demo.</p>
+      </div>
+    </section>
+    <section class="section">
+      <div class="wrap">
+        <div class="filters" data-filter-group="#all-packages">
+          <button class="filter-btn active" type="button" data-filter="all">All</button>
+          <button class="filter-btn" type="button" data-filter="mtn">MTN</button>
+          <button class="filter-btn" type="button" data-filter="airteltigo">AirtelTigo</button>
+          <button class="filter-btn" type="button" data-filter="telecel">Telecel</button>
+        </div>
+        <div id="all-packages" class="package-grid" data-packages="all"></div>
+      </div>
+    </section>
+  </main>
+  <div id="site-footer"></div>
+  <div id="checkout-root"></div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/checkout.js"></script>
+</body>
+</html>

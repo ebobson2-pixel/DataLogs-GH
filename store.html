@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agent store — DataLogs GH</title>
+  <meta name="description" content="Buy MTN, AirtelTigo and Telecel data from an agent mini store.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/store.css">
+</head>
+<body class="store-body">
+  <header class="store-top">
+    <div class="store-top-inner">
+      <a class="store-brand" href="#" id="store-brand-link">
+        <span class="store-badge" id="store-initials">AS</span>
+        <div>
+          <strong id="store-top-name">Agent store</strong>
+          <span>Independent mini shop</span>
+        </div>
+      </a>
+      <div class="store-powered">Powered by <a href="index.html">DataLogs GH</a></div>
+    </div>
+  </header>
+
+  <section class="store-hero">
+    <p class="eyebrow">Local agent storefront</p>
+    <h1 id="store-name">Loading…</h1>
+    <p id="store-tagline">Finding this mini storefront.</p>
+  </section>
+
+  <main class="store-wrap">
+    <div id="store-status" class="store-status" style="display:none;margin-bottom:16px"></div>
+    <div class="store-filters" id="store-filters" hidden></div>
+    <div id="store-packages" class="store-grid"></div>
+  </main>
+
+  <footer class="store-foot">
+    <span>Agent profit from each sale goes to their DataLogs wallet.</span>
+    <span>Secure checkout · Ghana numbers only</span>
+  </footer>
+
+  <div id="checkout-root"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/checkout.js"></script>
+  <script>
+    (async function () {
+      const params = new URLSearchParams(window.location.search);
+      const slug = (params.get("s") || "").toLowerCase();
+      const status = document.getElementById("store-status");
+      const grid = document.getElementById("store-packages");
+      const filters = document.getElementById("store-filters");
+
+      function fail(title, message, html) {
+        document.getElementById("store-name").textContent = title;
+        document.getElementById("store-tagline").textContent = message;
+        document.getElementById("store-top-name").textContent = title;
+        status.style.display = "block";
+        status.innerHTML = html || "";
+      }
+
+      if (!slug) {
+        fail("Store not found", "This link is missing a store slug.", `<p>Ask your agent for their share link, or <a href="agent/auth.html">become an agent</a>.</p>`);
+        return;
+      }
+
+      let store;
+      try {
+        store = await DataLogsAPI.getStoreBySlug(slug);
+      } catch (err) {
+        fail("Store error", err.message || "Could not load store.");
+        return;
+      }
+
+      if (!store || !store.published) {
+        fail(
+          "Store unavailable",
+          store ? "This mini store is still in draft." : "No published store matches this link.",
+          `<p>Browse the main shop on <a href="index.html">DataLogs GH</a>.</p>`
+        );
+        return;
+      }
+
+      window.__STORE_ID = store.id;
+      const initials = store.name.trim().split(/\s+/).slice(0, 2).map((w) => w[0]).join("").toUpperCase() || "AS";
+      document.title = `${store.name} — Agent store`;
+      document.getElementById("store-name").textContent = store.name;
+      document.getElementById("store-top-name").textContent = store.name;
+      document.getElementById("store-initials").textContent = initials;
+      document.getElementById("store-tagline").textContent =
+        store.tagline || "Tap a package, enter a number, and pay. Delivery is handled by DataLogs.";
+
+      const networks = store.networks || ["mtn", "airteltigo", "telecel"];
+      const [packages, priceRows] = await Promise.all([
+        DataLogsAPI.fetchPackages(),
+        DataLogsAPI.getAgentStorePrices(store.agent_id),
+      ]);
+      const profitByPackage = new Map(priceRows.map((row) => [row.package_id, Number(row.profit)]));
+
+      const storePackages = packages
+        .filter((p) => networks.includes(p.network) && profitByPackage.has(p.id))
+        .map((p) => {
+          const profit = profitByPackage.get(p.id) || 0;
+          return {
+            ...p,
+            price: Number(p.agentPrice) + profit,
+            profit,
+            base: Number(p.agentPrice),
+          };
+        });
+      window.__PACKAGES = storePackages;
+
+      filters.hidden = false;
+      filters.innerHTML = `
+        <button class="filter-btn active" type="button" data-store-filter="all">All</button>
+        ${networks
+          .map((id) => `<button class="filter-btn" type="button" data-store-filter="${id}">${NETWORKS[id].name}</button>`)
+          .join("")}
+      `;
+
+      function paint(filter) {
+        const list = storePackages.filter((p) => filter === "all" || p.network === filter);
+        if (!list.length) {
+          grid.innerHTML = `<div class="store-empty">No priced packages yet. This agent still needs to set store pricing.</div>`;
+          return;
+        }
+        grid.innerHTML = list
+          .map(
+            (item) => `
+          <button class="store-pack ${item.network}" type="button" data-buy="${item.id}" data-tier="retail" data-store-id="${store.id}">
+            ${item.tag ? `<span class="tag">${item.tag}</span>` : ""}
+            <div class="net">${NETWORKS[item.network].name}</div>
+            <div class="gb">${item.gb} GB</div>
+            <div class="meta">${item.validity || "Non expiry"}</div>
+            <div class="price">${formatCedi(item.price)}</div>
+            <div class="cta">Buy now →</div>
+          </button>`
+          )
+          .join("");
+      }
+
+      filters.addEventListener("click", (event) => {
+        const btn = event.target.closest("[data-store-filter]");
+        if (!btn) return;
+        filters.querySelectorAll(".filter-btn").forEach((el) => el.classList.remove("active"));
+        btn.classList.add("active");
+        paint(btn.dataset.storeFilter);
+      });
+
+      paint("all");
+    })();
+  </script>
+</body>
+</html>

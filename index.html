@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DataLogs GH — Buy MTN, AirtelTigo & Telecel data</title>
+  <meta name="description" content="Buy Ghana data bundles in GB for MTN, AirtelTigo and Telecel. Tap a package, enter a number, pay.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%232ec8e6'/><text x='50%' y='58%' text-anchor='middle' font-size='26' font-family='Arial' fill='%230b0b0b'>DL</text></svg>">
+</head>
+<body data-page="home">
+  <div id="site-header"></div>
+  <main id="main">
+    <section class="hero">
+      <div class="wrap">
+        <p class="kicker">Ghana data, without the wait</p>
+        <h1>Buy data in a tap. <em>Stay on.</em></h1>
+        <p class="lede">DataLogs GH sells MTN, AirtelTigo and Telecel bundles in GB. Choose a package, enter the recipient number, and pay. Orders sync live to your DataLogs account.</p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="packages.html">Browse packages</a>
+          <a class="btn btn-ghost" href="how-it-works.html">See how it works</a>
+        </div>
+        <div class="stats">
+          <div class="stat"><strong>3 networks</strong><span>MTN, AirtelTigo, Telecel</span></div>
+          <div class="stat"><strong>From GH₵ 4.80</strong><span>Clear prices, no small print</span></div>
+          <div class="stat"><strong>Any Ghana number</strong><span>Yours or someone you care about</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="wrap">
+        <div class="section-head">
+          <div>
+            <p class="kicker">Networks</p>
+            <h2>Pick the line. We’ll handle the rest.</h2>
+          </div>
+        </div>
+        <div class="network-grid">
+          <a class="card network-card" href="mtn.html">
+            <span class="pill">Most requested</span>
+            <div>
+              <h3>MTN</h3>
+              <p>Everyday bundles from 1 GB to 50 GB. Perfect for the yellow SIM you already trust.</p>
+            </div>
+          </a>
+          <a class="card network-card" href="airteltigo.html">
+            <span class="pill">Sharp value</span>
+            <div>
+              <h3>AirtelTigo</h3>
+              <p>AT data that stretches — socials, maps, and late-night browsing without fuss.</p>
+            </div>
+          </a>
+          <a class="card network-card" href="telecel.html">
+            <span class="pill">Steady signal</span>
+            <div>
+              <h3>Telecel</h3>
+              <p>Clean Telecel packages for home Wi-Fi backups, work and family top-ups.</p>
+            </div>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="wrap">
+        <div class="section-head">
+          <div>
+            <p class="kicker">Popular now</p>
+            <h2>Tap a bundle to buy.</h2>
+            <p class="intro">No cart. No extra pages. A package opens a short popup for the number, then payment.</p>
+          </div>
+          <a class="btn btn-ghost" href="packages.html">View all</a>
+        </div>
+        <div class="package-grid" data-packages="all" data-limit="6"></div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="wrap">
+        <div class="section-head">
+          <div>
+            <p class="kicker">Why DataLogs</p>
+            <h2>Simple on purpose.</h2>
+          </div>
+        </div>
+        <div class="feature-grid">
+          <article class="card">
+            <h3>Plain Ghana English</h3>
+            <p>No jargon. You see the GB, the price, and where it goes. That’s the whole story.</p>
+          </article>
+          <article class="card">
+            <h3>Built for speed</h3>
+            <p>Three taps: package, number, pay. We designed the shop around how people actually buy data.</p>
+          </article>
+          <article class="card">
+            <h3>Sea blue & black, always on</h3>
+            <p>A calm storefront that stays out of the way so you can top up and get back to your day.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="wrap">
+        <div class="cta-band">
+          <div>
+            <h2>Need data before the next meeting?</h2>
+            <p>Choose a network and send a bundle in under a minute.</p>
+          </div>
+          <a class="btn btn-dark" href="packages.html">Shop data</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="wrap">
+        <div class="cta-band" style="background:#121212;color:var(--text);border:1px solid var(--line)">
+          <div>
+            <h2 style="color:var(--yellow)">Sell with a mini store</h2>
+            <p style="color:var(--muted)">Create an agent account, share your link, and restock at subsidized prices.</p>
+          </div>
+          <a class="btn btn-primary" href="agent/auth.html">Become an agent</a>
+        </div>
+      </div>
+    </section>
+  </main>
+  <div id="site-footer"></div>
+  <div id="checkout-root"></div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/checkout.js"></script>
+</body>
+</html>

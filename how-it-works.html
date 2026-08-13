@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>How it works — DataLogs GH</title>
+  <meta name="description" content="Buy Ghana data in three steps: tap a package, enter a number, pay.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body data-page="how">
+  <div id="site-header"></div>
+  <main id="main">
+    <section class="page-hero">
+      <div class="wrap">
+        <p class="kicker">The flow</p>
+        <h1>Three short steps. Then you’re online.</h1>
+        <p>DataLogs GH is built so you never hunt through a cart. The package is the start of checkout.</p>
+      </div>
+    </section>
+    <section class="section">
+      <div class="wrap step-grid">
+        <article class="card step-card">
+          <div class="step-num">1</div>
+          <h3>Tap a package</h3>
+          <p>Pick MTN, AirtelTigo or Telecel and the GB you need. Popular and best-value packs are marked for you.</p>
+        </article>
+        <article class="card step-card">
+          <div class="step-num">2</div>
+          <h3>Enter the number</h3>
+          <p>A popup asks for the recipient. We check the prefix so an MTN bundle doesn’t try to land on a Telecel line.</p>
+        </article>
+        <article class="card step-card">
+          <div class="step-num">3</div>
+          <h3>Pay, then we send</h3>
+          <p>Choose Mobile Money or card. Your order is saved live in DataLogs and queued for network delivery.</p>
+        </article>
+      </div>
+    </section>
+    <section class="section">
+      <div class="wrap split">
+        <div>
+          <p class="kicker">Good to know</p>
+          <h2>Live orders, admin fulfillment.</h2>
+          <p>Every purchase creates a real order in Supabase. Admins manage packages, users, and mark deliveries complete from the admin console.</p>
+          <p>Agent accounts get subsidized wholesale rates controlled by admin package pricing.</p>
+          <a class="btn btn-primary" href="packages.html">Try a package</a>
+        </div>
+        <aside class="card">
+          <h3>Number tips</h3>
+          <p>MTN: 024, 025, 053, 054, 055, 059</p>
+          <p>AirtelTigo: 026, 027, 056, 057</p>
+          <p>Telecel: 020, 050</p>
+          <p class="hint">+233 numbers are accepted too.</p>
+        </aside>
+      </div>
+    </section>
+  </main>
+  <div id="site-footer"></div>
+  <div id="checkout-root"></div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/checkout.js"></script>
+</body>
+</html>

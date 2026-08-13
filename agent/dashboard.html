@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agent dashboard — DataLogs GH</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/styles.css">
+  <link rel="stylesheet" href="../css/agent.css">
+</head>
+<body class="dash-body">
+  <div class="dash-shell" id="dash-shell">
+    <aside class="dash-sidebar" aria-label="Agent navigation">
+      <div class="side-top">
+        <a class="side-brand" href="../index.html">
+          <span class="logo-mark">DL</span>
+          <span class="brand-text">DataLogs <span>GH</span></span>
+        </a>
+        <button class="collapse-btn" id="collapse-btn" type="button" title="Collapse sidebar" aria-label="Collapse sidebar">«</button>
+      </div>
+
+      <nav class="side-nav">
+        <button class="side-link active" type="button" data-panel="overview"><span class="side-ico">⌂</span><span class="side-label">Overview</span></button>
+        <button class="side-link" type="button" data-panel="store"><span class="side-ico">▣</span><span class="side-label">Mini store</span></button>
+        <button class="side-link" type="button" data-panel="pricing"><span class="side-ico">＋</span><span class="side-label">Store pricing</span></button>
+        <button class="side-link" type="button" data-panel="wholesale"><span class="side-ico">◎</span><span class="side-label">Buy wholesale</span></button>
+        <button class="side-link" type="button" data-panel="orders"><span class="side-ico">☰</span><span class="side-label">Orders</span></button>
+        <button class="side-link" type="button" data-panel="customers"><span class="side-ico">👥</span><span class="side-label">Customers</span></button>
+        <button class="side-link" type="button" data-panel="wallet"><span class="side-ico">₵</span><span class="side-label">My Wallet</span></button>
+        <button class="side-link" type="button" data-panel="withdrawal"><span class="side-ico">↑</span><span class="side-label">Withdrawal</span></button>
+        <button class="side-link" type="button" data-panel="account"><span class="side-ico">☺</span><span class="side-label">Account</span></button>
+      </nav>
+
+      <div class="side-foot">
+        <div class="side-user">
+          <div class="avatar" id="user-avatar">A</div>
+          <div class="side-user-meta">
+            <strong id="user-name">Agent</strong>
+            <span id="user-email">—</span>
+          </div>
+        </div>
+        <button class="side-link" type="button" id="logout-btn"><span class="side-ico">→</span><span class="logout-label">Sign out</span></button>
+      </div>
+    </aside>
+
+    <div class="dash-main">
+      <header class="dash-topbar">
+        <div style="display:flex;align-items:center;gap:12px">
+          <button class="mobile-menu-btn" id="mobile-menu-btn" type="button" aria-label="Open menu">☰</button>
+          <div>
+            <h1 id="panel-title">Overview</h1>
+            <p id="panel-sub">Your agent snapshot</p>
+          </div>
+        </div>
+        <a class="btn btn-ghost" id="open-store-btn" href="../store.html" target="_blank" rel="noopener">Open store</a>
+      </header>
+
+      <main class="dash-content">
+        <section class="dash-panel active" data-panel-view="overview">
+          <div class="stat-grid">
+            <article class="stat-card"><span>Store status</span><strong id="stat-store">Not set</strong></article>
+            <article class="stat-card"><span>Total orders</span><strong id="stat-orders">0</strong></article>
+            <article class="stat-card"><span>Profit earned</span><strong id="stat-profit">GH₵ 0.00</strong></article>
+            <article class="stat-card"><span>Wallet (withdrawable)</span><strong id="stat-saved">GH₵ 0.00</strong></article>
+          </div>
+          <div class="panel-card">
+            <h3>Quick start</h3>
+            <p class="hint">1) Set up your mini store · 2) Set store pricing (base + profit) · 3) Share your link · 4) Withdraw profits</p>
+            <div class="hero-actions" style="margin-top:16px">
+              <button class="btn btn-primary" type="button" data-goto="pricing">Set pricing</button>
+              <button class="btn btn-ghost" type="button" data-goto="store">Store settings</button>
+            </div>
+          </div>
+          <div class="panel-card">
+            <h3>Recent activity</h3>
+            <div id="overview-orders" class="empty-state">No wholesale orders yet.</div>
+          </div>
+        </section>
+
+        <section class="dash-panel" data-panel-view="store">
+          <div class="panel-card">
+            <h3>Your mini store</h3>
+            <p class="hint">Customers open your unique storefront (different from the main DataLogs site). You earn commission into your wallet.</p>
+            <form class="form" id="store-form" style="margin-top:16px">
+              <label>Store name<input name="name" required placeholder="Kwame Data Hub"></label>
+              <label>Store link slug<input name="slug" required placeholder="kwame-data" pattern="[a-z0-9\-]+" title="Lowercase letters, numbers and dashes"></label>
+              <label>Tagline<input name="tagline" placeholder="Fast data for Accra & beyond"></label>
+              <div>
+                <div style="font-weight:600;margin-bottom:8px">Networks to sell</div>
+                <div class="network-checks">
+                  <label><input type="checkbox" name="networks" value="mtn" checked> MTN</label>
+                  <label><input type="checkbox" name="networks" value="airteltigo" checked> AirtelTigo</label>
+                  <label><input type="checkbox" name="networks" value="telecel" checked> Telecel</label>
+                </div>
+              </div>
+              <label style="display:flex;align-items:center;gap:8px;font-weight:500">
+                <input type="checkbox" name="published" checked style="width:auto"> Publish store (make link live)
+              </label>
+              <p class="error" id="store-error" hidden></p>
+              <p class="hint" id="store-success" hidden style="color:var(--success)"></p>
+              <button class="btn btn-primary" type="submit">Save store</button>
+            </form>
+          </div>
+          <div class="panel-card">
+            <h3>Share link</h3>
+            <p class="hint">Send this on WhatsApp, Instagram, or SMS.</p>
+            <div class="share-box">
+              <input id="share-url" readonly placeholder="Save your store to generate a link">
+              <button class="btn btn-primary" type="button" id="copy-link-btn">Copy link</button>
+              <a class="btn btn-ghost" id="preview-link" href="#" target="_blank" rel="noopener">Preview</a>
+            </div>
+          </div>
+        </section>
+
+        <section class="dash-panel" data-panel-view="pricing">
+          <div class="panel-card">
+            <h3>Set your store prices</h3>
+            <p class="hint">Admin agent price is your base cost. Add your profit — your store sells at <strong>base + profit</strong>. Only priced packages appear on your mini store. Profit from each sale goes to your wallet for withdrawal.</p>
+            <div class="filters" style="margin-top:14px" id="pricing-filters">
+              <button class="filter-btn active" type="button" data-pfilter="all">All</button>
+              <button class="filter-btn" type="button" data-pfilter="mtn">MTN</button>
+              <button class="filter-btn" type="button" data-pfilter="airteltigo">AirtelTigo</button>
+              <button class="filter-btn" type="button" data-pfilter="telecel">Telecel</button>
+            </div>
+            <div class="table-wrap" style="margin-top:12px">
+              <table class="orders-table">
+                <thead>
+                  <tr>
+                    <th>Network</th>
+                    <th>Size</th>
+                    <th>Base (admin)</th>
+                    <th>Your profit</th>
+                    <th>Sell price</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="pricing-body"></tbody>
+              </table>
+            </div>
+            <p class="error" id="pricing-error" hidden></p>
+            <p class="hint" id="pricing-success" hidden style="color:var(--success)"></p>
+          </div>
+        </section>
+
+        <section class="dash-panel" data-panel-view="wholesale">
+          <div class="panel-card">
+            <h3>Agent rates</h3>
+            <p class="hint">Buy at agent rates set by admin. Tap a pack, enter the recipient number, and pay.</p>
+            <div class="filters" style="margin-top:14px" id="wholesale-filters">
+              <button class="filter-btn active" type="button" data-wfilter="all">All</button>
+              <button class="filter-btn" type="button" data-wfilter="mtn">MTN</button>
+              <button class="filter-btn" type="button" data-wfilter="airteltigo">AirtelTigo</button>
+              <button class="filter-btn" type="button" data-wfilter="telecel">Telecel</button>
+            </div>
+            <div class="wholesale-grid" id="wholesale-grid"></div>
+          </div>
+        </section>
+
+        <section class="dash-panel" data-panel-view="orders">
+          <div class="panel-card">
+            <div class="filters" id="orders-filters">
+              <button class="filter-btn active" type="button" data-ofilter="all">All</button>
+              <button class="filter-btn" type="button" data-ofilter="store">Store sales</button>
+              <button class="filter-btn" type="button" data-ofilter="wholesale">Wholesale</button>
+            </div>
+            <div class="table-wrap" style="margin-top:12px">
+              <table class="orders-table">
+                <thead>
+                  <tr>
+                    <th>Order</th>
+                    <th>Type</th>
+                    <th>Package</th>
+                    <th>Number</th>
+                    <th>Paid</th>
+                    <th>Delivery</th>
+                    <th>When</th>
+                  </tr>
+                </thead>
+                <tbody id="orders-body"></tbody>
+              </table>
+            </div>
+            <div id="orders-empty" class="empty-state" hidden>No orders yet.</div>
+          </div>
+        </section>
+
+        <section class="dash-panel" data-panel-view="customers">
+          <div class="panel-card">
+            <h3>Customers</h3>
+            <p class="hint">People who bought through your mini store, grouped by recipient number.</p>
+            <div class="table-wrap" style="margin-top:12px">
+              <table class="orders-table">
+                <thead>
+                  <tr>
+                    <th>Number</th>
+                    <th>Orders</th>
+                    <th>Total spent</th>
+                    <th>Last order</th>
+                    <th>Networks</th>
+                  </tr>
+                </thead>
+                <tbody id="customers-body"></tbody>
+              </table>
+            </div>
+            <div id="customers-empty" class="empty-state" hidden>No store customers yet. Share your mini store link.</div>
+          </div>
+        </section>
+
+        <section class="dash-panel" data-panel-view="wallet">
+          <div class="stat-grid" style="grid-template-columns:repeat(2,minmax(0,1fr))">
+            <article class="stat-card"><span>Available balance</span><strong id="wallet-balance">GH₵ 0.00</strong></article>
+            <article class="stat-card"><span>Lifetime</span><strong id="wallet-tx-count">0</strong></article>
+          </div>
+          <div class="panel-card">
+            <h3>Wallet activity</h3>
+            <p class="hint">Your profit from each store sale is credited here and is available for withdrawal.</p>
+            <div class="table-wrap" style="margin-top:12px">
+              <table class="orders-table">
+                <thead>
+                  <tr>
+                    <th>Type</th>
+                    <th>Amount</th>
+                    <th>Balance after</th>
+                    <th>Details</th>
+                    <th>When</th>
+                  </tr>
+                </thead>
+                <tbody id="wallet-body"></tbody>
+              </table>
+            </div>
+            <div id="wallet-empty" class="empty-state" hidden>No wallet activity yet.</div>
+          </div>
+        </section>
+
+        <section class="dash-panel" data-panel-view="withdrawal">
+          <div class="panel-card">
+            <h3>Request withdrawal</h3>
+            <p class="hint">Withdraw from your wallet to Mobile Money. Minimum GH₵ 10.</p>
+            <form class="form" id="withdraw-form" style="margin-top:14px;max-width:420px">
+              <label>Amount (GH₵)<input type="number" name="amount" min="10" step="0.01" required placeholder="50"></label>
+              <label>MoMo number<input type="tel" name="momo" required placeholder="024 000 0000"></label>
+              <label>Account name<input type="text" name="account_name" placeholder="Optional"></label>
+              <p class="error" id="withdraw-error" hidden></p>
+              <p class="hint" id="withdraw-success" hidden style="color:var(--success)"></p>
+              <button class="btn btn-primary" type="submit">Submit withdrawal</button>
+            </form>
+          </div>
+          <div class="panel-card">
+            <h3>Withdrawal history</h3>
+            <div class="table-wrap">
+              <table class="orders-table">
+                <thead>
+                  <tr>
+                    <th>Amount</th>
+                    <th>MoMo</th>
+                    <th>Status</th>
+                    <th>When</th>
+                  </tr>
+                </thead>
+                <tbody id="withdraw-body"></tbody>
+              </table>
+            </div>
+            <div id="withdraw-empty" class="empty-state" hidden>No withdrawals yet.</div>
+          </div>
+        </section>
+
+        <section class="dash-panel" data-panel-view="account">
+          <div class="panel-card">
+            <h3>Account</h3>
+            <div class="form" style="margin-top:8px">
+              <label>Name<input id="account-name" readonly></label>
+              <label>Email<input id="account-email" readonly></label>
+              <label>Phone<input id="account-phone" readonly></label>
+            </div>
+            <p class="demo-note" style="margin-top:14px">Your account is stored in Supabase Auth. Sign out from the sidebar when you’re done.</p>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <div id="checkout-root"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../js/config.js"></script>
+  <script src="../js/data.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/checkout.js"></script>
+  <script src="../js/dashboard.js"></script>
+</body>
+</html>

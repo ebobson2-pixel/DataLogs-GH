@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agent login — DataLogs GH</title>
+  <meta name="description" content="Create or sign in to your DataLogs GH agent account.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/styles.css">
+  <link rel="stylesheet" href="../css/agent.css">
+</head>
+<body class="auth-body">
+  <section class="auth-brand">
+    <div>
+      <a class="logo" href="../index.html"><span class="logo-mark">DL</span> DataLogs <span>GH</span></a>
+      <p class="kicker" style="margin-top:36px">Agent access</p>
+      <h1>Sell data. <em>Your store.</em></h1>
+      <p class="lede">Create an agent account powered by Supabase Auth, set up a mini storefront, share your link, and restock at subsidized prices.</p>
+      <ul class="auth-points">
+        <li>Real accounts secured with Supabase Auth</li>
+        <li>Personal store link for WhatsApp sharing</li>
+        <li>Live agent rates managed by DataLogs admin</li>
+      </ul>
+    </div>
+    <p class="demo-note">Admins can also sign in here and will be sent to the admin console.</p>
+  </section>
+
+  <section class="auth-panel">
+    <div class="auth-card">
+      <div class="auth-tabs" role="tablist">
+        <button class="auth-tab active" type="button" data-auth-tab="login">Sign in</button>
+        <button class="auth-tab" type="button" data-auth-tab="signup">Create account</button>
+      </div>
+
+      <form class="auth-form active form" id="login-form" data-auth-form="login">
+        <h2>Welcome back</h2>
+        <p class="lede">Sign in to your agent or admin dashboard.</p>
+        <label>Email<input type="email" name="email" required placeholder="you@email.com"></label>
+        <label class="password-field">Password
+          <input type="password" name="password" required placeholder="••••••••" autocomplete="current-password">
+          <button class="password-toggle" type="button" data-toggle-password>Show</button>
+        </label>
+        <p class="error" id="login-error" hidden></p>
+        <button class="btn btn-primary btn-full" type="submit">Sign in</button>
+      </form>
+
+      <form class="auth-form form" id="signup-form" data-auth-form="signup">
+        <h2>Become an agent</h2>
+        <p class="lede">Create your agent account in under a minute.</p>
+        <label>Full name<input type="text" name="name" required placeholder="Kwame Asante"></label>
+        <label>Email<input type="email" name="email" required placeholder="you@email.com"></label>
+        <label>Phone<input type="tel" name="phone" required placeholder="024 000 0000"></label>
+        <label class="password-field">Password
+          <input type="password" name="password" required minlength="6" placeholder="At least 6 characters" autocomplete="new-password">
+          <button class="password-toggle" type="button" data-toggle-password>Show</button>
+        </label>
+        <p class="error" id="signup-error" hidden></p>
+        <button class="btn btn-primary btn-full" type="submit">Create agent account</button>
+      </form>
+
+      <p class="auth-foot"><a href="../index.html">← Back to DataLogs GH</a></p>
+    </div>
+  </section>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../js/config.js"></script>
+  <script src="../js/data.js"></script>
+  <script src="../js/api.js"></script>
+  <script>
+    (async function () {
+      const profile = await DataLogsAPI.getProfile().catch(() => null);
+      if (profile) {
+        window.location.href = profile.role === "admin" ? "../admin/dashboard.html" : "dashboard.html";
+        return;
+      }
+
+      const tabs = document.querySelectorAll("[data-auth-tab]");
+      const forms = document.querySelectorAll("[data-auth-form]");
+
+      tabs.forEach((tab) => {
+        tab.addEventListener("click", () => {
+          tabs.forEach((t) => t.classList.remove("active"));
+          forms.forEach((f) => f.classList.remove("active"));
+          tab.classList.add("active");
+          document.querySelector(`[data-auth-form="${tab.dataset.authTab}"]`).classList.add("active");
+        });
+      });
+
+      document.querySelectorAll("[data-toggle-password]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const input = btn.parentElement.querySelector("input");
+          const showing = input.type === "text";
+          input.type = showing ? "password" : "text";
+          btn.textContent = showing ? "Show" : "Hide";
+        });
+      });
+
+      async function routeAfterAuth() {
+        const p = await DataLogsAPI.getProfile();
+        window.location.href = p.role === "admin" ? "../admin/dashboard.html" : "dashboard.html";
+      }
+
+      document.getElementById("login-form").addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const data = Object.fromEntries(new FormData(event.target).entries());
+        const result = await DataLogsAPI.signIn(data);
+        const error = document.getElementById("login-error");
+        if (!result.ok) {
+          error.hidden = false;
+          error.textContent = result.message;
+          return;
+        }
+        await routeAfterAuth();
+      });
+
+      document.getElementById("signup-form").addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const data = Object.fromEntries(new FormData(event.target).entries());
+        const result = await DataLogsAPI.signUp({ ...data, role: "agent" });
+        const error = document.getElementById("signup-error");
+        if (!result.ok) {
+          error.hidden = false;
+          error.textContent = result.message;
+          return;
+        }
+        if (!result.data.session) {
+          const login = await DataLogsAPI.signIn(data);
+          if (!login.ok) {
+            error.hidden = false;
+            error.textContent = "Account created. Please sign in.";
+            return;
+          }
+        }
+        await routeAfterAuth();
+      });
+    })();
+  </script>
+</body>
+</html>
