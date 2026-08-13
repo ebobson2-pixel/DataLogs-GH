@@ -13,8 +13,13 @@
             <span class="logo-mark">DL</span>
             DataLogs <span>GH</span>
           </a>
-          <button class="menu-toggle" type="button" aria-label="Open menu">☰</button>
-          <nav class="nav-links" aria-label="Primary">
+          <button class="menu-toggle" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="primary-nav">
+            <span class="menu-toggle-bars" aria-hidden="true">
+              <span></span><span></span><span></span>
+            </span>
+          </button>
+          <div class="nav-scrim" hidden></div>
+          <nav class="nav-links" id="primary-nav" aria-label="Primary">
             <a href="${assetPrefix}index.html" data-nav="home">Home</a>
             <a href="${assetPrefix}packages.html" data-nav="packages">Packages</a>
             <a href="${assetPrefix}how-it-works.html" data-nav="how">How it works</a>
@@ -33,7 +38,25 @@
 
     const toggle = header.querySelector(".menu-toggle");
     const links = header.querySelector(".nav-links");
-    toggle.addEventListener("click", () => links.classList.toggle("open"));
+    const scrim = header.querySelector(".nav-scrim");
+
+    const setMenuOpen = (open) => {
+      links.classList.toggle("open", open);
+      scrim.classList.toggle("open", open);
+      scrim.hidden = !open;
+      toggle.setAttribute("aria-expanded", String(open));
+      toggle.setAttribute("aria-label", open ? "Close menu" : "Open menu");
+      document.body.classList.toggle("nav-open", open);
+    };
+
+    toggle.addEventListener("click", () => setMenuOpen(!links.classList.contains("open")));
+    scrim.addEventListener("click", () => setMenuOpen(false));
+    links.querySelectorAll("a").forEach((link) => {
+      link.addEventListener("click", () => setMenuOpen(false));
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") setMenuOpen(false);
+    });
   }
 
   if (footer) {
