@@ -211,7 +211,7 @@
         accountName: form.get("account_name"),
       });
       success.hidden = false;
-      success.textContent = "Withdrawal submitted. Admins will process it.";
+      success.textContent = "Withdrawal submitted. We’ll process it shortly.";
       event.target.reset();
       await renderWithdrawals();
       await renderWallet();

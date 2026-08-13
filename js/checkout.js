@@ -117,7 +117,7 @@
         ${payButton("momo", "Mobile Money", "MTN MoMo, Telecel Cash or AT Money")}
         ${payButton("card", "Debit / credit card", "Visa or Mastercard")}
       </div>
-      <p class="demo-note">Payment is recorded in Supabase. Network delivery is fulfilled from the admin queue.</p>
+      <p class="demo-note">Payment is recorded securely. Network delivery usually follows shortly after.</p>
       <div class="hero-actions" style="margin-top:16px">
         <button class="btn btn-ghost" type="button" data-back>Back</button>
         <button class="btn btn-primary btn-full" type="button" data-pay>Pay ${formatCedi(state.pkg.price)}</button>
