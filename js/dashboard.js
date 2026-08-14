@@ -5,6 +5,15 @@
     window.location.href = "../admin/dashboard.html";
     return;
   }
+  try {
+    const access = await DataLogsAPI.syncAgentActivation();
+    if (access.required && !access.activated) {
+      window.location.href = "activate.html";
+      return;
+    }
+  } catch {
+    /* continue; dashboard still loads if sync fails after auth */
+  }
 
   const shell = document.getElementById("dash-shell");
   const titles = {

@@ -92,6 +92,26 @@ async function startCharge(req: Request, admin: ReturnType<typeof createAdmin>, 
     if (!Number.isFinite(amount) || amount < 5) throw new Error("Minimum top-up is GH₵ 5");
     if (amount > 5000) throw new Error("Maximum top-up is GH₵ 5,000");
     metadata = { agent_id: user.id };
+  } else if (kind === "agent_activation") {
+    if (!user) throw new Error("Sign in to activate your agent account");
+    const { data: profile } = await admin
+      .from("profiles")
+      .select("role, blocked, agent_activated")
+      .eq("id", user.id)
+      .maybeSingle();
+    if (!profile || profile.role !== "agent") throw new Error("Only agent accounts pay the activation fee");
+    if (profile.blocked) throw new Error("This account is blocked");
+    if (profile.agent_activated) throw new Error("This agent account is already activated");
+    const { data: settings } = await admin
+      .from("site_settings")
+      .select("agent_activation_fee_enabled, agent_activation_fee")
+      .eq("id", 1)
+      .maybeSingle();
+    if (!settings?.agent_activation_fee_enabled || Number(settings.agent_activation_fee) <= 0) {
+      throw new Error("Agent signup is free right now. Refresh and open your dashboard.");
+    }
+    amount = Number(settings.agent_activation_fee);
+    metadata = { agent_id: user.id };
   } else {
     const packageId = String(body.packageId || body.package_id || "");
     const recipient = String(body.recipientNumber || body.recipient_number || "");

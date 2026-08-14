@@ -67,7 +67,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="../js/config.js"></script>
   <script src="../js/data.js"></script>
-  <script src="../js/api.js?v=6"></script>
+  <script src="../js/api.js?v=8"></script>
   <script src="../js/whatsapp-fab.js"></script>
   <script src="../js/order-tracker.js?v=2"></script>
   <script src="../js/theme.js"></script>
@@ -75,9 +75,27 @@
     (async function () {
       const profile = await DataLogsAPI.getProfile().catch(() => null);
       if (profile) {
-        window.location.href = profile.role === "admin" ? "../admin/dashboard.html" : "dashboard.html";
+        window.location.href = await DataLogsAPI.routeAgentAfterAuth();
         return;
       }
+
+      async function paintFeeHint() {
+        try {
+          const settings = await DataLogsAPI.getSiteSettings();
+          const enabled = !!settings?.agent_activation_fee_enabled;
+          const fee = Number(settings?.agent_activation_fee || 0);
+          const lede = document.querySelector("#signup-form .lede");
+          if (!lede) return;
+          if (enabled && fee > 0) {
+            lede.textContent = `Create your account, then pay ${formatCedi(fee)} once to unlock the agent dashboard.`;
+          } else {
+            lede.textContent = "Create your agent account in under a minute. Signup is free.";
+          }
+        } catch {
+          /* keep default copy */
+        }
+      }
+      paintFeeHint();
 
       const blocked = new URLSearchParams(location.search).get("blocked");
       if (blocked) {
@@ -108,8 +126,7 @@
       });
 
       async function routeAfterAuth() {
-        const p = await DataLogsAPI.getProfile();
-        window.location.href = p.role === "admin" ? "../admin/dashboard.html" : "dashboard.html";
+        window.location.href = await DataLogsAPI.routeAgentAfterAuth();
       }
 
       document.getElementById("login-form").addEventListener("submit", async (event) => {

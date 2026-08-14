@@ -136,6 +136,8 @@
       document.getElementById("setting-support").value = settings?.support_contact || "";
       document.getElementById("setting-support-label").value = settings?.support_label || "Support";
       document.getElementById("setting-withdraw-threshold").value = settings?.withdrawal_threshold ?? 10;
+      document.getElementById("setting-activation-enabled").checked = !!settings?.agent_activation_fee_enabled;
+      document.getElementById("setting-activation-fee").value = settings?.agent_activation_fee ?? 0;
     } catch {
       /* keep empty */
     }
@@ -153,6 +155,8 @@
         supportContact: document.getElementById("setting-support").value,
         supportLabel: document.getElementById("setting-support-label").value,
         withdrawalThreshold: document.getElementById("setting-withdraw-threshold").value,
+        agentActivationFeeEnabled: document.getElementById("setting-activation-enabled").checked,
+        agentActivationFee: document.getElementById("setting-activation-fee").value,
       });
       ok.hidden = false;
     } catch (err) {

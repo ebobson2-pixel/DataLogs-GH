@@ -47,6 +47,27 @@ const DataLogsAPI = (() => {
     return profile;
   }
 
+  async function syncAgentActivation() {
+    const { data, error } = await client.rpc("sync_agent_activation");
+    if (error) throw error;
+    const payload = typeof data === "string" ? JSON.parse(data) : data;
+    return payload || { ok: true, required: false, activated: true, fee: 0 };
+  }
+
+  async function routeAgentAfterAuth() {
+    const profile = await getProfile();
+    if (!profile) return "auth.html";
+    if (profile.role === "admin") return "../admin/dashboard.html";
+    if (profile.role !== "agent") return "auth.html";
+    try {
+      const access = await syncAgentActivation();
+      if (access.required && !access.activated) return "activate.html";
+    } catch {
+      /* if sync fails, try dashboard and let it re-check */
+    }
+    return "dashboard.html";
+  }
+
   async function signUp({ name, email, phone, password, role }) {
     const { data, error } = await client.auth.signUp({
       email: email.trim(),
@@ -386,13 +407,24 @@ const DataLogsAPI = (() => {
     return data || { whatsapp_channel_url: "", support_contact: "", support_label: "Support" };
   }
 
-  async function updateSiteSettings({ whatsappChannelUrl, supportContact, supportLabel, withdrawalThreshold }) {
+  async function updateSiteSettings({
+    whatsappChannelUrl,
+    supportContact,
+    supportLabel,
+    withdrawalThreshold,
+    agentActivationFeeEnabled,
+    agentActivationFee,
+  }) {
     const { data, error } = await client.rpc("update_site_settings", {
       p_whatsapp_channel_url: whatsappChannelUrl || "",
       p_support_contact: supportContact || "",
       p_support_label: supportLabel || "Support",
       p_withdrawal_threshold:
         withdrawalThreshold == null || withdrawalThreshold === "" ? null : Number(withdrawalThreshold),
+      p_agent_activation_fee_enabled:
+        agentActivationFeeEnabled == null ? null : !!agentActivationFeeEnabled,
+      p_agent_activation_fee:
+        agentActivationFee == null || agentActivationFee === "" ? null : Number(agentActivationFee),
     });
     if (error) throw error;
     return data;
@@ -505,6 +537,8 @@ const DataLogsAPI = (() => {
     getUser,
     getProfile,
     requireProfile,
+    syncAgentActivation,
+    routeAgentAfterAuth,
     signUp,
     signIn,
     signOut,
