@@ -452,12 +452,12 @@
         amount: form.get("amount"),
         momoNumber: form.get("momo"),
         accountName: form.get("account_name"),
+        network: form.get("network"),
       });
       success.hidden = false;
-      success.textContent = "Withdrawal submitted. We’ll process it shortly.";
+      success.textContent = "Request sent to admin. Your wallet stays the same until they approve.";
       event.target.reset();
       await renderWithdrawals();
-      await renderWallet();
       await renderOverview();
     } catch (err) {
       error.hidden = false;
@@ -1134,7 +1134,23 @@
   });
 
   async function renderWithdrawals() {
-    const list = await DataLogsAPI.getWithdrawals();
+    const [list, settings, wallet] = await Promise.all([
+      DataLogsAPI.getWithdrawals(),
+      DataLogsAPI.getSiteSettings().catch(() => null),
+      DataLogsAPI.getWallet().catch(() => null),
+    ]);
+    const threshold = Number(settings?.withdrawal_threshold ?? 10);
+    const hint = document.getElementById("withdraw-hint");
+    const amountInput = document.getElementById("withdraw-amount");
+    if (hint) {
+      hint.textContent = `Withdraw your wallet profits to Mobile Money. Available ${formatCedi(
+        wallet?.balance || 0
+      )}. Minimum ${formatCedi(threshold)}. Admin must approve before money leaves your balance.`;
+    }
+    if (amountInput) {
+      amountInput.min = String(threshold);
+      amountInput.placeholder = String(threshold);
+    }
     const body = document.getElementById("withdraw-body");
     const empty = document.getElementById("withdraw-empty");
     if (!list.length) {
@@ -1143,12 +1159,14 @@
       return;
     }
     empty.hidden = true;
+    const netName = { mtn: "MTN", telecel: "Telecel", airteltigo: "AT" };
     body.innerHTML = list
       .map(
         (w) => `
       <tr>
         <td>${formatCedi(w.amount)}</td>
-        <td>${w.momo_number}${w.account_name ? ` · ${w.account_name}` : ""}</td>
+        <td>${w.momo_number}${w.account_name ? ` · ${escapeHtml(w.account_name)}` : ""}</td>
+        <td>${netName[w.network] || w.network || "—"}</td>
         <td>${w.status}</td>
         <td>${new Date(w.created_at).toLocaleString()}</td>
       </tr>`

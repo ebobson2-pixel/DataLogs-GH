@@ -327,18 +327,29 @@ const DataLogsAPI = (() => {
   async function getWithdrawals() {
     const { data, error } = await client
       .from("withdrawals")
-      .select("*")
+      .select("*, profiles:agent_id(full_name, email)")
       .order("created_at", { ascending: false });
     if (error) throw error;
     return data || [];
   }
 
-  async function requestWithdrawal({ amount, momoNumber, accountName }) {
+  async function requestWithdrawal({ amount, momoNumber, accountName, network }) {
     const { data, error } = await client.rpc("request_withdrawal", {
       p_amount: Number(amount),
       p_momo_number: momoNumber,
       p_account_name: accountName || null,
+      p_network: network,
       p_method: "momo",
+    });
+    if (error) throw error;
+    return data;
+  }
+
+  async function reviewWithdrawal({ id, decision, note }) {
+    const { data, error } = await client.rpc("review_withdrawal", {
+      p_withdrawal_id: id,
+      p_decision: decision,
+      p_note: note || null,
     });
     if (error) throw error;
     return data;
@@ -375,11 +386,13 @@ const DataLogsAPI = (() => {
     return data || { whatsapp_channel_url: "", support_contact: "", support_label: "Support" };
   }
 
-  async function updateSiteSettings({ whatsappChannelUrl, supportContact, supportLabel }) {
+  async function updateSiteSettings({ whatsappChannelUrl, supportContact, supportLabel, withdrawalThreshold }) {
     const { data, error } = await client.rpc("update_site_settings", {
       p_whatsapp_channel_url: whatsappChannelUrl || "",
       p_support_contact: supportContact || "",
       p_support_label: supportLabel || "Support",
+      p_withdrawal_threshold:
+        withdrawalThreshold == null || withdrawalThreshold === "" ? null : Number(withdrawalThreshold),
     });
     if (error) throw error;
     return data;
@@ -516,6 +529,7 @@ const DataLogsAPI = (() => {
     getWalletTransactions,
     getWithdrawals,
     requestWithdrawal,
+    reviewWithdrawal,
     getAgentStorePrices,
     setAgentPackageProfit,
     trackOrdersByPhone,

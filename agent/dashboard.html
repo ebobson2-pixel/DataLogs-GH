@@ -358,14 +358,21 @@
         <section class="dash-panel" data-panel-view="withdrawal">
           <div class="panel-card">
             <h3>Request withdrawal</h3>
-            <p class="hint">Withdraw from your wallet to Mobile Money. Minimum GH₵ 10.</p>
+            <p class="hint" id="withdraw-hint">Withdraw your wallet profits to Mobile Money. Admin must approve before money leaves your balance.</p>
             <form class="form" id="withdraw-form" style="margin-top:14px;max-width:420px">
-              <label>Amount (GH₵)<input type="number" name="amount" min="10" step="0.01" required placeholder="50"></label>
+              <label>Amount (GH₵)<input type="number" name="amount" id="withdraw-amount" min="1" step="0.01" required placeholder="50"></label>
+              <label>MoMo network
+                <select name="network" id="withdraw-network" required>
+                  <option value="mtn">MTN MoMo</option>
+                  <option value="telecel">Telecel Cash</option>
+                  <option value="airteltigo">AT Money</option>
+                </select>
+              </label>
               <label>MoMo number<input type="tel" name="momo" required placeholder="024 000 0000"></label>
-              <label>Account name<input type="text" name="account_name" placeholder="Optional"></label>
+              <label>Name on MoMo number<input type="text" name="account_name" required placeholder="Exact name on the MoMo account"></label>
               <p class="error" id="withdraw-error" hidden></p>
               <p class="hint" id="withdraw-success" hidden style="color:var(--success)"></p>
-              <button class="btn btn-primary" type="submit">Submit withdrawal</button>
+              <button class="btn btn-primary" type="submit">Submit to admin</button>
             </form>
           </div>
           <div class="panel-card">
@@ -376,6 +383,7 @@
                   <tr>
                     <th>Amount</th>
                     <th>MoMo</th>
+                    <th>Network</th>
                     <th>Status</th>
                     <th>When</th>
                   </tr>
@@ -437,12 +445,12 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="../js/config.js"></script>
   <script src="../js/data.js"></script>
-  <script src="../js/api.js?v=6"></script>
+  <script src="../js/api.js?v=7"></script>
   <script src="../js/order-tracker.js?v=2"></script>
   <script src="../js/theme.js"></script>
   <script src="../js/paystack.js?v=1"></script>
   <script src="../js/checkout.js?v=5"></script>
   <script src="../js/flyer.js?v=1"></script>
-  <script src="../js/dashboard.js?v=9"></script>
+  <script src="../js/dashboard.js?v=10"></script>
 </body>
 </html>

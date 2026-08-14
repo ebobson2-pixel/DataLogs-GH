@@ -28,6 +28,7 @@
         <button class="side-link" type="button" data-panel="users"><span class="side-ico">☺</span><span class="side-label">Users</span></button>
         <button class="side-link" type="button" data-panel="stores"><span class="side-ico">◎</span><span class="side-label">Stores</span></button>
         <button class="side-link" type="button" data-panel="api"><span class="side-ico">{ }</span><span class="side-label">API</span></button>
+        <button class="side-link" type="button" data-panel="withdrawals"><span class="side-ico">↑</span><span class="side-label">Withdrawals</span></button>
         <button class="side-link" type="button" data-panel="settings"><span class="side-ico">⚙</span><span class="side-label">Settings</span></button>
       </nav>
       <div class="side-foot">
@@ -261,6 +262,36 @@
           </div>
         </section>
 
+        <section class="dash-panel" data-panel-view="withdrawals">
+          <div class="panel-card">
+            <h3>Withdrawal requests</h3>
+            <p class="custom-price-hint">Approve to pay the agent and deduct from their wallet. Decline leaves their balance unchanged (unless an older held request is being reversed).</p>
+            <div class="filters" id="withdraw-filters" style="margin-bottom:12px">
+              <button class="filter-btn active" type="button" data-wfilter="pending">Pending</button>
+              <button class="filter-btn" type="button" data-wfilter="approved">Approved</button>
+              <button class="filter-btn" type="button" data-wfilter="rejected">Declined</button>
+              <button class="filter-btn" type="button" data-wfilter="all">All</button>
+            </div>
+            <div class="table-wrap">
+              <table class="orders-table">
+                <thead>
+                  <tr>
+                    <th>Agent</th>
+                    <th>Amount</th>
+                    <th>Network</th>
+                    <th>MoMo</th>
+                    <th>Name</th>
+                    <th>Status</th>
+                    <th>When</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="admin-withdraw-body"><tr><td colspan="8">Open this page to load withdrawals.</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
         <section class="dash-panel" data-panel-view="settings">
           <div class="panel-card">
             <h3>Site settings</h3>
@@ -275,6 +306,10 @@
               <label>Support contact
                 <input type="text" name="support_contact" id="setting-support" placeholder="Phone, WhatsApp, or email">
               </label>
+              <label>Withdrawal threshold (GH₵)
+                <input type="number" name="withdrawal_threshold" id="setting-withdraw-threshold" min="0" step="0.01" placeholder="10">
+              </label>
+              <p class="custom-price-hint">Agents cannot request less than this amount.</p>
               <p class="error" id="settings-error" hidden></p>
               <p class="success" id="settings-ok" hidden>Settings saved.</p>
               <button class="btn btn-primary" type="submit">Save settings</button>
@@ -288,8 +323,8 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="../js/config.js"></script>
   <script src="../js/data.js"></script>
-  <script src="../js/api.js?v=6"></script>
+  <script src="../js/api.js?v=7"></script>
   <script src="../js/theme.js"></script>
-  <script src="dashboard.js?v=6"></script>
+  <script src="dashboard.js?v=7"></script>
 </body>
 </html>

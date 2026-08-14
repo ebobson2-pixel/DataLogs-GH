@@ -25,10 +25,13 @@
     users: ["Users", "Tap a user for their full dashboard"],
     stores: ["Stores", "Agent mini storefronts"],
     api: ["API", "Keys, access, and live requests"],
-    settings: ["Settings", "WhatsApp channel and support contact"],
+    withdrawals: ["Withdrawals", "Approve or decline agent cash-outs"],
+    settings: ["Settings", "WhatsApp, support, and withdrawal threshold"],
   };
 
   let orderFilter = "all";
+  let withdrawFilter = "pending";
+  let withdrawalsCache = [];
   let ordersCache = [];
   let usersCache = [];
   let packagesCache = [];
@@ -74,6 +77,7 @@
     }
     if (id === "settings") loadSettingsForm();
     if (id === "api") loadApiConsole();
+    if (id === "withdrawals") loadWithdrawals();
   }
 
   function showUsersList() {
@@ -131,6 +135,7 @@
       document.getElementById("setting-wa").value = settings?.whatsapp_channel_url || "";
       document.getElementById("setting-support").value = settings?.support_contact || "";
       document.getElementById("setting-support-label").value = settings?.support_label || "Support";
+      document.getElementById("setting-withdraw-threshold").value = settings?.withdrawal_threshold ?? 10;
     } catch {
       /* keep empty */
     }
@@ -147,11 +152,88 @@
         whatsappChannelUrl: document.getElementById("setting-wa").value,
         supportContact: document.getElementById("setting-support").value,
         supportLabel: document.getElementById("setting-support-label").value,
+        withdrawalThreshold: document.getElementById("setting-withdraw-threshold").value,
       });
       ok.hidden = false;
     } catch (err) {
       error.hidden = false;
       error.textContent = err.message || "Could not save settings.";
+    }
+  });
+
+  async function loadWithdrawals() {
+    const body = document.getElementById("admin-withdraw-body");
+    if (!body) return;
+    body.innerHTML = `<tr><td colspan="8">Loading…</td></tr>`;
+    try {
+      withdrawalsCache = await DataLogsAPI.getWithdrawals();
+      renderAdminWithdrawals();
+    } catch (err) {
+      body.innerHTML = `<tr><td colspan="8">${escapeHtml(err.message || "Could not load withdrawals.")}</td></tr>`;
+    }
+  }
+
+  function renderAdminWithdrawals() {
+    const body = document.getElementById("admin-withdraw-body");
+    if (!body) return;
+    const netName = { mtn: "MTN", telecel: "Telecel", airteltigo: "AT" };
+    const list =
+      withdrawFilter === "all"
+        ? withdrawalsCache
+        : withdrawalsCache.filter((w) => w.status === withdrawFilter);
+    if (!list.length) {
+      body.innerHTML = `<tr><td colspan="8">No ${withdrawFilter === "all" ? "" : withdrawFilter + " "}withdrawals.</td></tr>`;
+      return;
+    }
+    body.innerHTML = list
+      .map((w) => {
+        const agent = w.profiles || {};
+        const agentLabel = escapeHtml(agent.full_name || agent.email || w.agent_id?.slice?.(0, 8) || "Agent");
+        const actions =
+          w.status === "pending"
+            ? `<div class="hero-actions" style="gap:6px;flex-wrap:nowrap">
+                <button class="btn btn-ok" type="button" data-wd-approve="${w.id}">Approve</button>
+                <button class="btn btn-danger" type="button" data-wd-reject="${w.id}">Decline</button>
+              </div>`
+            : escapeHtml(w.note || "—");
+        return `
+        <tr>
+          <td>${agentLabel}</td>
+          <td>${formatCedi(w.amount)}</td>
+          <td>${netName[w.network] || w.network || "—"}</td>
+          <td>${escapeHtml(w.momo_number || "")}</td>
+          <td>${escapeHtml(w.account_name || "—")}</td>
+          <td>${escapeHtml(w.status)}</td>
+          <td>${new Date(w.created_at).toLocaleString()}</td>
+          <td>${actions}</td>
+        </tr>`;
+      })
+      .join("");
+  }
+
+  document.getElementById("withdraw-filters")?.addEventListener("click", (event) => {
+    const btn = event.target.closest("[data-wfilter]");
+    if (!btn) return;
+    withdrawFilter = btn.dataset.wfilter;
+    document.querySelectorAll("#withdraw-filters .filter-btn").forEach((el) => {
+      el.classList.toggle("active", el === btn);
+    });
+    renderAdminWithdrawals();
+  });
+
+  document.getElementById("admin-withdraw-body")?.addEventListener("click", async (event) => {
+    const approve = event.target.closest("[data-wd-approve]");
+    const reject = event.target.closest("[data-wd-reject]");
+    const id = approve?.dataset.wdApprove || reject?.dataset.wdReject;
+    if (!id) return;
+    const decision = approve ? "approved" : "rejected";
+    const note =
+      decision === "rejected" ? window.prompt("Optional note for declining this withdrawal:") || "" : "";
+    try {
+      await DataLogsAPI.reviewWithdrawal({ id, decision, note });
+      await loadWithdrawals();
+    } catch (err) {
+      window.alert(err.message || "Could not update withdrawal.");
     }
   });
 
