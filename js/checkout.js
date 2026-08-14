@@ -14,12 +14,13 @@
 
   root.innerHTML = `
     <div class="modal-backdrop" id="checkout-modal" role="dialog" aria-modal="true" aria-labelledby="checkout-title">
-      <div class="modal"></div>
+      <div class="modal pay-popup"></div>
     </div>
   `;
 
   const backdrop = root.querySelector("#checkout-modal");
   const modal = root.querySelector(".modal");
+  let swapTimer = 0;
 
   document.addEventListener("click", (event) => {
     const trigger = event.target.closest("[data-buy]");
@@ -52,14 +53,43 @@
 
   function openStep(step) {
     backdrop.classList.add("open");
-    if (step === "number") renderNumber();
-    if (step === "pay") renderPay();
-    if (step === "process") renderProcess();
-    if (step === "done") renderDone();
+    document.body.classList.add("pay-open");
+    const paint = () => {
+      if (step === "number") renderNumber();
+      if (step === "method") renderMethod();
+      if (step === "pay") renderPay();
+      if (step === "process") renderProcess();
+      if (step === "challenge") renderChallenge();
+      if (step === "done") renderDone();
+    };
+    swapModal(paint);
+  }
+
+  function swapModal(paint) {
+    clearTimeout(swapTimer);
+    const alreadyOpen = modal.innerHTML.trim() !== "";
+    if (!alreadyOpen) {
+      paint();
+      modal.classList.add("pay-swap-in");
+      return;
+    }
+    modal.classList.remove("pay-swap-in");
+    modal.classList.add("pay-swap-out");
+    swapTimer = setTimeout(() => {
+      modal.classList.remove("pay-swap-out");
+      paint();
+      modal.classList.add("pay-swap-in");
+    }, 150);
   }
 
   function closeModal() {
-    backdrop.classList.remove("open");
+    if (!backdrop.classList.contains("open")) return;
+    backdrop.classList.add("closing");
+    setTimeout(() => {
+      backdrop.classList.remove("open", "closing");
+      document.body.classList.remove("pay-open");
+      modal.innerHTML = "";
+    }, 240);
   }
 
   function networkName() {
@@ -84,7 +114,7 @@
         </div>
         <button class="close-btn" type="button" data-close aria-label="Close">×</button>
       </div>
-      <form class="form" id="number-form">
+      <form class="form pay-fields-in" id="number-form">
         <label>
           Recipient number
           <input id="recipient" inputmode="tel" autocomplete="tel" placeholder="024 123 4567" value="${state.number}" required>
@@ -106,30 +136,65 @@
         return;
       }
       state.number = result.pretty;
-      openStep("pay");
+      openStep("method");
     });
   }
 
-  function renderPay() {
-    const walletOpt =
+  function renderMethod() {
+    const wallet =
       state.tier === "agent"
-        ? payButton("wallet", "Pay from wallet", "Use your DataLogs GH wallet balance")
+        ? choiceCard("wallet", "₵", "Pay from wallet", "Use your DataLogs GH balance")
         : "";
     modal.innerHTML = `
       <div class="modal-top">
         <div>
-          <div class="pill">Pay in this window</div>
+          <div class="pill">Choose a way to pay</div>
+          <h3 id="checkout-title">How do you want to pay?</h3>
+          <p class="hint">${formatCedi(state.pkg.price)} · ${state.pkg.gb} GB to ${state.number}</p>
+        </div>
+        <button class="close-btn" type="button" data-close aria-label="Close">×</button>
+      </div>
+      <div class="pay-choice">
+        ${choiceCard("momo", "📱", "Mobile Money", "MTN, Telecel Cash or AT Money")}
+        ${choiceCard("card", "💳", "Debit or credit card", "Visa or Mastercard")}
+        ${wallet}
+      </div>
+      <button class="btn btn-ghost btn-full" type="button" data-back>Back</button>
+    `;
+    wireClose();
+    modal.querySelector("[data-back]").addEventListener("click", () => openStep("number"));
+    modal.querySelectorAll("[data-method]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        state.method = btn.dataset.method;
+        btn.classList.add("picked");
+        setTimeout(() => openStep("pay"), 180);
+      });
+    });
+  }
+
+  function choiceCard(id, icon, title, subtitle) {
+    return `
+      <button class="pay-choice-card" type="button" data-method="${id}">
+        <span class="pay-choice-ico" aria-hidden="true">${icon}</span>
+        <span>
+          <strong>${title}</strong>
+          <span class="hint">${subtitle}</span>
+        </span>
+      </button>
+    `;
+  }
+
+  function renderPay() {
+    modal.innerHTML = `
+      <div class="modal-top">
+        <div>
+          <div class="pill">${state.method === "wallet" ? "Wallet" : state.method === "card" ? "Card" : "Mobile Money"}</div>
           <h3 id="checkout-title">Pay ${formatCedi(state.pkg.price)}</h3>
           <p class="hint">Sending ${state.pkg.gb} GB to ${state.number} on ${networkName()}</p>
         </div>
         <button class="close-btn" type="button" data-close aria-label="Close">×</button>
       </div>
-      <div class="pay-methods" role="list">
-        ${payButton("momo", "Mobile Money", "MTN, Telecel Cash or AT Money")}
-        ${payButton("card", "Debit / credit card", "Visa or Mastercard")}
-        ${walletOpt}
-      </div>
-      <form class="form pay-form" id="pay-form" style="margin-top:14px">
+      <form class="form pay-form pay-fields-in" id="pay-form">
         ${state.method === "wallet" ? walletFields() : payFields()}
         <p class="error" id="pay-error" hidden></p>
         <div class="hero-actions" style="margin-top:12px">
@@ -142,18 +207,44 @@
     `;
     wireClose();
     preloadPayDefaults();
-    modal.querySelectorAll("[data-method]").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        state.method = btn.dataset.method;
-        renderPay();
-      });
-    });
-    modal.querySelector("[data-back]").addEventListener("click", () => openStep("number"));
+    wireNetTiles();
+    modal.querySelector("[data-back]").addEventListener("click", () => openStep("method"));
     modal.querySelector("#pay-form").addEventListener("submit", (event) => {
       event.preventDefault();
       collectPayForm();
       openStep("process");
     });
+  }
+
+  function wireNetTiles() {
+    modal.querySelectorAll("[data-provider]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        state.momoProvider = btn.dataset.provider;
+        modal.querySelectorAll("[data-provider]").forEach((el) => el.classList.toggle("selected", el === btn));
+      });
+    });
+  }
+
+  function netTiles() {
+    const nets = [
+      { id: "mtn", name: "MTN MoMo", mark: "MTN" },
+      { id: "telecel", name: "Telecel", mark: "TEL" },
+      { id: "airteltigo", name: "AT Money", mark: "AT" },
+    ];
+    return `
+      <p class="hint" style="margin:0 0 6px">Pay with</p>
+      <div class="pay-nets" role="list">
+        ${nets
+          .map(
+            (n) => `
+          <button class="pay-net ${n.id} ${state.momoProvider === n.id ? "selected" : ""}" type="button" data-provider="${n.id}">
+            <span class="pay-net-mark">${n.mark}</span>
+            <strong>${n.name}</strong>
+          </button>`
+          )
+          .join("")}
+      </div>
+    `;
   }
 
   function payFields() {
@@ -177,13 +268,7 @@
       <label>Email for receipt
         <input id="pay-email" type="email" required placeholder="you@email.com" value="${escapeHtml(state.email)}">
       </label>
-      <label>Mobile Money network
-        <select id="momo-provider">
-          <option value="mtn" ${state.momoProvider === "mtn" ? "selected" : ""}>MTN MoMo</option>
-          <option value="telecel" ${state.momoProvider === "telecel" ? "selected" : ""}>Telecel Cash</option>
-          <option value="airteltigo" ${state.momoProvider === "airteltigo" ? "selected" : ""}>AT Money</option>
-        </select>
-      </label>
+      ${netTiles()}
       <label>MoMo number
         <input id="momo-phone" inputmode="tel" required placeholder="024 123 4567" value="${escapeHtml(state.momoPhone || state.number)}">
       </label>
@@ -212,8 +297,8 @@
   function collectPayForm() {
     const email = modal.querySelector("#pay-email");
     if (email) state.email = email.value.trim();
-    const provider = modal.querySelector("#momo-provider");
-    if (provider) state.momoProvider = provider.value;
+    const selectedNet = modal.querySelector(".pay-net.selected");
+    if (selectedNet) state.momoProvider = selectedNet.dataset.provider;
     const phone = modal.querySelector("#momo-phone");
     if (phone) state.momoPhone = phone.value.trim();
     const number = modal.querySelector("#card-number");
@@ -227,38 +312,68 @@
     }
   }
 
-  function payButton(id, title, subtitle) {
+  function waitVisual(title, hint) {
     return `
-      <button class="pay-method ${state.method === id ? "selected" : ""}" type="button" data-method="${id}">
-        <strong>${title}</strong>
-        <span class="hint">${subtitle}</span>
-      </button>
-    `;
-  }
-
-  async function renderProcess() {
-    modal.innerHTML = `
       <div class="modal-top">
         <div>
           <div class="pill">Secure payment</div>
-          <h3 id="checkout-title">Confirming payment…</h3>
-          <p class="hint" id="pay-hint">Stay on this page. We wait for Paystack to confirm before sending data.</p>
+          <h3 id="checkout-title">${title}</h3>
+          <p class="hint" id="pay-hint">${hint}</p>
         </div>
+      </div>
+      <div class="pay-wait" aria-hidden="true">
+        <i></i><i></i><i></i>
+        <div class="pay-wait-phone">📱</div>
       </div>
       <ul class="progress-list">
         <li class="active" data-step="pay"><span class="dot"></span> Taking payment</li>
         <li data-step="net"><span class="dot"></span> Sending ${networkName()} to the provider</li>
         <li data-step="send"><span class="dot"></span> Confirming ${state.pkg.gb} GB to ${state.number}</li>
       </ul>
-      <form class="form" id="pay-challenge" hidden>
-        <label id="challenge-label">Code
-          <input id="challenge-input" required>
-        </label>
-        <p class="error" id="challenge-error" hidden></p>
-        <button class="btn btn-primary btn-full" type="submit">Continue</button>
-      </form>
     `;
+  }
 
+  function renderChallenge() {
+    const result = state.challenge;
+    const kind = result.next;
+    const label = kind === "pin" ? "Card PIN" : kind === "otp" ? "Enter OTP" : "Phone number";
+    const placeholder = kind === "pin" ? "PIN" : kind === "otp" ? "6-digit code" : "Phone number";
+    modal.innerHTML = `
+      <div class="pay-otp pay-fields-in">
+        <div class="pay-wait" aria-hidden="true"><i></i><i></i><i></i><div class="pay-wait-phone">${kind === "pin" ? "🔒" : "🔑"}</div></div>
+        <div class="pill">Almost there</div>
+        <h3 id="checkout-title">${escapeHtml(label)}</h3>
+        <p class="hint">${escapeHtml(result.display_text || "Confirm this charge to continue.")}</p>
+        <form class="form" id="pay-challenge">
+          <input class="pay-otp-input" id="challenge-input" required autocomplete="one-time-code" inputmode="numeric" placeholder="${escapeHtml(placeholder)}">
+          <p class="error" id="challenge-error" hidden></p>
+          <button class="btn btn-primary btn-full" type="submit">Confirm payment</button>
+        </form>
+      </div>
+    `;
+    const input = modal.querySelector("#challenge-input");
+    input.focus();
+    modal.querySelector("#pay-challenge").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const error = modal.querySelector("#challenge-error");
+      error.hidden = true;
+      try {
+        const next =
+          kind === "pin"
+            ? await DataLogsPay.submitPin(state.reference, input.value)
+            : kind === "phone"
+              ? await DataLogsPay.submitPhone(state.reference, input.value)
+              : await DataLogsPay.submitOtp(state.reference, input.value);
+        await handlePaystackNext(next);
+      } catch (err) {
+        error.hidden = false;
+        error.textContent = err.message || "Could not continue.";
+      }
+    });
+  }
+
+  async function renderProcess() {
+    modal.innerHTML = waitVisual("Confirming payment…", "Stay on this page. We wait for Paystack to confirm before sending data.");
     try {
       if (state.method === "wallet") {
         const session = await DataLogsAPI.getSession();
@@ -296,46 +411,26 @@
   }
 
   async function handlePaystackNext(result) {
-    const hint = modal.querySelector("#pay-hint");
-    const title = modal.querySelector("#checkout-title");
     if (result.next === "success") {
+      if (!modal.querySelector('[data-step="pay"]')) {
+        modal.innerHTML = waitVisual("Payment confirmed", "Finishing your order…");
+      }
       await waitForPaidOrder(result);
       return;
     }
     if (result.next === "failed") throw new Error(result.display_text || "Payment failed.");
-    if (hint) hint.textContent = result.display_text || "Complete the payment on your phone.";
-    if (title) title.textContent = result.next === "offline" ? "Approve on your phone" : "Extra confirmation needed";
     if (result.url) window.open(String(result.url), "_blank", "noopener");
 
     if (result.next === "otp" || result.next === "pin" || result.next === "phone") {
-      const form = modal.querySelector("#pay-challenge");
-      const input = modal.querySelector("#challenge-input");
-      const label = modal.querySelector("#challenge-label");
-      form.hidden = false;
-      input.value = "";
-      input.placeholder = result.next === "pin" ? "PIN" : result.next === "otp" ? "OTP" : "Phone number";
-      label.firstChild.textContent = result.next === "pin" ? "Card PIN" : result.next === "otp" ? "OTP" : "Phone";
-      form.onsubmit = async (event) => {
-        event.preventDefault();
-        const error = modal.querySelector("#challenge-error");
-        error.hidden = true;
-        try {
-          const next =
-            result.next === "pin"
-              ? await DataLogsPay.submitPin(state.reference, input.value)
-              : result.next === "phone"
-                ? await DataLogsPay.submitPhone(state.reference, input.value)
-                : await DataLogsPay.submitOtp(state.reference, input.value);
-          form.hidden = true;
-          await handlePaystackNext(next);
-        } catch (err) {
-          error.hidden = false;
-          error.textContent = err.message || "Could not continue.";
-        }
-      };
+      state.challenge = result;
+      openStep("challenge");
       return;
     }
 
+    modal.innerHTML = waitVisual(
+      result.next === "offline" ? "Approve on your phone" : "Confirming payment…",
+      result.display_text || "Complete the payment on your phone."
+    );
     await waitForPaidOrder(result);
   }
 
@@ -390,6 +485,8 @@
   }
 
   function showPayError(message) {
+    modal.classList.remove("pay-swap-out");
+    modal.classList.add("pay-swap-in");
     modal.innerHTML = `
       <div class="modal-top">
         <div>

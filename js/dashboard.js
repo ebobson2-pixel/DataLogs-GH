@@ -751,8 +751,6 @@
     const txs = await DataLogsAPI.getWalletTransactions();
     document.getElementById("wallet-balance").textContent = formatCedi(wallet?.balance || 0);
     document.getElementById("wallet-tx-count").textContent = String(txs.length);
-    const email = document.getElementById("topup-email");
-    if (email && !email.value) email.value = profile.email || profile.authEmail || "";
     const body = document.getElementById("wallet-body");
     const empty = document.getElementById("wallet-empty");
     if (!txs.length) {
@@ -775,26 +773,324 @@
       .join("");
   }
 
-  let topupMethod = "momo";
-  document.getElementById("topup-methods")?.addEventListener("click", (event) => {
-    const btn = event.target.closest("[data-topup-method]");
-    if (!btn) return;
-    topupMethod = btn.dataset.topupMethod;
-    document.querySelectorAll("#topup-methods .pay-method").forEach((el) => el.classList.toggle("selected", el === btn));
-    document.getElementById("topup-momo-fields").hidden = topupMethod !== "momo";
-    document.getElementById("topup-card-fields").hidden = topupMethod !== "card";
-  });
+  const topup = {
+    amount: "",
+    email: profile.email || profile.authEmail || "",
+    method: "momo",
+    provider: "mtn",
+    momoPhone: "",
+    card: { number: "", month: "", year: "", cvv: "" },
+    reference: null,
+    challenge: null,
+  };
+  let topupSwapTimer = 0;
+  const topupBackdrop = document.getElementById("topup-modal");
+  const topupPopup = document.getElementById("topup-popup");
 
-  async function waitForTopup(reference, amount, form) {
+  function openTopupBackdrop() {
+    topupBackdrop.classList.add("open");
+    topupBackdrop.classList.remove("closing");
+    document.body.classList.add("pay-open");
+  }
+
+  function closeTopupPopup() {
+    if (!topupBackdrop.classList.contains("open")) return;
+    topupBackdrop.classList.add("closing");
+    setTimeout(() => {
+      topupBackdrop.classList.remove("open", "closing");
+      document.body.classList.remove("pay-open");
+      topupPopup.innerHTML = "";
+    }, 240);
+  }
+
+  function swapTopup(paint) {
+    clearTimeout(topupSwapTimer);
+    const already = topupPopup.innerHTML.trim() !== "";
+    if (!already) {
+      paint();
+      topupPopup.classList.add("pay-swap-in");
+      openTopupBackdrop();
+      return;
+    }
+    topupPopup.classList.remove("pay-swap-in");
+    topupPopup.classList.add("pay-swap-out");
+    topupSwapTimer = setTimeout(() => {
+      topupPopup.classList.remove("pay-swap-out");
+      paint();
+      topupPopup.classList.add("pay-swap-in");
+    }, 150);
+  }
+
+  function topupChoice(id, icon, title, subtitle) {
+    return `
+      <button class="pay-choice-card" type="button" data-topup-method="${id}">
+        <span class="pay-choice-ico" aria-hidden="true">${icon}</span>
+        <span><strong>${title}</strong><span class="hint">${subtitle}</span></span>
+      </button>
+    `;
+  }
+
+  function renderTopupAmount() {
+    swapTopup(() => {
+      topupPopup.innerHTML = `
+        <div class="modal-top">
+          <div>
+            <div class="pill">Wallet top-up</div>
+            <h3 id="topup-title">How much do you want to add?</h3>
+            <p class="hint">Minimum GH₵ 5 · Maximum GH₵ 5,000</p>
+          </div>
+          <button class="close-btn" type="button" data-close-topup aria-label="Close">×</button>
+        </div>
+        <form class="form pay-fields-in" id="topup-amount-form">
+          <label>Amount (GH₵)
+            <input type="number" id="topup-amount" min="5" step="0.01" required placeholder="50" value="${escapeHtml(String(topup.amount || ""))}">
+          </label>
+          <label>Email for receipt
+            <input type="email" id="topup-email" required placeholder="you@email.com" value="${escapeHtml(topup.email)}">
+          </label>
+          <p class="error" id="topup-popup-error" hidden></p>
+          <button class="btn btn-primary btn-full" type="submit">Continue</button>
+        </form>
+      `;
+      topupPopup.querySelector("[data-close-topup]").addEventListener("click", closeTopupPopup);
+      topupPopup.querySelector("#topup-amount-form").addEventListener("submit", (event) => {
+        event.preventDefault();
+        const amount = Number(topupPopup.querySelector("#topup-amount").value);
+        const email = topupPopup.querySelector("#topup-email").value.trim();
+        const error = topupPopup.querySelector("#topup-popup-error");
+        if (!Number.isFinite(amount) || amount < 5) {
+          error.hidden = false;
+          error.textContent = "Enter at least GH₵ 5.";
+          return;
+        }
+        topup.amount = amount;
+        topup.email = email;
+        renderTopupMethod();
+      });
+    });
+  }
+
+  function renderTopupMethod() {
+    swapTopup(() => {
+      topupPopup.innerHTML = `
+        <div class="modal-top">
+          <div>
+            <div class="pill">Choose a way to pay</div>
+            <h3 id="topup-title">Top up ${formatCedi(topup.amount)}</h3>
+            <p class="hint">Pick Mobile Money or card</p>
+          </div>
+          <button class="close-btn" type="button" data-close-topup aria-label="Close">×</button>
+        </div>
+        <div class="pay-choice">
+          ${topupChoice("momo", "📱", "Mobile Money", "MTN, Telecel Cash or AT Money")}
+          ${topupChoice("card", "💳", "Debit or credit card", "Visa or Mastercard")}
+        </div>
+        <button class="btn btn-ghost btn-full" type="button" data-topup-back>Back</button>
+      `;
+      topupPopup.querySelector("[data-close-topup]").addEventListener("click", closeTopupPopup);
+      topupPopup.querySelector("[data-topup-back]").addEventListener("click", renderTopupAmount);
+      topupPopup.querySelectorAll("[data-topup-method]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          topup.method = btn.dataset.topupMethod;
+          btn.classList.add("picked");
+          setTimeout(renderTopupDetails, 180);
+        });
+      });
+    });
+  }
+
+  function renderTopupDetails() {
+    swapTopup(() => {
+      const fields =
+        topup.method === "card"
+          ? `
+            <label>Card number<input id="topup-card-number" inputmode="numeric" required placeholder="ACCT-000015" value="${escapeHtml(topup.card.number)}"></label>
+            <div class="split card-expiry">
+              <label>Month<input id="topup-card-month" maxlength="2" required placeholder="MM" value="${escapeHtml(topup.card.month)}"></label>
+              <label>Year<input id="topup-card-year" maxlength="2" required placeholder="YY" value="${escapeHtml(topup.card.year)}"></label>
+              <label>CVV<input id="topup-card-cvv" maxlength="4" required placeholder="123" value="${escapeHtml(topup.card.cvv)}"></label>
+            </div>
+          `
+          : `
+            <p class="hint" style="margin:0 0 6px">Pay with</p>
+            <div class="pay-nets" id="topup-nets">
+              <button class="pay-net mtn ${topup.provider === "mtn" ? "selected" : ""}" type="button" data-topup-provider="mtn"><span class="pay-net-mark">MTN</span><strong>MTN MoMo</strong></button>
+              <button class="pay-net telecel ${topup.provider === "telecel" ? "selected" : ""}" type="button" data-topup-provider="telecel"><span class="pay-net-mark">TEL</span><strong>Telecel</strong></button>
+              <button class="pay-net airteltigo ${topup.provider === "airteltigo" ? "selected" : ""}" type="button" data-topup-provider="airteltigo"><span class="pay-net-mark">AT</span><strong>AT Money</strong></button>
+            </div>
+            <label>MoMo number<input type="tel" id="topup-momo-phone" required placeholder="024 123 4567" value="${escapeHtml(topup.momoPhone)}"></label>
+          `;
+      topupPopup.innerHTML = `
+        <div class="modal-top">
+          <div>
+            <div class="pill">${topup.method === "card" ? "Card" : "Mobile Money"}</div>
+            <h3 id="topup-title">Pay ${formatCedi(topup.amount)}</h3>
+            <p class="hint">You stay on DataLogs GH while Paystack confirms the charge.</p>
+          </div>
+          <button class="close-btn" type="button" data-close-topup aria-label="Close">×</button>
+        </div>
+        <form class="form pay-form pay-fields-in" id="topup-details-form">
+          ${fields}
+          <p class="error" id="topup-popup-error" hidden></p>
+          <div class="hero-actions" style="margin-top:12px">
+            <button class="btn btn-ghost" type="button" data-topup-back>Back</button>
+            <button class="btn btn-primary btn-full" type="submit">Pay ${formatCedi(topup.amount)}</button>
+          </div>
+        </form>
+      `;
+      topupPopup.querySelector("[data-close-topup]").addEventListener("click", closeTopupPopup);
+      topupPopup.querySelector("[data-topup-back]").addEventListener("click", renderTopupMethod);
+      topupPopup.querySelectorAll("[data-topup-provider]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          topup.provider = btn.dataset.topupProvider;
+          topupPopup.querySelectorAll("[data-topup-provider]").forEach((el) => el.classList.toggle("selected", el === btn));
+        });
+      });
+      topupPopup.querySelector("#topup-details-form").addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const error = topupPopup.querySelector("#topup-popup-error");
+        error.hidden = true;
+        try {
+          if (topup.method === "momo") {
+            topup.momoPhone = topupPopup.querySelector("#topup-momo-phone").value.trim();
+            if (!topup.momoPhone.replace(/\D/g, "")) throw new Error("Enter the Mobile Money number that will pay.");
+          } else {
+            topup.card = {
+              number: topupPopup.querySelector("#topup-card-number").value,
+              month: topupPopup.querySelector("#topup-card-month").value,
+              year: topupPopup.querySelector("#topup-card-year").value,
+              cvv: topupPopup.querySelector("#topup-card-cvv").value,
+            };
+            if (String(topup.card.number).replace(/\D/g, "").length < 13) throw new Error("Enter a valid card number.");
+          }
+          await startTopupCharge();
+        } catch (err) {
+          error.hidden = false;
+          error.textContent = err.message || "Could not top up.";
+        }
+      });
+    });
+  }
+
+  function renderTopupWait(title, hint) {
+    swapTopup(() => {
+      topupPopup.innerHTML = `
+        <div class="modal-top">
+          <div>
+            <div class="pill">Wallet top-up</div>
+            <h3 id="topup-title">${title}</h3>
+            <p class="hint" id="topup-popup-hint">${hint}</p>
+          </div>
+        </div>
+        <div class="pay-wait" aria-hidden="true"><i></i><i></i><i></i><div class="pay-wait-phone">₵</div></div>
+        <p class="hint" style="text-align:center">Approve on your phone. Balance is added only after Paystack confirms.</p>
+      `;
+    });
+  }
+
+  function renderTopupChallenge() {
+    const result = topup.challenge;
+    const kind = result.next;
+    const label = kind === "pin" ? "Card PIN" : kind === "otp" ? "Enter OTP" : "Phone number";
+    swapTopup(() => {
+      topupPopup.innerHTML = `
+        <div class="pay-otp pay-fields-in">
+          <div class="pay-wait" aria-hidden="true"><i></i><i></i><i></i><div class="pay-wait-phone">${kind === "pin" ? "🔒" : "🔑"}</div></div>
+          <div class="pill">Almost there</div>
+          <h3 id="topup-title">${label}</h3>
+          <p class="hint">${result.display_text || "Confirm this charge to continue."}</p>
+          <form class="form" id="topup-challenge-form">
+            <input class="pay-otp-input" id="topup-challenge-input" required autocomplete="one-time-code" inputmode="numeric">
+            <p class="error" id="topup-sheet-error" hidden></p>
+            <button class="btn btn-primary btn-full" type="submit">Confirm payment</button>
+          </form>
+        </div>
+      `;
+      const input = topupPopup.querySelector("#topup-challenge-input");
+      input.focus();
+      topupPopup.querySelector("form").addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const error = topupPopup.querySelector("#topup-sheet-error");
+        error.hidden = true;
+        try {
+          const next =
+            kind === "pin"
+              ? await DataLogsPay.submitPin(result.reference, input.value)
+              : kind === "phone"
+                ? await DataLogsPay.submitPhone(result.reference, input.value)
+                : await DataLogsPay.submitOtp(result.reference, input.value);
+          await handleTopupNext(next);
+        } catch (err) {
+          error.hidden = false;
+          error.textContent = err.message || "Could not continue.";
+        }
+      });
+    });
+  }
+
+  async function startTopupCharge() {
+    if (!window.DataLogsPay) throw new Error("Payment is not loaded. Refresh and try again.");
+    renderTopupWait("Confirming payment…", "Stay on this page while Paystack confirms the top-up.");
+    try {
+      const charged = await DataLogsPay.charge({
+        kind: "wallet_topup",
+        channel: topup.method,
+        amount: topup.amount,
+        email: topup.email,
+        momo: { phone: topup.momoPhone, provider: topup.provider },
+        card: {
+          number: topup.card.number,
+          cvv: topup.card.cvv,
+          expiry_month: topup.card.month,
+          expiry_year: topup.card.year,
+        },
+      });
+      topup.reference = charged.reference;
+      await handleTopupNext(charged);
+    } catch (err) {
+      const msg = err.message || "Could not top up.";
+      const panelError = document.getElementById("topup-error");
+      if (panelError) {
+        panelError.hidden = false;
+        panelError.textContent = msg;
+      }
+      swapTopup(() => {
+        topupPopup.innerHTML = `
+          <div class="modal-top">
+            <div>
+              <h3 id="topup-title">Could not complete payment</h3>
+              <p class="error">${escapeHtml(msg)}</p>
+            </div>
+            <button class="close-btn" type="button" data-close-topup aria-label="Close">×</button>
+          </div>
+          <button class="btn btn-primary btn-full" type="button" data-topup-back>Try again</button>
+        `;
+        topupPopup.querySelector("[data-close-topup]").addEventListener("click", closeTopupPopup);
+        topupPopup.querySelector("[data-topup-back]").addEventListener("click", renderTopupDetails);
+      });
+    }
+  }
+
+  async function waitForTopup(reference) {
     const success = document.getElementById("topup-success");
     const started = Date.now();
     while (Date.now() - started < 180000) {
       const status = await DataLogsPay.status(reference);
       if (status.status === "success") {
+        swapTopup(() => {
+          topupPopup.innerHTML = `
+            <div class="success-mark" aria-hidden="true">✓</div>
+            <h3 id="topup-title">Wallet topped up</h3>
+            <p class="hint">${formatCedi(topup.amount)} is now in your wallet.</p>
+            <button class="btn btn-primary btn-full" type="button" data-close-topup>Done</button>
+          `;
+          topupPopup.querySelector("[data-close-topup]").addEventListener("click", closeTopupPopup);
+        });
         success.hidden = false;
-        success.textContent = `Wallet topped up by ${formatCedi(amount)}.`;
-        form.reset();
-        document.getElementById("topup-challenge").hidden = true;
+        success.textContent = `Wallet topped up by ${formatCedi(topup.amount)}.`;
+        topup.amount = "";
+        topup.momoPhone = "";
+        topup.card = { number: "", month: "", year: "", cvv: "" };
         await renderWallet();
         await renderOverview();
         return;
@@ -807,86 +1103,34 @@
     throw new Error("Still waiting for Paystack. Check again in a minute.");
   }
 
-  async function handleTopupNext(result, amount, form) {
-    const success = document.getElementById("topup-success");
-    const challenge = document.getElementById("topup-challenge");
-    const input = document.getElementById("topup-challenge-input");
-    const label = document.getElementById("topup-challenge-label");
-    const btn = document.getElementById("topup-challenge-btn");
-    success.hidden = false;
-    success.textContent = result.display_text || "Approve the payment, then wait here.";
+  async function handleTopupNext(result) {
     if (result.url) window.open(String(result.url), "_blank", "noopener");
     if (result.next === "success") {
-      await waitForTopup(result.reference, amount, form);
+      renderTopupWait("Payment confirmed", "Adding money to your wallet…");
+      await waitForTopup(result.reference);
       return;
     }
     if (result.next === "failed") throw new Error(result.display_text || "Payment failed.");
     if (result.next === "otp" || result.next === "pin" || result.next === "phone") {
-      challenge.hidden = false;
-      input.value = "";
-      input.placeholder = result.next === "pin" ? "PIN" : result.next === "otp" ? "OTP" : "Phone number";
-      label.firstChild.textContent = result.next === "pin" ? "Card PIN" : result.next === "otp" ? "OTP" : "Phone";
-      btn.onclick = async () => {
-        const error = document.getElementById("topup-error");
-        error.hidden = true;
-        try {
-          const next =
-            result.next === "pin"
-              ? await DataLogsPay.submitPin(result.reference, input.value)
-              : result.next === "phone"
-                ? await DataLogsPay.submitPhone(result.reference, input.value)
-                : await DataLogsPay.submitOtp(result.reference, input.value);
-          challenge.hidden = true;
-          await handleTopupNext(next, amount, form);
-        } catch (err) {
-          error.hidden = false;
-          error.textContent = err.message || "Could not continue.";
-        }
-      };
+      topup.challenge = result;
+      renderTopupChallenge();
       return;
     }
-    await waitForTopup(result.reference, amount, form);
+    renderTopupWait("Approve on your phone", result.display_text || "Approve the payment, then wait here.");
+    await waitForTopup(result.reference);
   }
 
-  document.getElementById("topup-form")?.addEventListener("submit", async (event) => {
-    event.preventDefault();
+  document.getElementById("open-topup")?.addEventListener("click", () => {
     const error = document.getElementById("topup-error");
     const success = document.getElementById("topup-success");
-    const submit = document.getElementById("topup-submit");
-    error.hidden = true;
-    success.hidden = true;
-    document.getElementById("topup-challenge").hidden = true;
-    const form = event.target;
-    const amount = Number(form.amount.value);
-    try {
-      if (!window.DataLogsPay) throw new Error("Payment is not loaded. Refresh and try again.");
-      if (topupMethod === "momo" && !String(form.momo_phone.value || "").replace(/\D/g, "")) {
-        throw new Error("Enter the Mobile Money number that will pay.");
-      }
-      if (topupMethod === "card" && String(form.card_number.value || "").replace(/\D/g, "").length < 13) {
-        throw new Error("Enter a valid card number.");
-      }
-      submit.disabled = true;
-      const charged = await DataLogsPay.charge({
-        kind: "wallet_topup",
-        channel: topupMethod,
-        amount,
-        email: form.email.value,
-        momo: { phone: form.momo_phone.value, provider: form.provider.value },
-        card: {
-          number: form.card_number.value,
-          cvv: form.card_cvv.value,
-          expiry_month: form.card_month.value,
-          expiry_year: form.card_year.value,
-        },
-      });
-      await handleTopupNext(charged, amount, form);
-    } catch (err) {
-      error.hidden = false;
-      error.textContent = err.message || "Could not top up.";
-    } finally {
-      submit.disabled = false;
-    }
+    if (error) error.hidden = true;
+    if (success) success.hidden = true;
+    topup.email = profile.email || profile.authEmail || topup.email;
+    renderTopupAmount();
+  });
+
+  topupBackdrop?.addEventListener("click", (event) => {
+    if (event.target === topupBackdrop) closeTopupPopup();
   });
 
   async function renderWithdrawals() {

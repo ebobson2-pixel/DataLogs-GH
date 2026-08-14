@@ -260,10 +260,24 @@
 }
 
 .store-body .modal input,
-.store-body .modal .pay-method {
+.store-body .modal .pay-method,
+.store-body .modal .pay-net,
+.store-body .pay-sheet-card,
+.store-body .pay-choice-card,
+.store-body .pay-otp-input {
   background: #f8faf9;
   border-color: var(--store-line);
   color: var(--store-ink);
+}
+
+.store-body .pay-choice-ico {
+  background: var(--store-accent-soft);
+}
+
+.store-body .pay-method.selected,
+.store-body .pay-choice-card.picked {
+  background: var(--store-accent-soft);
+  border-color: var(--store-accent);
 }
 
 .store-body .btn-primary {

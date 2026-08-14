@@ -8,8 +8,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&family=Montserrat:wght@600;700;800;900&family=Outfit:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../css/styles.css?v=7">
-  <link rel="stylesheet" href="../css/agent.css?v=7">
+  <link rel="stylesheet" href="../css/styles.css?v=9">
+  <link rel="stylesheet" href="../css/agent.css?v=8">
 </head>
 <body class="dash-body">
   <div class="dash-shell" id="dash-shell">
@@ -328,42 +328,12 @@
           </div>
           <div class="panel-card">
             <h3>Top up wallet</h3>
-            <p class="hint">Pay with Mobile Money or card. The balance is added only after Paystack confirms the payment.</p>
-            <form class="form" id="topup-form" style="margin-top:14px;max-width:520px">
-              <label>Amount (GH₵)<input type="number" name="amount" min="5" step="0.01" required placeholder="50"></label>
-              <label>Email for receipt<input type="email" name="email" id="topup-email" required placeholder="you@email.com"></label>
-              <div class="pay-methods" id="topup-methods">
-                <button class="pay-method selected" type="button" data-topup-method="momo"><strong>Mobile Money</strong><span class="hint">MTN, Telecel or AT</span></button>
-                <button class="pay-method" type="button" data-topup-method="card"><strong>Card</strong><span class="hint">Visa or Mastercard</span></button>
-              </div>
-              <div id="topup-momo-fields">
-                <label>MoMo network
-                  <select name="provider">
-                    <option value="mtn">MTN MoMo</option>
-                    <option value="telecel">Telecel Cash</option>
-                    <option value="airteltigo">AT Money</option>
-                  </select>
-                </label>
-                <label>MoMo number<input type="tel" name="momo_phone" placeholder="024 123 4567"></label>
-              </div>
-              <div id="topup-card-fields" hidden>
-                <label>Card number<input name="card_number" inputmode="numeric" placeholder="ACCT-000015"></label>
-                <div class="split card-expiry">
-                  <label>Month<input name="card_month" maxlength="2" placeholder="MM"></label>
-                  <label>Year<input name="card_year" maxlength="2" placeholder="YY"></label>
-                  <label>CVV<input name="card_cvv" maxlength="4" placeholder="123"></label>
-                </div>
-              </div>
-              <p class="error" id="topup-error" hidden></p>
-              <p class="hint" id="topup-success" hidden style="color:var(--success)"></p>
-              <div id="topup-challenge" hidden style="margin-top:12px">
-                <label id="topup-challenge-label">Code
-                  <input id="topup-challenge-input" autocomplete="one-time-code">
-                </label>
-                <button class="btn btn-primary" type="button" id="topup-challenge-btn" style="margin-top:10px">Continue</button>
-              </div>
-              <button class="btn btn-primary" type="submit" id="topup-submit">Pay to top up</button>
-            </form>
+            <p class="hint">Open the payment popup to add money with Mobile Money or card. The balance is added only after Paystack confirms.</p>
+            <div class="hero-actions" style="margin-top:14px">
+              <button class="btn btn-primary" type="button" id="open-topup">Top up wallet</button>
+            </div>
+            <p class="hint" id="topup-success" hidden style="color:var(--success);margin-top:12px"></p>
+            <p class="error" id="topup-error" hidden></p>
           </div>
           <div class="panel-card">
             <h3>Wallet activity</h3>
@@ -460,6 +430,9 @@
   </div>
 
   <div id="checkout-root"></div>
+  <div class="modal-backdrop" id="topup-modal" role="dialog" aria-modal="true" aria-labelledby="topup-title">
+    <div class="modal pay-popup" id="topup-popup"></div>
+  </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="../js/config.js"></script>
@@ -468,8 +441,8 @@
   <script src="../js/order-tracker.js?v=2"></script>
   <script src="../js/theme.js"></script>
   <script src="../js/paystack.js?v=1"></script>
-  <script src="../js/checkout.js?v=3"></script>
+  <script src="../js/checkout.js?v=5"></script>
   <script src="../js/flyer.js?v=1"></script>
-  <script src="../js/dashboard.js?v=7"></script>
+  <script src="../js/dashboard.js?v=9"></script>
 </body>
 </html>
