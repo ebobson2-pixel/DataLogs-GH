@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <script>try{var d=document.documentElement,t=localStorage.getItem("datalogs_theme"),a=localStorage.getItem("datalogs_accent");if(t==="light")d.setAttribute("data-theme","light");if(a)d.setAttribute("data-accent",a);}catch(e){}</script>
+  <title>Agent API docs — DataLogs GH</title>
+  <meta name="description" content="Connect your website to DataLogs GH. Generate an API key and sell MTN, AirtelTigo and Telecel data with a few requests.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css?v=7">
+  <link rel="stylesheet" href="css/docs.css?v=7">
+  <link rel="icon" href="assets/logo-mark.svg" type="image/svg+xml">
+</head>
+<body data-page="docs">
+  <div id="site-header"></div>
+  <main id="main">
+    <section class="page-hero">
+      <div class="wrap">
+        <p class="kicker">Agent API</p>
+        <h1>Connect your website to DataLogs GH</h1>
+        <p>Generate an API key in your dashboard, then buy data for customers from your own site. The live base URL is <code>https://datalogsgh.shop/api/v1</code>.</p>
+        <p class="api-status" id="api-status">Checking API…</p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="wrap docs-layout">
+        <aside class="docs-toc">
+          <strong>On this page</strong>
+          <a href="#start">1. Get your key</a>
+          <a href="#auth">2. Authentication</a>
+          <a href="#packages">3. List packages</a>
+          <a href="#order">4. Place an order</a>
+          <a href="#status">5. Check status</a>
+          <a href="#wallet">6. Wallet</a>
+          <a href="#errors">Errors &amp; status</a>
+          <a href="#examples">Website examples</a>
+        </aside>
+
+        <div class="docs-body">
+          <article class="card docs-card" id="start">
+            <h2>1. Get your API key</h2>
+            <ol class="docs-steps">
+              <li>Sign in to your <a href="agent/auth.html">agent dashboard</a>.</li>
+              <li>Open <strong>API keys</strong> in the sidebar.</li>
+              <li>Name the key (for example “My website”) and tap <strong>Generate API key</strong>.</li>
+              <li>Copy the secret immediately. It starts with <code>dlg_live_</code> and is shown only once.</li>
+            </ol>
+            <p>You can keep up to 5 active keys. Revoke a key if it leaks. After you revoke it, that website must use a new key.</p>
+          </article>
+
+          <article class="card docs-card" id="auth">
+            <h2>2. Authentication</h2>
+            <p>Every request except <code>GET /health</code> needs your key.</p>
+            <p><strong>Base URL</strong></p>
+            <pre><code>https://datalogsgh.shop/api/v1</code></pre>
+            <p><strong>Header</strong> (pick one)</p>
+            <pre><code>Authorization: Bearer dlg_live_your_key_here
+X-API-Key: dlg_live_your_key_here</code></pre>
+            <p>Send JSON with <code>Content-Type: application/json</code> on POST requests. Your website can call this API from any domain.</p>
+          </article>
+
+          <article class="card docs-card" id="packages">
+            <h2>3. List packages</h2>
+            <p>Use this to show bundles on your site. Prices are your wholesale rate, including any custom price DataLogs GH set for you.</p>
+            <p><code>GET /packages</code></p>
+            <p>Optional filter: <code>GET /packages?network=mtn</code> · also <code>airteltigo</code> or <code>telecel</code>.</p>
+            <pre><code>curl "https://datalogsgh.shop/api/v1/packages" \
+  -H "Authorization: Bearer dlg_live_your_key_here"</code></pre>
+            <p>Example response</p>
+            <pre><code>{
+  "ok": true,
+  "data": {
+    "packages": [
+      {
+        "id": "uuid-of-package",
+        "network": "mtn",
+        "gb": 1,
+        "price": 4.5,
+        "currency": "GHS",
+        "validity": "Non expiry"
+      }
+    ]
+  }
+}</code></pre>
+          </article>
+
+          <article class="card docs-card" id="order">
+            <h2>4. Place an order</h2>
+            <p><code>POST /orders</code> buys a bundle for a Ghana number. Use either a package id from step 3, or network + GB.</p>
+            <p>The number must match the network (MTN prefixes such as 024, AirtelTigo 027, Telecel 020).</p>
+            <pre><code>curl -X POST "https://datalogsgh.shop/api/v1/orders" \
+  -H "Authorization: Bearer dlg_live_your_key_here" \
+  -H "Content-Type: application/json" \
+  -d "{\"package_id\":\"uuid-of-package\",\"recipient\":\"0241234567\"}"</code></pre>
+            <p>Same order using network and size:</p>
+            <pre><code>{
+  "network": "mtn",
+  "gb": 1,
+  "recipient": "0241234567"
+}</code></pre>
+            <p>Success looks like this. <code>status</code> is only <strong>processing</strong> or <strong>completed</strong>.</p>
+            <pre><code>{
+  "ok": true,
+  "data": {
+    "order": {
+      "order_code": "DL-A1B2C3D4",
+      "network": "mtn",
+      "gb": 1,
+      "recipient": "024 123 4567",
+      "amount": 4.5,
+      "currency": "GHS",
+      "status": "processing",
+      "created_at": "2026-08-14T12:00:00.000Z"
+    }
+  }
+}</code></pre>
+            <p>Save <code>order_code</code> so you can look the order up later. Delivery starts automatically after the order is created.</p>
+          </article>
+
+          <article class="card docs-card" id="status">
+            <h2>5. Check an order</h2>
+            <p><code>GET /orders/DL-A1B2C3D4</code></p>
+            <pre><code>curl "https://datalogsgh.shop/api/v1/orders/DL-A1B2C3D4" \
+  -H "Authorization: Bearer dlg_live_your_key_here"</code></pre>
+            <p>List your recent API / wholesale orders: <code>GET /orders?limit=20</code> (max 50).</p>
+          </article>
+
+          <article class="card docs-card" id="wallet">
+            <h2>6. Wallet</h2>
+            <p><code>GET /wallet</code> returns your commission wallet balance in Ghana cedis.</p>
+            <pre><code>curl "https://datalogsgh.shop/api/v1/wallet" \
+  -H "Authorization: Bearer dlg_live_your_key_here"</code></pre>
+          </article>
+
+          <article class="card docs-card" id="errors">
+            <h2>Errors &amp; status</h2>
+            <p>Failed responses always include <code>ok: false</code> and a short <code>message</code> you can show to yourself, not always to the customer.</p>
+            <div class="table-wrap">
+              <table class="docs-table">
+                <thead>
+                  <tr><th>HTTP</th><th>error</th><th>What to do</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td>200 / 201</td><td>—</td><td>Request worked.</td></tr>
+                  <tr><td>400</td><td>bad_request</td><td>Fix the number, network, or package.</td></tr>
+                  <tr><td>401</td><td>unauthorized</td><td>Check the key. Generate a new one if it was revoked.</td></tr>
+                  <tr><td>404</td><td>not_found</td><td>Wrong URL or unknown order code.</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p><strong>Order status for your customers</strong></p>
+            <ul>
+              <li><code>processing</code> — payment recorded, bundle is being sent.</li>
+              <li><code>completed</code> — delivery is done.</li>
+            </ul>
+            <p>Do not show any other status on your website.</p>
+            <p>Health check (no key): <code>GET https://datalogsgh.shop/api/v1/health</code></p>
+          </article>
+
+          <article class="card docs-card" id="examples">
+            <h2>Website examples</h2>
+            <p>Copy one of these into your backend. Never put the API key in browser JavaScript that customers can view. Call DataLogs GH from your server.</p>
+
+            <h3>JavaScript (Node)</h3>
+            <pre><code>const BASE = "https://datalogsgh.shop/api/v1";
+const KEY = process.env.DATALOGS_API_KEY;
+
+async function buyData({ packageId, recipient }) {
+  const res = await fetch(`${BASE}/orders`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ package_id: packageId, recipient }),
+  });
+  return res.json();
+}</code></pre>
+
+            <h3>PHP</h3>
+            <pre><code>$base = "https://datalogsgh.shop/api/v1";
+$key = getenv("DATALOGS_API_KEY");
+
+$ch = curl_init("$base/orders");
+curl_setopt_array($ch, [
+  CURLOPT_POST => true,
+  CURLOPT_RETURNTRANSFER => true,
+  CURLOPT_HTTPHEADER => [
+    "Authorization: Bearer $key",
+    "Content-Type: application/json",
+  ],
+  CURLOPT_POSTFIELDS => json_encode([
+    "network" => "mtn",
+    "gb" => 1,
+    "recipient" => "0241234567",
+  ]),
+]);
+$response = json_decode(curl_exec($ch), true);</code></pre>
+
+            <h3>Python</h3>
+            <pre><code>import os, requests
+
+BASE = "https://datalogsgh.shop/api/v1"
+KEY = os.environ["DATALOGS_API_KEY"]
+
+r = requests.post(
+    f"{BASE}/orders",
+    headers={"Authorization": f"Bearer {KEY}"},
+    json={"network": "mtn", "gb": 1, "recipient": "0241234567"},
+    timeout=30,
+)
+print(r.json())</code></pre>
+
+            <h3>Suggested flow on your site</h3>
+            <ol class="docs-steps">
+              <li>Your server calls <code>GET /packages</code> and displays network, GB, and price.</li>
+              <li>Customer picks a bundle and enters a Ghana number.</li>
+              <li>You collect payment on your site first.</li>
+              <li>Your server calls <code>POST /orders</code> with that package and number.</li>
+              <li>Show the customer <code>order_code</code> and status <code>processing</code> or <code>completed</code>.</li>
+              <li>Optionally poll <code>GET /orders/ORDER_CODE</code> every few seconds until it is completed.</li>
+            </ol>
+            <p class="hero-actions">
+              <a class="btn btn-primary" href="agent/auth.html">Open agent dashboard</a>
+              <a class="btn btn-ghost" href="contact.html">Need help?</a>
+            </p>
+          </article>
+        </div>
+      </div>
+    </section>
+  </main>
+  <div id="site-footer"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/api.js?v=6"></script>
+  <script src="js/whatsapp-fab.js"></script>
+  <script src="js/order-tracker.js?v=2"></script>
+  <script src="js/theme.js"></script>
+  <script src="js/app.js?v=2"></script>
+  <script src="js/docs.js"></script>
+</body>
+</html>

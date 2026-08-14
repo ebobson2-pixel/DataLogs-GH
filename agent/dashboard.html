@@ -2,20 +2,21 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <script>try{var d=document.documentElement,t=localStorage.getItem("datalogs_theme"),a=localStorage.getItem("datalogs_accent");if(t==="light")d.setAttribute("data-theme","light");if(a)d.setAttribute("data-accent",a);}catch(e){}</script>
   <title>Agent dashboard — DataLogs GH</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../css/styles.css">
-  <link rel="stylesheet" href="../css/agent.css">
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&family=Montserrat:wght@600;700;800;900&family=Outfit:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/styles.css?v=7">
+  <link rel="stylesheet" href="../css/agent.css?v=7">
 </head>
 <body class="dash-body">
   <div class="dash-shell" id="dash-shell">
     <aside class="dash-sidebar" aria-label="Agent navigation">
       <div class="side-top">
         <a class="side-brand" href="../index.html">
-          <span class="logo-mark">DL</span>
+          <span class="logo-mark" aria-hidden="true"><img src="../assets/logo-mark.svg" alt="" width="28" height="28"></span>
           <span class="brand-text">DataLogs <span>GH</span></span>
         </a>
         <button class="collapse-btn" id="collapse-btn" type="button" title="Collapse sidebar" aria-label="Collapse sidebar">«</button>
@@ -24,12 +25,14 @@
       <nav class="side-nav">
         <button class="side-link active" type="button" data-panel="overview"><span class="side-ico">⌂</span><span class="side-label">Overview</span></button>
         <button class="side-link" type="button" data-panel="store"><span class="side-ico">▣</span><span class="side-label">Mini store</span></button>
+        <button class="side-link" type="button" data-panel="flyer"><span class="side-ico">▤</span><span class="side-label">Flyers</span></button>
         <button class="side-link" type="button" data-panel="pricing"><span class="side-ico">＋</span><span class="side-label">Store pricing</span></button>
         <button class="side-link" type="button" data-panel="wholesale"><span class="side-ico">◎</span><span class="side-label">Buy wholesale</span></button>
         <button class="side-link" type="button" data-panel="orders"><span class="side-ico">☰</span><span class="side-label">Orders</span></button>
         <button class="side-link" type="button" data-panel="customers"><span class="side-ico">👥</span><span class="side-label">Customers</span></button>
         <button class="side-link" type="button" data-panel="wallet"><span class="side-ico">₵</span><span class="side-label">My Wallet</span></button>
         <button class="side-link" type="button" data-panel="withdrawal"><span class="side-ico">↑</span><span class="side-label">Withdrawal</span></button>
+        <button class="side-link" type="button" data-panel="developer"><span class="side-ico">{ }</span><span class="side-label">API keys</span></button>
         <button class="side-link" type="button" data-panel="account"><span class="side-ico">☺</span><span class="side-label">Account</span></button>
       </nav>
 
@@ -44,6 +47,7 @@
         <button class="side-link" type="button" id="logout-btn"><span class="side-ico">→</span><span class="logout-label">Sign out</span></button>
       </div>
     </aside>
+    <div class="dash-scrim" id="dash-scrim"></div>
 
     <div class="dash-main">
       <header class="dash-topbar">
@@ -51,38 +55,102 @@
           <button class="mobile-menu-btn" id="mobile-menu-btn" type="button" aria-label="Open menu">☰</button>
           <div>
             <h1 id="panel-title">Overview</h1>
-            <p id="panel-sub">Your agent snapshot</p>
+            <p id="panel-sub">Live sales, profit, and traffic</p>
           </div>
         </div>
-        <a class="btn btn-ghost" id="open-store-btn" href="../store.html" target="_blank" rel="noopener">Open store</a>
+        <div class="dash-topbar-end">
+          <div data-theme-tools></div>
+          <a class="btn btn-ghost" id="open-store-btn" href="../store.html" target="_blank" rel="noopener">Open store</a>
+          <a class="support-chip" id="topbar-support" hidden href="#" target="_blank" rel="noopener">Support</a>
+        </div>
       </header>
 
       <main class="dash-content">
         <section class="dash-panel active" data-panel-view="overview">
-          <div class="stat-grid">
-            <article class="stat-card"><span>Store status</span><strong id="stat-store">Not set</strong></article>
-            <article class="stat-card"><span>Total orders</span><strong id="stat-orders">0</strong></article>
-            <article class="stat-card"><span>Profit earned</span><strong id="stat-profit">GH₵ 0.00</strong></article>
-            <article class="stat-card"><span>Wallet (withdrawable)</span><strong id="stat-saved">GH₵ 0.00</strong></article>
+          <div class="overview-livebar">
+            <div class="live-badge"><span class="live-dot"></span> Live</div>
+            <p class="overview-updated" id="overview-updated">Connecting…</p>
           </div>
-          <div class="panel-card">
-            <h3>Quick start</h3>
-            <p class="hint">1) Set up your mini store · 2) Set store pricing (base + profit) · 3) Share your link · 4) Withdraw profits</p>
-            <div class="hero-actions" style="margin-top:16px">
-              <button class="btn btn-primary" type="button" data-goto="pricing">Set pricing</button>
-              <button class="btn btn-ghost" type="button" data-goto="store">Store settings</button>
+
+          <div class="panel-card support-card" id="overview-support" hidden>
+            <div>
+              <h3 id="overview-support-title">Support</h3>
+              <p id="overview-support-text">Contact DataLogs GH if you need help with your store or wallet.</p>
             </div>
+            <div class="hero-actions" id="overview-support-actions"></div>
           </div>
+
+          <div class="stat-grid overview-stats">
+            <article class="stat-card">
+              <span>Store status</span>
+              <strong id="stat-store">Not set</strong>
+              <small id="stat-store-meta">Set up your mini store</small>
+            </article>
+            <article class="stat-card">
+              <span>Total orders</span>
+              <strong><span id="stat-orders" data-run="int">0</span></strong>
+              <svg class="sparkline" id="spark-orders" viewBox="0 0 120 36" aria-hidden="true"></svg>
+            </article>
+            <article class="stat-card">
+              <span>Today</span>
+              <strong><span id="stat-today" data-run="int">0</span></strong>
+              <small>orders today</small>
+            </article>
+            <article class="stat-card">
+              <span>Profit earned</span>
+              <strong>GH₵ <span id="stat-profit" data-run="cedi">0.00</span></strong>
+              <svg class="sparkline" id="spark-profit" viewBox="0 0 120 36" aria-hidden="true"></svg>
+            </article>
+            <article class="stat-card">
+              <span>Wallet</span>
+              <strong>GH₵ <span id="stat-saved" data-run="cedi">0.00</span></strong>
+              <small>withdrawable now</small>
+            </article>
+            <article class="stat-card">
+              <span>Customers</span>
+              <strong><span id="stat-customers" data-run="int">0</span></strong>
+              <small>unique store numbers</small>
+            </article>
+          </div>
+
+          <div class="charts-grid">
+            <article class="panel-card chart-card">
+              <div class="chart-head">
+                <div>
+                  <h3>Sales this week</h3>
+                  <p class="hint">Store vs wholesale · last 7 days</p>
+                </div>
+                <div class="chart-legend" id="sales-legend"></div>
+              </div>
+              <canvas id="chart-sales" width="640" height="260"></canvas>
+            </article>
+            <article class="panel-card chart-card">
+              <div class="chart-head">
+                <div>
+                  <h3>Network mix</h3>
+                  <p class="hint">Share of all your orders</p>
+                </div>
+              </div>
+              <div class="donut-wrap">
+                <canvas id="chart-network" width="280" height="260"></canvas>
+                <div class="donut-center">
+                  <strong id="donut-total" data-run="int">0</strong>
+                  <span>orders</span>
+                </div>
+              </div>
+              <div class="chart-legend" id="network-legend"></div>
+            </article>
+          </div>
+
           <div class="panel-card">
             <h3>Recent activity</h3>
-            <div id="overview-orders" class="empty-state">No wholesale orders yet.</div>
+            <div id="overview-orders" class="empty-state">No orders yet.</div>
           </div>
         </section>
 
         <section class="dash-panel" data-panel-view="store">
           <div class="panel-card">
             <h3>Your mini store</h3>
-            <p class="hint">Customers open your unique storefront (different from the main DataLogs site). You earn commission into your wallet.</p>
             <form class="form" id="store-form" style="margin-top:16px">
               <label>Store name<input name="name" required placeholder="Kwame Data Hub"></label>
               <label>Store link slug<input name="slug" required placeholder="kwame-data" pattern="[a-z0-9\-]+" title="Lowercase letters, numbers and dashes"></label>
@@ -114,10 +182,56 @@
           </div>
         </section>
 
+        <section class="dash-panel" data-panel-view="flyer">
+          <div class="panel-card">
+            <h3>Store flyer</h3>
+            <p class="hint">Pick a style. We fill it with your store name, sell prices, phone, and store link, then you download a JPG to post.</p>
+            <div class="flyer-styles" id="flyer-styles">
+              <button class="flyer-style active" type="button" data-flyer-style="hub">
+                <span class="flyer-style-swatch flyer-swatch-hub"></span>
+                <strong>Bundle Hub</strong>
+                <span>Yellow / blue / red columns</span>
+              </button>
+              <button class="flyer-style" type="button" data-flyer-style="plug">
+                <span class="flyer-style-swatch flyer-swatch-plug"></span>
+                <strong>Data Plug</strong>
+                <span>Sky, grass, price grids</span>
+              </button>
+              <button class="flyer-style" type="button" data-flyer-style="package">
+                <span class="flyer-style-swatch flyer-swatch-package"></span>
+                <strong>Data Package</strong>
+                <span>Dark green glow cards</span>
+              </button>
+            </div>
+            <form class="form" id="flyer-form" style="margin-top:16px">
+              <div class="split" style="grid-template-columns:1fr 1fr;gap:12px">
+                <label>WhatsApp / call number
+                  <input id="flyer-phone" type="tel" placeholder="024 000 0000">
+                </label>
+                <label>Working hours
+                  <input id="flyer-hours" type="text" value="8am - 9pm Each day">
+                </label>
+              </div>
+              <p class="error" id="flyer-error" hidden></p>
+              <div class="hero-actions" style="margin-top:12px">
+                <button class="btn btn-ghost" type="button" id="flyer-preview-btn">Refresh preview</button>
+                <button class="btn btn-primary" type="button" id="flyer-download-btn">Download JPG</button>
+              </div>
+            </form>
+          </div>
+          <div class="panel-card">
+            <h3>Preview</h3>
+            <p class="hint" id="flyer-url-hint">Your store link is printed as the caption at the bottom.</p>
+            <div class="flyer-preview-wrap">
+              <canvas id="flyer-canvas" width="1080" height="1440"></canvas>
+            </div>
+          </div>
+        </section>
+
         <section class="dash-panel" data-panel-view="pricing">
           <div class="panel-card">
             <h3>Set your store prices</h3>
-            <p class="hint">Admin agent price is your base cost. Add your profit — your store sells at <strong>base + profit</strong>. Only priced packages appear on your mini store. Profit from each sale goes to your wallet for withdrawal.</p>
+            <p class="hint">Admin agent price is your base cost. Add your profit — your store sells at <strong>base + profit</strong>. Only priced packages appear on your store.</p>
             <div class="filters" style="margin-top:14px" id="pricing-filters">
               <button class="filter-btn active" type="button" data-pfilter="all">All</button>
               <button class="filter-btn" type="button" data-pfilter="mtn">MTN</button>
@@ -208,13 +322,51 @@
         </section>
 
         <section class="dash-panel" data-panel-view="wallet">
-          <div class="stat-grid" style="grid-template-columns:repeat(2,minmax(0,1fr))">
+          <div class="stat-grid stat-grid-2">
             <article class="stat-card"><span>Available balance</span><strong id="wallet-balance">GH₵ 0.00</strong></article>
             <article class="stat-card"><span>Lifetime</span><strong id="wallet-tx-count">0</strong></article>
           </div>
           <div class="panel-card">
+            <h3>Top up wallet</h3>
+            <p class="hint">Pay with Mobile Money or card. The balance is added only after Paystack confirms the payment.</p>
+            <form class="form" id="topup-form" style="margin-top:14px;max-width:520px">
+              <label>Amount (GH₵)<input type="number" name="amount" min="5" step="0.01" required placeholder="50"></label>
+              <label>Email for receipt<input type="email" name="email" id="topup-email" required placeholder="you@email.com"></label>
+              <div class="pay-methods" id="topup-methods">
+                <button class="pay-method selected" type="button" data-topup-method="momo"><strong>Mobile Money</strong><span class="hint">MTN, Telecel or AT</span></button>
+                <button class="pay-method" type="button" data-topup-method="card"><strong>Card</strong><span class="hint">Visa or Mastercard</span></button>
+              </div>
+              <div id="topup-momo-fields">
+                <label>MoMo network
+                  <select name="provider">
+                    <option value="mtn">MTN MoMo</option>
+                    <option value="telecel">Telecel Cash</option>
+                    <option value="airteltigo">AT Money</option>
+                  </select>
+                </label>
+                <label>MoMo number<input type="tel" name="momo_phone" placeholder="024 123 4567"></label>
+              </div>
+              <div id="topup-card-fields" hidden>
+                <label>Card number<input name="card_number" inputmode="numeric" placeholder="ACCT-000015"></label>
+                <div class="split card-expiry">
+                  <label>Month<input name="card_month" maxlength="2" placeholder="MM"></label>
+                  <label>Year<input name="card_year" maxlength="2" placeholder="YY"></label>
+                  <label>CVV<input name="card_cvv" maxlength="4" placeholder="123"></label>
+                </div>
+              </div>
+              <p class="error" id="topup-error" hidden></p>
+              <p class="hint" id="topup-success" hidden style="color:var(--success)"></p>
+              <div id="topup-challenge" hidden style="margin-top:12px">
+                <label id="topup-challenge-label">Code
+                  <input id="topup-challenge-input" autocomplete="one-time-code">
+                </label>
+                <button class="btn btn-primary" type="button" id="topup-challenge-btn" style="margin-top:10px">Continue</button>
+              </div>
+              <button class="btn btn-primary" type="submit" id="topup-submit">Pay to top up</button>
+            </form>
+          </div>
+          <div class="panel-card">
             <h3>Wallet activity</h3>
-            <p class="hint">Your profit from each store sale is credited here and is available for withdrawal.</p>
             <div class="table-wrap" style="margin-top:12px">
               <table class="orders-table">
                 <thead>
@@ -265,6 +417,29 @@
           </div>
         </section>
 
+        <section class="dash-panel" data-panel-view="developer">
+          <div class="panel-card">
+            <h3>Your API keys</h3>
+            <p class="custom-price-hint">Use a key to sell DataLogs GH bundles from your own website. The secret is shown only once when you create it.</p>
+            <p class="custom-price-hint">Base URL: <code id="api-base-url">https://datalogsgh.shop/api/v1</code></p>
+            <form class="form" id="api-key-form" style="margin-top:14px">
+              <label>Key name
+                <input name="name" maxlength="40" placeholder="My website" value="Website">
+              </label>
+              <p class="error" id="api-key-error" hidden></p>
+              <button class="btn btn-primary" type="submit">Generate API key</button>
+            </form>
+            <div id="api-key-reveal" class="key-reveal" hidden></div>
+          </div>
+          <div class="panel-card">
+            <h3>Active keys</h3>
+            <div id="api-key-list" class="user-card-list"></div>
+            <p class="hero-actions" style="margin-top:16px">
+              <a class="btn btn-ghost" href="../docs.html" target="_blank" rel="noopener">Open API documentation</a>
+            </p>
+          </div>
+        </section>
+
         <section class="dash-panel" data-panel-view="account">
           <div class="panel-card">
             <h3>Account</h3>
@@ -273,7 +448,11 @@
               <label>Email<input id="account-email" readonly></label>
               <label>Phone<input id="account-phone" readonly></label>
             </div>
-            <p class="demo-note" style="margin-top:14px">Your account is stored in Supabase Auth. Sign out from the sidebar when you’re done.</p>
+          </div>
+          <div class="panel-card" id="account-support" hidden>
+            <h3 id="account-support-title">Support</h3>
+            <p class="custom-price-hint" id="account-support-text"></p>
+            <div class="hero-actions" id="account-support-actions"></div>
           </div>
         </section>
       </main>
@@ -285,9 +464,12 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="../js/config.js"></script>
   <script src="../js/data.js"></script>
-  <script src="../js/api.js"></script>
-  <script src="../js/order-tracker.js"></script>
-  <script src="../js/checkout.js"></script>
-  <script src="../js/dashboard.js"></script>
+  <script src="../js/api.js?v=6"></script>
+  <script src="../js/order-tracker.js?v=2"></script>
+  <script src="../js/theme.js"></script>
+  <script src="../js/paystack.js?v=1"></script>
+  <script src="../js/checkout.js?v=3"></script>
+  <script src="../js/flyer.js?v=1"></script>
+  <script src="../js/dashboard.js?v=7"></script>
 </body>
 </html>

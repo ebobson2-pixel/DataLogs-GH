@@ -2,20 +2,21 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <script>try{var d=document.documentElement,t=localStorage.getItem("datalogs_theme"),a=localStorage.getItem("datalogs_accent");if(t==="light")d.setAttribute("data-theme","light");if(a)d.setAttribute("data-accent",a);}catch(e){}</script>
   <title>Admin dashboard — DataLogs GH</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../css/styles.css">
-  <link rel="stylesheet" href="../css/agent.css">
+  <link rel="stylesheet" href="../css/styles.css?v=7">
+  <link rel="stylesheet" href="../css/agent.css?v=7">
 </head>
 <body class="dash-body">
   <div class="dash-shell" id="dash-shell">
     <aside class="dash-sidebar" aria-label="Admin navigation">
       <div class="side-top">
         <a class="side-brand" href="../index.html">
-          <span class="logo-mark">DL</span>
+          <span class="logo-mark" aria-hidden="true"><img src="../assets/logo-mark.svg" alt="" width="28" height="28"></span>
           <span class="brand-text">Admin <span>GH</span></span>
         </a>
         <button class="collapse-btn" id="collapse-btn" type="button" title="Collapse sidebar" aria-label="Collapse sidebar">«</button>
@@ -26,6 +27,8 @@
         <button class="side-link" type="button" data-panel="orders"><span class="side-ico">☰</span><span class="side-label">Orders</span></button>
         <button class="side-link" type="button" data-panel="users"><span class="side-ico">☺</span><span class="side-label">Users</span></button>
         <button class="side-link" type="button" data-panel="stores"><span class="side-ico">◎</span><span class="side-label">Stores</span></button>
+        <button class="side-link" type="button" data-panel="api"><span class="side-ico">{ }</span><span class="side-label">API</span></button>
+        <button class="side-link" type="button" data-panel="settings"><span class="side-ico">⚙</span><span class="side-label">Settings</span></button>
       </nav>
       <div class="side-foot">
         <div class="side-user">
@@ -38,6 +41,7 @@
         <button class="side-link" type="button" id="logout-btn"><span class="side-ico">→</span><span class="logout-label">Sign out</span></button>
       </div>
     </aside>
+    <div class="dash-scrim" id="dash-scrim"></div>
 
     <div class="dash-main">
       <header class="dash-topbar">
@@ -48,7 +52,10 @@
             <p id="panel-sub">Control center</p>
           </div>
         </div>
-        <a class="btn btn-ghost" href="../index.html">View site</a>
+        <div class="dash-topbar-end">
+          <div data-theme-tools></div>
+          <a class="btn btn-ghost" href="../index.html">View site</a>
+        </div>
       </header>
 
       <main class="dash-content">
@@ -58,6 +65,8 @@
             <article class="stat-card"><span>Packages</span><strong id="stat-packages">0</strong></article>
             <article class="stat-card"><span>Orders</span><strong id="stat-orders">0</strong></article>
             <article class="stat-card"><span>Revenue</span><strong id="stat-revenue">GH₵ 0.00</strong></article>
+            <article class="stat-card"><span>Provider wallet</span><strong id="stat-provider">GH₵ —</strong></article>
+            <article class="stat-card"><span>Needs retry</span><strong id="stat-retry">0</strong></article>
           </div>
           <div class="panel-card">
             <h3>Latest orders</h3>
@@ -99,7 +108,7 @@
                     <th>Network</th><th>GB</th><th>Public</th><th>Agent</th><th>Validity</th><th></th>
                   </tr>
                 </thead>
-                <tbody id="packages-body"></tbody>
+                <tbody id="packages-body"><tr><td colspan="6">Loading…</td></tr></tbody>
               </table>
             </div>
           </div>
@@ -108,6 +117,12 @@
         <section class="dash-panel" data-panel-view="orders">
           <div class="panel-card">
             <h3>All orders</h3>
+            <div class="filters" id="admin-order-filters" style="margin-bottom:12px">
+              <button class="filter-btn active" type="button" data-afilter="all">All</button>
+              <button class="filter-btn" type="button" data-afilter="retry">Needs retry</button>
+              <button class="filter-btn" type="button" data-afilter="failed">Failed</button>
+            </div>
+            <p class="error" id="retry-error" hidden></p>
             <div class="table-wrap">
               <table class="orders-table">
                 <thead>
@@ -120,29 +135,28 @@
                     <th>Paid</th>
                     <th>Payment</th>
                     <th>Delivery</th>
+                    <th>Provider</th>
                     <th>Date</th>
                     <th>Time</th>
+                    <th></th>
                   </tr>
                 </thead>
-                <tbody id="orders-body"></tbody>
+                <tbody id="orders-body"><tr><td colspan="12">Loading…</td></tr></tbody>
               </table>
             </div>
           </div>
         </section>
 
         <section class="dash-panel" data-panel-view="users">
-          <div class="panel-card">
-            <h3>Users & roles</h3>
-            <div class="table-wrap">
-              <table class="orders-table">
-                <thead>
-                  <tr>
-                    <th>Name</th><th>Email</th><th>Phone</th><th>Role</th><th>Joined</th>
-                  </tr>
-                </thead>
-                <tbody id="users-body"></tbody>
-              </table>
+          <div id="users-list-view">
+            <div class="panel-card">
+              <h3>Users & roles</h3>
+              <p class="custom-price-hint">Open a user to see their wallet, orders, block/promote controls, and custom pricing.</p>
+              <div id="users-body" class="user-card-list"><div class="empty-state">Loading…</div></div>
             </div>
+          </div>
+          <div id="user-detail-view" class="is-hidden">
+            <div id="user-detail-root"></div>
           </div>
         </section>
 
@@ -156,9 +170,115 @@
                     <th>Store</th><th>Slug</th><th>Agent</th><th>Published</th><th>Updated</th>
                   </tr>
                 </thead>
-                <tbody id="stores-body"></tbody>
+                <tbody id="stores-body"><tr><td colspan="5">Loading…</td></tr></tbody>
               </table>
             </div>
+          </div>
+        </section>
+
+        <section class="dash-panel" data-panel-view="api">
+          <div class="stat-grid">
+            <article class="stat-card"><span>Active keys</span><strong id="api-stat-keys">0</strong></article>
+            <article class="stat-card"><span>Users with API</span><strong id="api-stat-users">0</strong></article>
+            <article class="stat-card"><span>Requests (24h)</span><strong id="api-stat-requests">0</strong></article>
+            <article class="stat-card"><span>Errors (24h)</span><strong id="api-stat-errors">0</strong></article>
+            <article class="stat-card"><span>API orders</span><strong id="api-stat-orders">0</strong></article>
+            <article class="stat-card"><span>Disabled users</span><strong id="api-stat-disabled">0</strong></article>
+          </div>
+          <div class="panel-card">
+            <h3>Issue an API key</h3>
+            <p class="custom-price-hint">Create a key for an agent. The secret is shown once — copy it and send it to them securely.</p>
+            <form class="form" id="admin-api-key-form">
+              <div class="split" style="grid-template-columns:1.4fr 1fr;gap:12px">
+                <label>Agent
+                  <select name="user_id" id="admin-api-user" required>
+                    <option value="">Select an agent</option>
+                  </select>
+                </label>
+                <label>Key name
+                  <input name="name" maxlength="40" placeholder="Website" value="Website">
+                </label>
+              </div>
+              <p class="error" id="admin-api-key-error" hidden></p>
+              <div class="hero-actions" style="margin-top:12px">
+                <button class="btn btn-primary" type="submit">Generate key</button>
+                <button class="btn btn-ghost" type="button" id="admin-api-refresh">Refresh</button>
+              </div>
+            </form>
+            <div id="admin-api-key-reveal" class="key-reveal" hidden></div>
+          </div>
+          <div class="panel-card">
+            <h3>User API keys</h3>
+            <div class="filters" id="admin-api-key-filters" style="margin-bottom:12px">
+              <button class="filter-btn active" type="button" data-kfilter="active">Active</button>
+              <button class="filter-btn" type="button" data-kfilter="revoked">Revoked</button>
+              <button class="filter-btn" type="button" data-kfilter="all">All</button>
+            </div>
+            <label class="api-search-label">Search users
+              <input type="search" id="admin-api-search" placeholder="Name, email, or key prefix">
+            </label>
+            <div class="table-wrap">
+              <table class="orders-table">
+                <thead>
+                  <tr>
+                    <th>User</th>
+                    <th>Key</th>
+                    <th>Prefix</th>
+                    <th>Last used</th>
+                    <th>Status</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="admin-api-keys-body"><tr><td colspan="6">Open this page to load keys.</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="panel-card">
+            <h3>API requests</h3>
+            <p class="custom-price-hint">Live calls to the agent API. Health checks are not logged.</p>
+            <div class="filters" id="admin-api-req-filters" style="margin-bottom:12px">
+              <button class="filter-btn active" type="button" data-rfilter="all">All</button>
+              <button class="filter-btn" type="button" data-rfilter="ok">Success</button>
+              <button class="filter-btn" type="button" data-rfilter="error">Errors</button>
+              <button class="filter-btn" type="button" data-rfilter="orders">Orders</button>
+            </div>
+            <div class="table-wrap">
+              <table class="orders-table">
+                <thead>
+                  <tr>
+                    <th>When</th>
+                    <th>User</th>
+                    <th>Call</th>
+                    <th>Status</th>
+                    <th>Order</th>
+                    <th>Time</th>
+                    <th>Detail</th>
+                  </tr>
+                </thead>
+                <tbody id="admin-api-requests-body"><tr><td colspan="7">Open this page to load requests.</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section class="dash-panel" data-panel-view="settings">
+          <div class="panel-card">
+            <h3>Site settings</h3>
+            <p class="custom-price-hint">The WhatsApp channel button appears on the public site once a link is saved. Support contact is shown to agents on their dashboard.</p>
+            <form class="form" id="settings-form">
+              <label>WhatsApp channel URL
+                <input type="url" name="whatsapp_channel_url" id="setting-wa" placeholder="https://whatsapp.com/channel/…">
+              </label>
+              <label>Support label
+                <input type="text" name="support_label" id="setting-support-label" placeholder="Support" maxlength="40">
+              </label>
+              <label>Support contact
+                <input type="text" name="support_contact" id="setting-support" placeholder="Phone, WhatsApp, or email">
+              </label>
+              <p class="error" id="settings-error" hidden></p>
+              <p class="success" id="settings-ok" hidden>Settings saved.</p>
+              <button class="btn btn-primary" type="submit">Save settings</button>
+            </form>
           </div>
         </section>
       </main>
@@ -168,8 +288,8 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="../js/config.js"></script>
   <script src="../js/data.js"></script>
-  <script src="../js/api.js"></script>
-  <script src="../js/order-tracker.js"></script>
-  <script src="dashboard.js"></script>
+  <script src="../js/api.js?v=6"></script>
+  <script src="../js/theme.js"></script>
+  <script src="dashboard.js?v=6"></script>
 </body>
 </html>

@@ -2,5 +2,7 @@ scripts/
 .env
 .env.*
 node_modules/
+.supabase/
+supabase/.temp/
 *.log
 .DS_Store

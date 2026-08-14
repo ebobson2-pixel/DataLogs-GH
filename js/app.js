@@ -1,8 +1,15 @@
 (async function initSite() {
+  const Theme = window.DataLogsTheme;
   const page = document.body.dataset.page || "home";
   const header = document.getElementById("site-header");
   const footer = document.getElementById("site-footer");
   const assetPrefix = document.body.dataset.assetPrefix || "";
+  const logoMark = `<span class="logo-mark" aria-hidden="true"><svg viewBox="0 0 64 64" fill="none"><rect width="64" height="64" rx="16" fill="currentColor"/><path d="M18 40c6.5-6.5 15.5-6.5 22 0" stroke="#0b0b0b" stroke-width="4.5" stroke-linecap="round"/><path d="M13 33c10-10 28-10 38 0" stroke="#0b0b0b" stroke-width="4.5" stroke-linecap="round" opacity="0.72"/><path d="M9 26c13.5-13.5 32.5-13.5 46 0" stroke="#0b0b0b" stroke-width="4.5" stroke-linecap="round" opacity="0.42"/><circle cx="32" cy="46" r="4.2" fill="#0b0b0b"/></svg></span>`;
+
+  if (Theme) {
+    Theme.applyTheme(Theme.currentTheme());
+    Theme.applyAccent(Theme.currentAccent());
+  }
 
   if (header) {
     header.innerHTML = `
@@ -10,24 +17,30 @@
       <header class="site-header">
         <div class="wrap nav">
           <a class="logo" href="${assetPrefix}index.html" aria-label="DataLogs GH home">
-            <span class="logo-mark">DL</span>
-            DataLogs <span>GH</span>
+            ${logoMark}
+            <span class="brand-word">DataLogs</span> <span>GH</span>
           </a>
-          <button class="menu-toggle" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="primary-nav">
-            <span class="menu-toggle-bars" aria-hidden="true">
-              <span></span><span></span><span></span>
-            </span>
-          </button>
+          <div class="nav-end">
+            <nav class="nav-links" id="primary-nav" aria-label="Primary">
+              <a href="${assetPrefix}index.html" data-nav="home">Home</a>
+              <a href="${assetPrefix}packages.html" data-nav="packages">Packages</a>
+              <a href="${assetPrefix}how-it-works.html" data-nav="how">How it works</a>
+              <a href="${assetPrefix}docs.html" data-nav="docs">API docs</a>
+              <a href="${assetPrefix}about.html" data-nav="about">About</a>
+              <a href="${assetPrefix}contact.html" data-nav="contact">Contact</a>
+              <a href="${assetPrefix}agent/auth.html" data-nav="agent">Agents</a>
+              <a class="btn btn-primary" href="${assetPrefix}packages.html">Buy data</a>
+            </nav>
+            <div class="nav-tools">
+              ${Theme ? Theme.toolsHTML() : ""}
+              <button class="menu-toggle" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="primary-nav">
+                <span class="menu-toggle-bars" aria-hidden="true">
+                  <span></span><span></span><span></span>
+                </span>
+              </button>
+            </div>
+          </div>
           <div class="nav-scrim" hidden></div>
-          <nav class="nav-links" id="primary-nav" aria-label="Primary">
-            <a href="${assetPrefix}index.html" data-nav="home">Home</a>
-            <a href="${assetPrefix}packages.html" data-nav="packages">Packages</a>
-            <a href="${assetPrefix}how-it-works.html" data-nav="how">How it works</a>
-            <a href="${assetPrefix}about.html" data-nav="about">About</a>
-            <a href="${assetPrefix}contact.html" data-nav="contact">Contact</a>
-            <a href="${assetPrefix}agent/auth.html" data-nav="agent">Agents</a>
-            <a class="btn btn-primary" href="${assetPrefix}packages.html">Buy data</a>
-          </nav>
         </div>
       </header>
     `;
@@ -35,6 +48,8 @@
     header.querySelectorAll("[data-nav]").forEach((link) => {
       if (link.dataset.nav === page) link.classList.add("active");
     });
+
+    if (Theme) Theme.bind(header.querySelector(".nav-tools"));
 
     const toggle = header.querySelector(".menu-toggle");
     const links = header.querySelector(".nav-links");
@@ -49,7 +64,9 @@
       document.body.classList.toggle("nav-open", open);
     };
 
-    toggle.addEventListener("click", () => setMenuOpen(!links.classList.contains("open")));
+    toggle.addEventListener("click", () => {
+      setMenuOpen(!links.classList.contains("open"));
+    });
     scrim.addEventListener("click", () => setMenuOpen(false));
     links.querySelectorAll("a").forEach((link) => {
       link.addEventListener("click", () => setMenuOpen(false));
@@ -64,7 +81,7 @@
       <footer class="site-footer">
         <div class="wrap footer-grid">
           <div>
-            <div class="logo"><span class="logo-mark">DL</span> DataLogs <span>GH</span></div>
+            <div class="logo">${logoMark} DataLogs <span>GH</span></div>
             <p class="intro">Sea blue and black, simple and fast. Buy MTN, AirtelTigo and Telecel data in Ghana without the long queues.</p>
           </div>
           <div>
@@ -77,6 +94,7 @@
             <strong>Company</strong>
             <p><a href="${assetPrefix}about.html">About us</a></p>
             <p><a href="${assetPrefix}how-it-works.html">How it works</a></p>
+            <p><a href="${assetPrefix}docs.html">Agent API docs</a></p>
             <p><a href="${assetPrefix}contact.html">Support</a></p>
             <p><a href="${assetPrefix}agent/auth.html">Become an agent</a></p>
           </div>
@@ -88,7 +106,6 @@
         </div>
         <div class="wrap footer-bottom">
           <span>© ${new Date().getFullYear()} DataLogs GH.</span>
-          <span>Powered by Supabase.</span>
         </div>
       </footer>
     `;

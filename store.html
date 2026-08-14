@@ -2,14 +2,14 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Agent store — DataLogs GH</title>
   <meta name="description" content="Buy MTN, AirtelTigo and Telecel data from an agent mini store.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/styles.css">
-  <link rel="stylesheet" href="css/store.css">
+  <link rel="stylesheet" href="css/styles.css?v=7">
+  <link rel="stylesheet" href="css/store.css?v=7">
 </head>
 <body class="store-body">
   <header class="store-top">
@@ -18,10 +18,8 @@
         <span class="store-badge" id="store-initials">AS</span>
         <div>
           <strong id="store-top-name">Agent store</strong>
-          <span>Independent mini shop</span>
         </div>
       </a>
-      <div class="store-powered">Powered by <a href="index.html">DataLogs GH</a></div>
     </div>
   </header>
 
@@ -37,37 +35,82 @@
     <div id="store-packages" class="store-grid"></div>
   </main>
 
-  <footer class="store-foot">
-    <span>Agent profit from each sale goes to their DataLogs wallet.</span>
-    <span>Secure checkout · Ghana numbers only</span>
-  </footer>
+  <footer class="store-foot" hidden></footer>
 
   <div id="checkout-root"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/config.js"></script>
   <script src="js/data.js"></script>
-  <script src="js/api.js"></script>
-  <script src="js/order-tracker.js"></script>
-  <script src="js/checkout.js"></script>
+  <script src="js/api.js?v=6"></script>
+  <script src="js/order-tracker.js?v=2"></script>
+  <script src="js/paystack.js?v=1"></script>
+  <script src="js/checkout.js?v=3"></script>
   <script>
     (async function () {
       const params = new URLSearchParams(window.location.search);
-      const slug = (params.get("s") || "").toLowerCase();
+      const storedSlug = (sessionStorage.getItem("datalogs_store_slug") || localStorage.getItem("datalogs_store_slug") || "").toLowerCase();
+      let slug = (params.get("s") || storedSlug || "").toLowerCase();
+
+      if (slug && params.get("s") !== slug) {
+        const next = new URL(window.location.href);
+        next.searchParams.set("s", slug);
+        history.replaceState({}, "", next);
+      }
+
+      if (slug) {
+        sessionStorage.setItem("datalogs_store_slug", slug);
+        localStorage.setItem("datalogs_store_slug", slug);
+      }
+
+      function storeUrl() {
+        const next = new URL(window.location.href);
+        next.search = slug ? `?s=${encodeURIComponent(slug)}` : "";
+        return next.pathname + next.search;
+      }
+
+      const brand = document.getElementById("store-brand-link");
+      brand.setAttribute("href", storeUrl() || "#");
+      brand.addEventListener("click", (event) => {
+        event.preventDefault();
+        window.location.replace(storeUrl());
+      });
+
       const status = document.getElementById("store-status");
       const grid = document.getElementById("store-packages");
       const filters = document.getElementById("store-filters");
 
-      function fail(title, message, html) {
+      function reloadStore() {
+        window.location.replace(storeUrl() || window.location.pathname + window.location.search);
+      }
+
+      function scheduleReload() {
+        const key = `datalogs_store_reloads_${slug || "none"}`;
+        const n = Number(sessionStorage.getItem(key) || 0);
+        if (n >= 3) return;
+        sessionStorage.setItem(key, String(n + 1));
+        setTimeout(reloadStore, 4000);
+      }
+
+      let loadFailed = false;
+
+      function fail(title, message) {
+        loadFailed = true;
         document.getElementById("store-name").textContent = title;
         document.getElementById("store-tagline").textContent = message;
         document.getElementById("store-top-name").textContent = title;
         status.style.display = "block";
-        status.innerHTML = html || "";
+        status.innerHTML = `<button class="store-refresh" type="button" id="store-retry">Refresh store</button>`;
+        document.getElementById("store-retry")?.addEventListener("click", reloadStore);
+        scheduleReload();
       }
 
+      window.addEventListener("online", () => {
+        if (loadFailed) reloadStore();
+      });
+
       if (!slug) {
-        fail("Store not found", "This link is missing a store slug.", `<p>Ask your agent for their share link, or <a href="agent/auth.html">become an agent</a>.</p>`);
+        fail("Store not found", "This link is missing a store.");
         return;
       }
 
@@ -82,26 +125,32 @@
       if (!store || !store.published) {
         fail(
           "Store unavailable",
-          store ? "This mini store is still in draft." : "No published store matches this link.",
-          `<p>Browse the main shop on <a href="index.html">DataLogs GH</a>.</p>`
+          store ? "This store is still in draft." : "No published store matches this link."
         );
         return;
       }
 
+      sessionStorage.removeItem(`datalogs_store_reloads_${slug}`);
       window.__STORE_ID = store.id;
       const initials = store.name.trim().split(/\s+/).slice(0, 2).map((w) => w[0]).join("").toUpperCase() || "AS";
-      document.title = `${store.name} — Agent store`;
+      document.title = store.name;
       document.getElementById("store-name").textContent = store.name;
       document.getElementById("store-top-name").textContent = store.name;
       document.getElementById("store-initials").textContent = initials;
-      document.getElementById("store-tagline").textContent =
-        store.tagline || "Tap a package, enter a number, and pay. Delivery is handled by DataLogs.";
+      document.getElementById("store-tagline").textContent = store.tagline || "Tap a package and pay.";
 
       const networks = store.networks || ["mtn", "airteltigo", "telecel"];
-      const [packages, priceRows] = await Promise.all([
-        DataLogsAPI.fetchPackages(),
-        DataLogsAPI.getAgentStorePrices(store.agent_id),
-      ]);
+      let packages = [];
+      let priceRows = [];
+      try {
+        [packages, priceRows] = await Promise.all([
+          DataLogsAPI.fetchPackages(),
+          DataLogsAPI.getAgentStorePrices(store.agent_id),
+        ]);
+      } catch (err) {
+        fail("Store error", err.message || "Could not load packages.");
+        return;
+      }
       const profitByPackage = new Map(priceRows.map((row) => [row.package_id, Number(row.profit)]));
 
       const storePackages = packages

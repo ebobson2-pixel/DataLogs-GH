@@ -78,15 +78,14 @@
   font-size: 0.78rem;
 }
 
-.store-powered {
-  font-size: 0.78rem;
-  color: var(--store-muted);
-}
-
-.store-powered a {
-  color: var(--store-accent);
-  text-decoration: none;
-  font-weight: 600;
+.store-refresh {
+  border: 0;
+  cursor: pointer;
+  background: var(--store-accent);
+  color: #fff;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 10px 16px;
 }
 
 .store-hero {
@@ -154,7 +153,7 @@
 
 .store-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(210px, 100%), 1fr));
   gap: 14px;
 }
 
@@ -288,4 +287,42 @@
 
 .store-body .close-btn {
   color: var(--store-muted);
+}
+
+@media (max-width: 640px) {
+  .store-top-inner,
+  .store-hero,
+  .store-wrap,
+  .store-foot {
+    width: min(1080px, calc(100% - 20px));
+  }
+
+  .store-top-inner {
+    min-height: 58px;
+    gap: 10px;
+  }
+
+  .store-brand strong {
+    font-size: 1rem;
+    max-width: 42vw;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .store-hero {
+    padding: 20px;
+    margin-top: 16px;
+    border-radius: 20px;
+  }
+
+  .store-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .store-refresh {
+    padding: 8px 12px;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+  }
 }

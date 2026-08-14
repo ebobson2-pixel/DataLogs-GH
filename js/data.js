@@ -24,18 +24,48 @@ function formatCedi(amount) {
 }
 
 function mapPackage(row) {
+  const agentPrice = Number(row.agent_price);
   return {
     id: row.id,
     network: row.network,
     gb: Number(row.gb),
     price: Number(row.retail_price),
     retail: Number(row.retail_price),
-    agentPrice: Number(row.agent_price),
+    agentPrice,
+    defaultAgentPrice: agentPrice,
+    customPriced: false,
     validity: row.validity,
     tag: row.tag || null,
     active: row.active,
     sort_order: row.sort_order,
   };
+}
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function supportContactMeta(settings) {
+  const contact = String(settings?.support_contact || "").trim();
+  const label = String(settings?.support_label || "Support").trim() || "Support";
+  if (!contact) return null;
+  const digits = contact.replace(/\D/g, "");
+  const meta = { label, contact, href: null, wa: null, tel: null };
+  if (contact.includes("@")) {
+    meta.href = `mailto:${contact}`;
+  } else if (digits.length >= 9) {
+    let wa = digits;
+    if (wa.startsWith("0") && wa.length === 10) wa = `233${wa.slice(1)}`;
+    meta.tel = `tel:${digits}`;
+    meta.wa = `https://wa.me/${wa}`;
+    meta.href = meta.tel;
+  }
+  return meta;
 }
 
 function packagesFor(network, list) {
@@ -88,6 +118,17 @@ function formatOrderDateTime(iso) {
     full: d.toLocaleString(),
   };
 }
+
+function publicDeliveryStatus(status) {
+  return status === "delivered" || status === "completed" ? "completed" : "processing";
+}
+
+function publicDeliveryLabel(status) {
+  return publicDeliveryStatus(status) === "completed" ? "Completed" : "Processing";
+}
+
+window.publicDeliveryStatus = publicDeliveryStatus;
+window.publicDeliveryLabel = publicDeliveryLabel;
 
 function slugify(text) {
   return text

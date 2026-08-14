@@ -10,15 +10,16 @@ const DataLogsAPI = (() => {
   }
 
   async function getUser() {
-    const { data } = await client.auth.getUser();
-    return data.user;
+    const session = await getSession();
+    return session?.user || null;
   }
 
   async function getProfile() {
     const user = await getUser();
     if (!user) return null;
-    const { data, error } = await client.from("profiles").select("*").eq("id", user.id).single();
+    const { data, error } = await client.from("profiles").select("*").eq("id", user.id).maybeSingle();
     if (error) throw error;
+    if (!data) return null;
     return { ...data, authEmail: user.email };
   }
 
@@ -31,6 +32,12 @@ const DataLogsAPI = (() => {
     const profile = await getProfile();
     if (!profile) {
       window.location.href = loginUrl;
+      return null;
+    }
+    if (profile.blocked) {
+      await signOut();
+      const blockedUrl = loginUrl.includes("?") ? `${loginUrl}&blocked=1` : `${loginUrl}?blocked=1`;
+      window.location.href = blockedUrl;
       return null;
     }
     if (roles && !roles.includes(profile.role)) {
@@ -62,6 +69,15 @@ const DataLogsAPI = (() => {
       password,
     });
     if (error) return { ok: false, message: error.message };
+    try {
+      const profile = await getProfile();
+      if (profile?.blocked) {
+        await client.auth.signOut();
+        return { ok: false, message: "This account has been blocked. Contact DataLogs GH support." };
+      }
+    } catch {
+      /* continue */
+    }
     return { ok: true, data };
   }
 
@@ -69,12 +85,36 @@ const DataLogsAPI = (() => {
     await client.auth.signOut();
   }
 
-  async function fetchPackages({ includeInactive = false } = {}) {
+  async function fetchPackages({ includeInactive = false, applyCustomPrices } = {}) {
     let query = client.from("packages").select("*").order("sort_order", { ascending: true });
     if (!includeInactive) query = query.eq("active", true);
     const { data, error } = await query;
     if (error) throw error;
-    return (data || []).map(mapPackage);
+    const rows = data || [];
+    const useCustom = applyCustomPrices ?? !includeInactive;
+    let customMap = new Map();
+    if (useCustom) {
+      try {
+        const user = await getUser();
+        if (user) {
+          const { data: custom } = await client
+            .from("user_custom_prices")
+            .select("package_id, agent_price")
+            .eq("user_id", user.id);
+          customMap = new Map((custom || []).map((row) => [row.package_id, Number(row.agent_price)]));
+        }
+      } catch {
+        /* guests have no custom prices */
+      }
+    }
+    return rows.map((row) => {
+      const mapped = mapPackage(row);
+      if (customMap.has(row.id)) {
+        mapped.agentPrice = customMap.get(row.id);
+        mapped.customPriced = true;
+      }
+      return mapped;
+    });
   }
 
   async function upsertPackage(payload) {
@@ -165,20 +205,68 @@ const DataLogsAPI = (() => {
     return data;
   }
 
+  async function placeOrderWithWallet({ packageId, recipientNumber }) {
+    const { data, error } = await client.rpc("place_order_with_wallet", {
+      p_package_id: packageId,
+      p_recipient_number: recipientNumber,
+    });
+    if (error) throw error;
+    return data;
+  }
+
+  async function fulfillOrder(orderId, { retry = false } = {}) {
+    const { data, error } = await client.functions.invoke("fulfill-order", {
+      body: { action: retry ? "retry" : "fulfill", orderId },
+    });
+    if (data && typeof data === "object") return data;
+    if (error) throw error;
+    return data;
+  }
+
+  async function providerBalance() {
+    const invoke = client.functions.invoke("fulfill-order", {
+      body: { action: "balance" },
+    });
+    const timeout = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error("Provider balance timed out")), 8000);
+    });
+    const { data, error } = await Promise.race([invoke, timeout]);
+    if (data && typeof data === "object") return data;
+    if (error) throw error;
+    return data;
+  }
+
+  function publicDeliveryStatus(status) {
+    return status === "delivered" || status === "completed" ? "completed" : "processing";
+  }
+
+  function maskPublicOrder(order) {
+    if (!order) return order;
+    return {
+      ...order,
+      delivery_status: publicDeliveryStatus(order.delivery_status),
+      fail_reason: null,
+      provider_error: null,
+      provider_status: null,
+      retryable: false,
+    };
+  }
+
   async function myOrders() {
     const { data, error } = await client
       .from("orders")
       .select("*, agent_stores(name, slug)")
       .order("created_at", { ascending: false });
     if (error) throw error;
-    return data || [];
+    return (data || []).map(maskPublicOrder);
   }
 
   async function allOrders() {
     const { data, error } = await client
       .from("orders")
-      .select("*, profiles:buyer_id(full_name, email, phone), agent_stores(name, slug)")
-      .order("created_at", { ascending: false });
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(400);
     if (error) throw error;
     return data || [];
   }
@@ -207,26 +295,31 @@ const DataLogsAPI = (() => {
   async function allStores() {
     const { data, error } = await client
       .from("agent_stores")
-      .select("*, profiles:agent_id(full_name, email)")
+      .select("*")
       .order("updated_at", { ascending: false });
     if (error) throw error;
     return data || [];
   }
 
-  async function getWallet() {
-    const profile = await getProfile();
-    if (!profile) return null;
-    const { data, error } = await client.from("wallets").select("*").eq("agent_id", profile.id).maybeSingle();
+  async function adminDashboardData() {
+    const { data, error } = await client.rpc("admin_dashboard_data");
     if (error) throw error;
-    return data || { agent_id: profile.id, balance: 0 };
+    const payload = typeof data === "string" ? JSON.parse(data) : data;
+    return payload || { users: [], packages: [], orders: [], stores: [] };
   }
 
-  async function getWalletTransactions() {
-    const { data, error } = await client
-      .from("wallet_transactions")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(50);
+  async function getWallet(agentId) {
+    const id = agentId || (await getProfile())?.id;
+    if (!id) return null;
+    const { data, error } = await client.from("wallets").select("*").eq("agent_id", id).maybeSingle();
+    if (error) throw error;
+    return data || { agent_id: id, balance: 0 };
+  }
+
+  async function getWalletTransactions(agentId) {
+    let query = client.from("wallet_transactions").select("*").order("created_at", { ascending: false }).limit(80);
+    if (agentId) query = query.eq("agent_id", agentId);
+    const { data, error } = await query;
     if (error) throw error;
     return data || [];
   }
@@ -276,6 +369,116 @@ const DataLogsAPI = (() => {
     return data || [];
   }
 
+  async function getSiteSettings() {
+    const { data, error } = await client.from("site_settings").select("*").eq("id", 1).maybeSingle();
+    if (error) throw error;
+    return data || { whatsapp_channel_url: "", support_contact: "", support_label: "Support" };
+  }
+
+  async function updateSiteSettings({ whatsappChannelUrl, supportContact, supportLabel }) {
+    const { data, error } = await client.rpc("update_site_settings", {
+      p_whatsapp_channel_url: whatsappChannelUrl || "",
+      p_support_contact: supportContact || "",
+      p_support_label: supportLabel || "Support",
+    });
+    if (error) throw error;
+    return data;
+  }
+
+  async function adminCreditWallet(userId, amount, note) {
+    const { data, error } = await client.rpc("admin_credit_wallet", {
+      p_user_id: userId,
+      p_amount: Number(amount),
+      p_note: note || null,
+    });
+    if (error) throw error;
+    return data;
+  }
+
+  async function adminSetBlocked(userId, blocked) {
+    const { data, error } = await client.rpc("admin_set_blocked", {
+      p_user_id: userId,
+      p_blocked: !!blocked,
+    });
+    if (error) throw error;
+    return data;
+  }
+
+  async function getUserCustomPrices(userId) {
+    const { data, error } = await client.from("user_custom_prices").select("*").eq("user_id", userId);
+    if (error) throw error;
+    return data || [];
+  }
+
+  async function adminSetCustomPrice(userId, packageId, agentPrice) {
+    const { data, error } = await client.rpc("admin_set_custom_price", {
+      p_user_id: userId,
+      p_package_id: packageId,
+      p_agent_price: agentPrice == null || agentPrice === "" ? null : Number(agentPrice),
+    });
+    if (error) throw error;
+    return data;
+  }
+
+  async function ordersForUser(userId) {
+    const { data, error } = await client
+      .from("orders")
+      .select("*, agent_stores(name, slug)")
+      .eq("buyer_id", userId)
+      .order("created_at", { ascending: false });
+    if (error) throw error;
+    return data || [];
+  }
+
+  async function listApiKeys() {
+    const { data, error } = await client.rpc("list_agent_api_keys");
+    if (error) throw error;
+    return data || [];
+  }
+
+  async function createApiKey(name) {
+    const { data, error } = await client.rpc("create_agent_api_key", { p_name: name || "Website" });
+    if (error) throw error;
+    return data;
+  }
+
+    async function revokeApiKey(id) {
+    const { data, error } = await client.rpc("revoke_agent_api_key", { p_id: id });
+    if (error) throw error;
+    return data;
+  }
+
+  async function adminApiConsole() {
+    const { data, error } = await client.rpc("admin_api_console");
+    if (error) throw error;
+    const payload = typeof data === "string" ? JSON.parse(data) : data;
+    return payload || { stats: {}, agents: [], keys: [], requests: [] };
+  }
+
+  async function adminCreateUserApiKey(userId, name) {
+    const { data, error } = await client.rpc("admin_create_user_api_key", {
+      p_user_id: userId,
+      p_name: name || "Website",
+    });
+    if (error) throw error;
+    return data;
+  }
+
+  async function adminRevokeApiKey(id) {
+    const { data, error } = await client.rpc("admin_revoke_api_key", { p_id: id });
+    if (error) throw error;
+    return data;
+  }
+
+  async function adminSetApiDisabled(userId, disabled) {
+    const { data, error } = await client.rpc("admin_set_api_disabled", {
+      p_user_id: userId,
+      p_disabled: disabled,
+    });
+    if (error) throw error;
+    return data;
+  }
+
   function storePublicUrl(slug) {
     if (window.location.pathname.includes("/agent/") || window.location.pathname.includes("/admin/")) {
       return new URL(`../store.html?s=${encodeURIComponent(slug)}`, window.location.href).href;
@@ -299,12 +502,16 @@ const DataLogsAPI = (() => {
     getStoreBySlug,
     saveStore,
     placeOrder,
+    placeOrderWithWallet,
+    fulfillOrder,
+    providerBalance,
     myOrders,
     allOrders,
     updateOrder,
     allUsers,
     updateUserRole,
     allStores,
+    adminDashboardData,
     getWallet,
     getWalletTransactions,
     getWithdrawals,
@@ -312,6 +519,20 @@ const DataLogsAPI = (() => {
     getAgentStorePrices,
     setAgentPackageProfit,
     trackOrdersByPhone,
+    getSiteSettings,
+    updateSiteSettings,
+    adminCreditWallet,
+    adminSetBlocked,
+    getUserCustomPrices,
+    adminSetCustomPrice,
+    ordersForUser,
+    listApiKeys,
+    createApiKey,
+    revokeApiKey,
+    adminApiConsole,
+    adminCreateUserApiKey,
+    adminRevokeApiKey,
+    adminSetApiDisabled,
     storePublicUrl,
   };
 })();

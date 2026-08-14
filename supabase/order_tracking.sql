@@ -1,26 +1,18 @@
--- Public order tracking by recipient phone number
+-- Public order tracking by recipient (or buyer) phone number.
+-- Public callers only receive completed / processing — never failed.
 
-create or replace function public.normalize_gh_phone(p_phone text)
+create or replace function public.phone_last9(p_phone text)
 returns text
-language plpgsql
+language sql
 immutable
 as $$
-declare
-  digits text;
-  local text;
-begin
-  digits := regexp_replace(coalesce(p_phone, ''), '\D', '', 'g');
-  local := digits;
-  if local like '233%' and length(local) = 12 then
-    local := '0' || substr(local, 4);
-  elsif length(local) = 9 then
-    local := '0' || local;
-  end if;
-  if local !~ '^0\d{9}$' then
-    return null;
-  end if;
-  return substr(local, 1, 3) || ' ' || substr(local, 4, 3) || ' ' || substr(local, 7, 4);
-end;
+  select case
+    when length(digits) >= 9 then right(digits, 9)
+    else null
+  end
+  from (
+    select regexp_replace(coalesce(p_phone, ''), '[^0-9]', '', 'g') as digits
+  ) s;
 $$;
 
 create or replace function public.track_orders_by_phone(p_phone text)
@@ -40,40 +32,43 @@ security definer
 set search_path = public
 as $$
 declare
-  pretty text := public.normalize_gh_phone(p_phone);
-  digits text := regexp_replace(coalesce(p_phone, ''), '\D', '', 'g');
+  key text := public.phone_last9(p_phone);
 begin
-  if pretty is null and length(digits) < 9 then
+  if key is null then
     raise exception 'Enter a valid Ghana number';
   end if;
 
   return query
   select
-    o.order_code,
-    o.network,
-    o.gb,
-    o.recipient_number,
-    o.amount_paid,
-    o.delivery_status,
-    o.payment_status,
+    ord.order_code,
+    ord.network,
+    ord.gb::numeric,
+    ord.recipient_number,
+    ord.amount_paid::numeric,
     case
-      when o.agent_store_id is not null then coalesce('Agent store · ' || s.name, 'Agent store')
-      when o.pricing_tier = 'agent' then 'Agent wholesale'
+      when ord.delivery_status = 'delivered' then 'completed'::text
+      else 'processing'::text
+    end,
+    case
+      when ord.payment_status = 'paid' then 'paid'::text
+      else 'processing'::text
+    end,
+    case
+      when ord.agent_store_id is not null then coalesce('Agent store · ' || store.name, 'Agent store')
+      when ord.pricing_tier = 'agent' then 'Agent wholesale'
       else 'Main website'
-    end as source,
-    o.created_at
-  from public.orders o
-  left join public.agent_stores s on s.id = o.agent_store_id
+    end,
+    ord.created_at
+  from public.orders ord
+  left join public.agent_stores store on store.id = ord.agent_store_id
+  left join public.profiles buyer on buyer.id = ord.buyer_id
   where
-    regexp_replace(o.recipient_number, '\D', '', 'g') = regexp_replace(coalesce(pretty, p_phone), '\D', '', 'g')
-    or (
-      length(digits) >= 9
-      and regexp_replace(o.recipient_number, '\D', '', 'g') like '%' || right(digits, 9)
-    )
-  order by o.created_at desc
+    public.phone_last9(ord.recipient_number) = key
+    or public.phone_last9(buyer.phone) = key
+  order by ord.created_at desc
   limit 25;
 end;
 $$;
 
-grant execute on function public.normalize_gh_phone(text) to anon, authenticated;
+grant execute on function public.phone_last9(text) to anon, authenticated;
 grant execute on function public.track_orders_by_phone(text) to anon, authenticated;

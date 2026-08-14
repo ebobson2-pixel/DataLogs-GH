@@ -2,24 +2,25 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <script>try{var d=document.documentElement,t=localStorage.getItem("datalogs_theme"),a=localStorage.getItem("datalogs_accent");if(t==="light")d.setAttribute("data-theme","light");if(a)d.setAttribute("data-accent",a);}catch(e){}</script>
   <title>Agent login — DataLogs GH</title>
   <meta name="description" content="Create or sign in to your DataLogs GH agent account.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../css/styles.css">
-  <link rel="stylesheet" href="../css/agent.css">
+  <link rel="stylesheet" href="../css/styles.css?v=7">
+  <link rel="stylesheet" href="../css/agent.css?v=7">
 </head>
 <body class="auth-body">
+  <div class="auth-tools" data-theme-tools></div>
   <section class="auth-brand">
     <div>
-      <a class="logo" href="../index.html"><span class="logo-mark">DL</span> DataLogs <span>GH</span></a>
+      <a class="logo" href="../index.html"><span class="logo-mark" aria-hidden="true"><img src="../assets/logo-mark.svg" alt="" width="40" height="40"></span> DataLogs <span>GH</span></a>
       <p class="kicker" style="margin-top:36px">Agent access</p>
       <h1>Sell data. <em>Your store.</em></h1>
-      <p class="lede">Create an agent account powered by Supabase Auth, set up a mini storefront, share your link, and restock at subsidized prices.</p>
+      <p class="lede">Create an agent account, set up a storefront, share your link, and restock at subsidized prices.</p>
       <ul class="auth-points">
-        <li>Real accounts secured with Supabase Auth</li>
         <li>Personal store link for WhatsApp sharing</li>
         <li>Live wholesale rates for restocking</li>
       </ul>
@@ -66,14 +67,23 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="../js/config.js"></script>
   <script src="../js/data.js"></script>
-  <script src="../js/api.js"></script>
-  <script src="../js/order-tracker.js"></script>
+  <script src="../js/api.js?v=6"></script>
+  <script src="../js/whatsapp-fab.js"></script>
+  <script src="../js/order-tracker.js?v=2"></script>
+  <script src="../js/theme.js"></script>
   <script>
     (async function () {
       const profile = await DataLogsAPI.getProfile().catch(() => null);
       if (profile) {
         window.location.href = profile.role === "admin" ? "../admin/dashboard.html" : "dashboard.html";
         return;
+      }
+
+      const blocked = new URLSearchParams(location.search).get("blocked");
+      if (blocked) {
+        const error = document.getElementById("login-error");
+        error.hidden = false;
+        error.textContent = "This account has been blocked. Contact DataLogs GH support.";
       }
 
       const tabs = document.querySelectorAll("[data-auth-tab]");

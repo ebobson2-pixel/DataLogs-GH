@@ -1,0 +1,13 @@
+project_id = "xyihewuuyxailwunwgus"
+
+[functions.fulfill-order]
+verify_jwt = true
+
+[functions.agent-api]
+verify_jwt = false
+
+[functions.paystack]
+verify_jwt = false
+
+[functions.paystack-webhook]
+verify_jwt = false

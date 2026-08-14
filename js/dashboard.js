@@ -8,14 +8,16 @@
 
   const shell = document.getElementById("dash-shell");
   const titles = {
-    overview: ["Overview", "Your agent snapshot"],
+    overview: ["Overview", "Live sales, profit, and traffic"],
     store: ["Mini store", "Your unique storefront"],
+    flyer: ["Flyers", "Download a price poster for your store"],
     pricing: ["Store pricing", "Base + your profit = sell price"],
     wholesale: ["Buy wholesale", "Subsidized agent rates"],
     orders: ["Orders", "Store sales & wholesale"],
     customers: ["Customers", "People who bought from your store"],
     wallet: ["My Wallet", "Commissions and balance"],
     withdrawal: ["Withdrawal", "Cash out to MoMo"],
+    developer: ["API keys", "Connect your own website"],
     account: ["Account", "Profile details"],
   };
 
@@ -33,6 +35,40 @@
   document.getElementById("account-email").value = profile.email || profile.authEmail || "";
   document.getElementById("account-phone").value = profile.phone || "";
 
+  function paintSupport(settings) {
+    const meta = supportContactMeta(settings);
+    const overview = document.getElementById("overview-support");
+    const account = document.getElementById("account-support");
+    const chip = document.getElementById("topbar-support");
+    [overview, account, chip].forEach((el) => {
+      if (el) el.hidden = !meta;
+    });
+    if (!meta) return;
+    const actions = (id) => {
+      const parts = [];
+      if (meta.tel) parts.push(`<a class="btn btn-ghost" href="${meta.tel}">Call</a>`);
+      if (meta.wa) parts.push(`<a class="btn btn-primary" href="${meta.wa}" target="_blank" rel="noopener">WhatsApp</a>`);
+      if (meta.href && !meta.tel) parts.push(`<a class="btn btn-primary" href="${meta.href}">${escapeHtml(meta.contact)}</a>`);
+      if (!parts.length) parts.push(`<p>${escapeHtml(meta.contact)}</p>`);
+      document.getElementById(id).innerHTML = parts.join("");
+    };
+    document.getElementById("overview-support-title").textContent = meta.label;
+    document.getElementById("overview-support-text").textContent = meta.contact;
+    document.getElementById("account-support-title").textContent = meta.label;
+    document.getElementById("account-support-text").textContent = meta.contact;
+    actions("overview-support-actions");
+    actions("account-support-actions");
+    chip.textContent = meta.label;
+    chip.href = meta.wa || meta.href || "#";
+    if (!meta.wa && !meta.href) {
+      chip.removeAttribute("target");
+      chip.href = "#";
+      chip.addEventListener("click", (event) => event.preventDefault());
+    }
+  }
+
+  DataLogsAPI.getSiteSettings().then(paintSupport).catch(() => {});
+
   document.getElementById("collapse-btn").addEventListener("click", () => {
     shell.classList.toggle("collapsed");
     const collapsed = shell.classList.contains("collapsed");
@@ -47,6 +83,9 @@
 
   document.getElementById("mobile-menu-btn").addEventListener("click", () => {
     shell.classList.toggle("mobile-open");
+  });
+  document.getElementById("dash-scrim")?.addEventListener("click", () => {
+    shell.classList.remove("mobile-open");
   });
 
   document.getElementById("logout-btn").addEventListener("click", async () => {
@@ -79,7 +118,207 @@
     if (id === "customers") renderCustomers();
     if (id === "wallet") renderWallet();
     if (id === "withdrawal") renderWithdrawals();
+    if (id === "developer") renderApiKeys();
     if (id === "overview") renderOverview();
+    if (id === "flyer") renderFlyerPreview();
+  }
+
+  const runRafs = new Map();
+  let overviewTimer = null;
+  let overviewChartData = null;
+  let salesChartDraw = 0;
+  let networkChartDraw = 0;
+
+  function runNumber(el, to, decimals = 0) {
+    if (!el) return;
+    const from = Number(el.dataset.runValue || 0);
+    const target = Number(to) || 0;
+    el.dataset.runValue = String(target);
+    if (runRafs.has(el)) cancelAnimationFrame(runRafs.get(el));
+    if (from === target) {
+      el.textContent = target.toFixed(decimals);
+      return;
+    }
+    const start = performance.now();
+    const dur = 900;
+    const tick = (now) => {
+      const t = Math.min(1, (now - start) / dur);
+      const eased = 1 - Math.pow(1 - t, 3);
+      const val = from + (target - from) * eased;
+      el.textContent = val.toFixed(decimals);
+      if (t < 1) {
+        const id = requestAnimationFrame(tick);
+        runRafs.set(el, id);
+      } else {
+        el.textContent = target.toFixed(decimals);
+        runRafs.delete(el);
+      }
+    };
+    runRafs.set(el, requestAnimationFrame(tick));
+  }
+
+  function localDayKey(date) {
+    const d = new Date(date);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  }
+
+  function lastSevenDays() {
+    const days = [];
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(now.getDate() - i);
+      days.push({
+        date: d,
+        key: localDayKey(d),
+        label: d.toLocaleDateString(undefined, { weekday: "short" }),
+      });
+    }
+    return days;
+  }
+
+  function drawSpark(svg, values, color = "#2ec8e6") {
+    if (!svg) return;
+    const nums = values.length ? values : [0, 0];
+    const max = Math.max(...nums, 1);
+    const w = 120;
+    const h = 36;
+    const step = nums.length > 1 ? w / (nums.length - 1) : w;
+    const pts = nums.map((v, i) => {
+      const x = i * step;
+      const y = h - 4 - (v / max) * (h - 8);
+      return `${x},${y}`;
+    });
+    const area = `0,${h} ${pts.join(" ")} ${w},${h}`;
+    svg.innerHTML = `<polygon points="${area}" fill="${color}" fill-opacity="0.16"></polygon><polyline points="${pts.join(" ")}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></polyline>`;
+  }
+
+  function sizeCanvas(canvas) {
+    const ratio = Math.min(window.devicePixelRatio || 1, 2);
+    const rect = canvas.getBoundingClientRect();
+    const width = Math.max(280, Math.floor(rect.width || canvas.width));
+    const height = Math.max(200, Math.floor(rect.height || 240));
+    canvas.width = Math.floor(width * ratio);
+    canvas.height = Math.floor(height * ratio);
+    const ctx = canvas.getContext("2d");
+    ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+    return { ctx, width, height };
+  }
+
+  function drawSalesChart(canvas, days, storeSeries, wholesaleSeries) {
+    cancelAnimationFrame(salesChartDraw);
+    const { ctx, width, height } = sizeCanvas(canvas);
+    const pad = { t: 18, r: 12, b: 28, l: 36 };
+    const innerW = width - pad.l - pad.r;
+    const innerH = height - pad.t - pad.b;
+    const max = Math.max(1, ...storeSeries, ...wholesaleSeries);
+    const start = performance.now();
+
+    const pointX = (i) => pad.l + (days.length === 1 ? innerW / 2 : (i / (days.length - 1)) * innerW);
+    const pointY = (v, p) => pad.t + innerH - (v / max) * innerH * p;
+
+    const paint = (p) => {
+      ctx.clearRect(0, 0, width, height);
+      ctx.strokeStyle = "rgba(255,255,255,0.06)";
+      ctx.lineWidth = 1;
+      for (let g = 0; g <= 4; g++) {
+        const y = pad.t + (innerH / 4) * g;
+        ctx.beginPath();
+        ctx.moveTo(pad.l, y);
+        ctx.lineTo(width - pad.r, y);
+        ctx.stroke();
+      }
+      ctx.fillStyle = "#8b8b8b";
+      ctx.font = "11px Outfit, sans-serif";
+      ctx.textAlign = "center";
+      days.forEach((d, i) => ctx.fillText(d.label, pointX(i), height - 8));
+      ctx.textAlign = "right";
+      ctx.fillText(String(max), pad.l - 8, pad.t + 4);
+
+      ctx.beginPath();
+      storeSeries.forEach((v, i) => {
+        const x = pointX(i);
+        const y = pointY(v, p);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+      ctx.strokeStyle = "#2ec8e6";
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+      ctx.lineTo(pointX(storeSeries.length - 1), pad.t + innerH);
+      ctx.lineTo(pointX(0), pad.t + innerH);
+      ctx.closePath();
+      ctx.fillStyle = "rgba(46, 200, 230, 0.16)";
+      ctx.fill();
+
+      ctx.beginPath();
+      wholesaleSeries.forEach((v, i) => {
+        const x = pointX(i);
+        const y = pointY(v, p);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+      ctx.strokeStyle = "#a78bfa";
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+
+      storeSeries.forEach((v, i) => {
+        ctx.beginPath();
+        ctx.arc(pointX(i), pointY(v, p), 3.2, 0, Math.PI * 2);
+        ctx.fillStyle = "#2ec8e6";
+        ctx.fill();
+      });
+    };
+
+    const tick = (now) => {
+      const t = Math.min(1, (now - start) / 850);
+      const eased = 1 - Math.pow(1 - t, 3);
+      paint(eased);
+      if (t < 1) salesChartDraw = requestAnimationFrame(tick);
+    };
+    salesChartDraw = requestAnimationFrame(tick);
+  }
+
+  function drawNetworkChart(canvas, slices) {
+    cancelAnimationFrame(networkChartDraw);
+    const { ctx, width, height } = sizeCanvas(canvas);
+    const cx = width / 2;
+    const cy = height / 2;
+    const radius = Math.min(width, height) / 2 - 16;
+    const total = slices.reduce((s, x) => s + x.value, 0) || 1;
+    const start = performance.now();
+
+    const paint = (p) => {
+      ctx.clearRect(0, 0, width, height);
+      let angle = -Math.PI / 2;
+      if (!slices.some((s) => s.value > 0)) {
+        ctx.beginPath();
+        ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+        ctx.strokeStyle = "rgba(255,255,255,0.08)";
+        ctx.lineWidth = 22;
+        ctx.stroke();
+        return;
+      }
+      slices.filter((s) => s.value > 0).forEach((slice) => {
+        const sweep = (slice.value / total) * Math.PI * 2 * p;
+        ctx.beginPath();
+        ctx.arc(cx, cy, radius, angle, angle + sweep);
+        ctx.strokeStyle = slice.color;
+        ctx.lineWidth = 22;
+        ctx.lineCap = "butt";
+        ctx.stroke();
+        angle += sweep;
+      });
+    };
+
+    const tick = (now) => {
+      const t = Math.min(1, (now - start) / 900);
+      const eased = 1 - Math.pow(1 - t, 3);
+      paint(eased);
+      if (t < 1) networkChartDraw = requestAnimationFrame(tick);
+    };
+    networkChartDraw = requestAnimationFrame(tick);
   }
 
   const storeForm = document.getElementById("store-form");
@@ -102,7 +341,11 @@
       storeForm.slug.value = store.slug;
       showStoreMessage("success", "Store saved. Your share link is ready.");
       await refreshStoreUI();
-      await renderOverview();
+      try {
+        await renderOverview();
+      } catch (err) {
+        console.error(err);
+      }
     } catch (err) {
       showStoreMessage("error", err.message || "Could not save store.");
     }
@@ -277,21 +520,70 @@
     storeCache = store;
     const orders = await loadVisibleOrders();
     const storeSales = orders.filter(isStoreSale);
+    const wholesale = orders.filter(isWholesale);
     const wallet = await DataLogsAPI.getWallet();
     const txs = await DataLogsAPI.getWalletTransactions();
     const profitEarned = txs
       .filter((t) => t.type === "credit")
       .reduce((sum, t) => sum + Number(t.amount || 0), 0);
+    const todayKey = localDayKey(new Date());
+    const todayOrders = orders.filter((o) => localDayKey(o.created_at) === todayKey);
+    const customers = new Set(storeSales.map((o) => o.recipient_number)).size;
+    const days = lastSevenDays();
+    const storeSeries = days.map((d) => storeSales.filter((o) => localDayKey(o.created_at) === d.key).length);
+    const wholesaleSeries = days.map((d) => wholesale.filter((o) => localDayKey(o.created_at) === d.key).length);
+    const orderSeries = days.map((d, i) => storeSeries[i] + wholesaleSeries[i]);
+    const profitSeries = days.map((d) =>
+      txs
+        .filter((t) => t.type === "credit" && localDayKey(t.created_at) === d.key)
+        .reduce((sum, t) => sum + Number(t.amount || 0), 0)
+    );
 
-    document.getElementById("stat-store").textContent = store ? (store.published ? "Live" : "Draft") : "Not set";
-    document.getElementById("stat-orders").textContent = String(orders.length);
-    document.getElementById("stat-profit").textContent = formatCedi(profitEarned);
-    document.getElementById("stat-saved").textContent = formatCedi(wallet?.balance || 0);
+    const storeEl = document.getElementById("stat-store");
+    const storeMeta = document.getElementById("stat-store-meta");
+    storeEl.textContent = store ? (store.published ? "Live" : "Draft") : "Not set";
+    storeMeta.textContent = store
+      ? store.published
+        ? "Your storefront is public"
+        : "Saved, not published"
+      : "Set up your mini store";
+
+    runNumber(document.getElementById("stat-orders"), orders.length, 0);
+    runNumber(document.getElementById("stat-today"), todayOrders.length, 0);
+    runNumber(document.getElementById("stat-profit"), profitEarned, 2);
+    runNumber(document.getElementById("stat-saved"), wallet?.balance || 0, 2);
+    runNumber(document.getElementById("stat-customers"), customers, 0);
+    runNumber(document.getElementById("donut-total"), orders.length, 0);
+    drawSpark(document.getElementById("spark-orders"), orderSeries);
+    drawSpark(document.getElementById("spark-profit"), profitSeries, "#7dff9a");
+
+    const networkSlices = [
+      { key: "mtn", label: "MTN", color: "#ffcc00", value: orders.filter((o) => o.network === "mtn").length },
+      { key: "airteltigo", label: "AirtelTigo", color: "#3b82f6", value: orders.filter((o) => o.network === "airteltigo").length },
+      { key: "telecel", label: "Telecel", color: "#ef4444", value: orders.filter((o) => o.network === "telecel").length },
+    ];
+
+    document.getElementById("sales-legend").innerHTML = `
+      <span class="legend-item"><i class="legend-swatch" style="background:#2ec8e6"></i>Store ${storeSales.length}</span>
+      <span class="legend-item"><i class="legend-swatch" style="background:#a78bfa"></i>Wholesale ${wholesale.length}</span>
+    `;
+    document.getElementById("network-legend").innerHTML = networkSlices
+      .map((s) => `<span class="legend-item"><i class="legend-swatch" style="background:${s.color}"></i>${s.label} ${s.value}</span>`)
+      .join("");
+
+    const salesCanvas = document.getElementById("chart-sales");
+    const networkCanvas = document.getElementById("chart-network");
+    overviewChartData = { days, storeSeries, wholesaleSeries, networkSlices };
+    if (salesCanvas) drawSalesChart(salesCanvas, days, storeSeries, wholesaleSeries);
+    if (networkCanvas) drawNetworkChart(networkCanvas, networkSlices);
+
+    const stamp = new Date();
+    document.getElementById("overview-updated").textContent = `Updated ${stamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}`;
 
     const box = document.getElementById("overview-orders");
     if (!orders.length) {
       box.className = "empty-state";
-      box.textContent = "No orders yet. Set store prices, share your link, then sales profit lands in your wallet.";
+      box.textContent = "No orders yet.";
       return;
     }
     box.className = "";
@@ -318,6 +610,29 @@
       </div>
       <p class="hint" style="margin-top:10px">Store sales: ${storeSales.length} · Total profit credited: ${formatCedi(profitEarned)} · Withdrawable now: ${formatCedi(wallet?.balance || 0)}</p>`;
   }
+
+  function startLiveOverview() {
+    clearInterval(overviewTimer);
+    overviewTimer = setInterval(() => {
+      const panel = document.querySelector('[data-panel-view="overview"]');
+      if (panel && panel.classList.contains("active") && document.visibilityState === "visible") {
+        renderOverview();
+      }
+    }, 12000);
+  }
+
+  let resizeTimer = null;
+  window.addEventListener("resize", () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      const panel = document.querySelector('[data-panel-view="overview"]');
+      if (!panel || !panel.classList.contains("active") || !overviewChartData) return;
+      const salesCanvas = document.getElementById("chart-sales");
+      const networkCanvas = document.getElementById("chart-network");
+      if (salesCanvas) drawSalesChart(salesCanvas, overviewChartData.days, overviewChartData.storeSeries, overviewChartData.wholesaleSeries);
+      if (networkCanvas) drawNetworkChart(networkCanvas, overviewChartData.networkSlices);
+    }, 180);
+  });
 
   function renderPricing() {
     const list = packagesFor(pricingFilter, packages);
@@ -355,6 +670,7 @@
               <span class="was">${formatCedi(item.retail)}</span>
             </div>
             <span class="save-badge">Save ${formatCedi(saved)}</span>
+            ${item.customPriced ? `<span class="badge-custom">Your price</span>` : ""}
           </button>`;
       })
       .join("");
@@ -382,7 +698,7 @@
         <td>${NETWORKS[o.network]?.name || o.network} ${o.gb} GB</td>
         <td>${o.recipient_number}</td>
         <td>${formatCedi(o.amount_paid)}</td>
-        <td>${o.delivery_status}</td>
+        <td>${publicDeliveryLabel(o.delivery_status)}</td>
         <td>${new Date(o.created_at).toLocaleString()}</td>
       </tr>`
       )
@@ -435,6 +751,8 @@
     const txs = await DataLogsAPI.getWalletTransactions();
     document.getElementById("wallet-balance").textContent = formatCedi(wallet?.balance || 0);
     document.getElementById("wallet-tx-count").textContent = String(txs.length);
+    const email = document.getElementById("topup-email");
+    if (email && !email.value) email.value = profile.email || profile.authEmail || "";
     const body = document.getElementById("wallet-body");
     const empty = document.getElementById("wallet-empty");
     if (!txs.length) {
@@ -456,6 +774,120 @@
       )
       .join("");
   }
+
+  let topupMethod = "momo";
+  document.getElementById("topup-methods")?.addEventListener("click", (event) => {
+    const btn = event.target.closest("[data-topup-method]");
+    if (!btn) return;
+    topupMethod = btn.dataset.topupMethod;
+    document.querySelectorAll("#topup-methods .pay-method").forEach((el) => el.classList.toggle("selected", el === btn));
+    document.getElementById("topup-momo-fields").hidden = topupMethod !== "momo";
+    document.getElementById("topup-card-fields").hidden = topupMethod !== "card";
+  });
+
+  async function waitForTopup(reference, amount, form) {
+    const success = document.getElementById("topup-success");
+    const started = Date.now();
+    while (Date.now() - started < 180000) {
+      const status = await DataLogsPay.status(reference);
+      if (status.status === "success") {
+        success.hidden = false;
+        success.textContent = `Wallet topped up by ${formatCedi(amount)}.`;
+        form.reset();
+        document.getElementById("topup-challenge").hidden = true;
+        await renderWallet();
+        await renderOverview();
+        return;
+      }
+      if (status.status === "failed" || status.status === "abandoned") {
+        throw new Error("Payment was not completed.");
+      }
+      await new Promise((resolve) => setTimeout(resolve, 3000));
+    }
+    throw new Error("Still waiting for Paystack. Check again in a minute.");
+  }
+
+  async function handleTopupNext(result, amount, form) {
+    const success = document.getElementById("topup-success");
+    const challenge = document.getElementById("topup-challenge");
+    const input = document.getElementById("topup-challenge-input");
+    const label = document.getElementById("topup-challenge-label");
+    const btn = document.getElementById("topup-challenge-btn");
+    success.hidden = false;
+    success.textContent = result.display_text || "Approve the payment, then wait here.";
+    if (result.url) window.open(String(result.url), "_blank", "noopener");
+    if (result.next === "success") {
+      await waitForTopup(result.reference, amount, form);
+      return;
+    }
+    if (result.next === "failed") throw new Error(result.display_text || "Payment failed.");
+    if (result.next === "otp" || result.next === "pin" || result.next === "phone") {
+      challenge.hidden = false;
+      input.value = "";
+      input.placeholder = result.next === "pin" ? "PIN" : result.next === "otp" ? "OTP" : "Phone number";
+      label.firstChild.textContent = result.next === "pin" ? "Card PIN" : result.next === "otp" ? "OTP" : "Phone";
+      btn.onclick = async () => {
+        const error = document.getElementById("topup-error");
+        error.hidden = true;
+        try {
+          const next =
+            result.next === "pin"
+              ? await DataLogsPay.submitPin(result.reference, input.value)
+              : result.next === "phone"
+                ? await DataLogsPay.submitPhone(result.reference, input.value)
+                : await DataLogsPay.submitOtp(result.reference, input.value);
+          challenge.hidden = true;
+          await handleTopupNext(next, amount, form);
+        } catch (err) {
+          error.hidden = false;
+          error.textContent = err.message || "Could not continue.";
+        }
+      };
+      return;
+    }
+    await waitForTopup(result.reference, amount, form);
+  }
+
+  document.getElementById("topup-form")?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const error = document.getElementById("topup-error");
+    const success = document.getElementById("topup-success");
+    const submit = document.getElementById("topup-submit");
+    error.hidden = true;
+    success.hidden = true;
+    document.getElementById("topup-challenge").hidden = true;
+    const form = event.target;
+    const amount = Number(form.amount.value);
+    try {
+      if (!window.DataLogsPay) throw new Error("Payment is not loaded. Refresh and try again.");
+      if (topupMethod === "momo" && !String(form.momo_phone.value || "").replace(/\D/g, "")) {
+        throw new Error("Enter the Mobile Money number that will pay.");
+      }
+      if (topupMethod === "card" && String(form.card_number.value || "").replace(/\D/g, "").length < 13) {
+        throw new Error("Enter a valid card number.");
+      }
+      submit.disabled = true;
+      const charged = await DataLogsPay.charge({
+        kind: "wallet_topup",
+        channel: topupMethod,
+        amount,
+        email: form.email.value,
+        momo: { phone: form.momo_phone.value, provider: form.provider.value },
+        card: {
+          number: form.card_number.value,
+          cvv: form.card_cvv.value,
+          expiry_month: form.card_month.value,
+          expiry_year: form.card_year.value,
+        },
+      });
+      await handleTopupNext(charged, amount, form);
+    } catch (err) {
+      error.hidden = false;
+      error.textContent = err.message || "Could not top up.";
+    } finally {
+      submit.disabled = false;
+    }
+  });
 
   async function renderWithdrawals() {
     const list = await DataLogsAPI.getWithdrawals();
@@ -480,6 +912,194 @@
       .join("");
   }
 
+  async function renderApiKeys() {
+    const base = document.getElementById("api-base-url");
+    if (base) base.textContent = window.DATALOGS_CONFIG?.apiBase || "https://datalogsgh.shop/api/v1";
+    const listEl = document.getElementById("api-key-list");
+    if (!listEl) return;
+    try {
+      const keys = await DataLogsAPI.listApiKeys();
+      const active = keys.filter((k) => !k.revoked_at);
+      const retired = keys.filter((k) => k.revoked_at);
+      if (!keys.length) {
+        listEl.innerHTML = `<div class="empty-state">No keys yet. Generate one above, then follow the API docs.</div>`;
+        return;
+      }
+      listEl.innerHTML = [...active, ...retired]
+        .map((k) => {
+          const revoked = !!k.revoked_at;
+          return `
+          <article class="user-card">
+            <div>
+              <div class="user-card-name">${escapeHtml(k.name || "Website")} ${revoked ? `<span class="badge-blocked">Revoked</span>` : ""}</div>
+              <p class="user-card-meta"><code>${escapeHtml(k.key_prefix)}…</code> · created ${new Date(k.created_at).toLocaleDateString()}${
+                k.last_used_at ? ` · last used ${new Date(k.last_used_at).toLocaleString()}` : " · not used yet"
+              }</p>
+            </div>
+            ${
+              revoked
+                ? ""
+                : `<button class="btn btn-danger" type="button" data-revoke-key="${k.id}">Revoke</button>`
+            }
+          </article>`;
+        })
+        .join("");
+    } catch (err) {
+      listEl.innerHTML = `<div class="empty-state">${escapeHtml(err.message || "Could not load API keys.")}</div>`;
+    }
+  }
+
+  document.getElementById("api-key-form")?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const error = document.getElementById("api-key-error");
+    const reveal = document.getElementById("api-key-reveal");
+    error.hidden = true;
+    reveal.hidden = true;
+    const name = new FormData(event.target).get("name");
+    try {
+      const created = await DataLogsAPI.createApiKey(String(name || "Website"));
+      reveal.hidden = false;
+      reveal.innerHTML = `
+        <strong>Copy this key now. It will not be shown again.</strong>
+        <code id="new-api-key">${escapeHtml(created.key)}</code>
+        <button class="btn btn-primary" type="button" id="copy-api-key">Copy key</button>`;
+      document.getElementById("copy-api-key").addEventListener("click", async () => {
+        try {
+          await navigator.clipboard.writeText(created.key);
+          document.getElementById("copy-api-key").textContent = "Copied";
+        } catch {
+          document.getElementById("new-api-key").focus();
+        }
+      });
+      await renderApiKeys();
+    } catch (err) {
+      error.hidden = false;
+      error.textContent = err.message || "Could not create key.";
+    }
+  });
+
+  document.getElementById("api-key-list")?.addEventListener("click", async (event) => {
+    const btn = event.target.closest("[data-revoke-key]");
+    if (!btn) return;
+    if (!confirm("Revoke this API key? Websites using it will stop working.")) return;
+    try {
+      await DataLogsAPI.revokeApiKey(btn.dataset.revokeKey);
+      await renderApiKeys();
+    } catch (err) {
+      alert(err.message || "Could not revoke key.");
+    }
+  });
+
+  let flyerStyle = "hub";
+  const flyerPhone = document.getElementById("flyer-phone");
+  const flyerHours = document.getElementById("flyer-hours");
+  if (flyerPhone) flyerPhone.value = profile.phone || "";
+
+  function prettyPhone(raw) {
+    const digits = String(raw || "").replace(/\D/g, "");
+    let local = digits;
+    if (local.startsWith("233") && local.length === 12) local = `0${local.slice(3)}`;
+    if (local.length === 9) local = `0${local}`;
+    if (local.length === 10) return `${local.slice(0, 3)} ${local.slice(3, 6)} ${local.slice(6)}`;
+    return String(raw || "").trim();
+  }
+
+  function intlPhone(raw) {
+    let digits = String(raw || "").replace(/\D/g, "");
+    if (digits.startsWith("0") && digits.length === 10) digits = `233${digits.slice(1)}`;
+    if (digits.startsWith("233") && digits.length === 12) {
+      return `+233 (0) ${digits.slice(3, 5)} ${digits.slice(5, 8)} ${digits.slice(8)}`;
+    }
+    return prettyPhone(raw);
+  }
+
+  function storeLink(slug) {
+    const base = (window.DATALOGS_CONFIG?.siteUrl || "https://datalogsgh.shop").replace(/\/$/, "");
+    if (slug) return `${base}/store.html?s=${encodeURIComponent(slug)}`;
+    return base;
+  }
+
+  function flyerPackages() {
+    const networks = storeCache?.networks || ["mtn", "airteltigo", "telecel"];
+    return packages
+      .filter((p) => networks.includes(p.network) && priceMap.has(p.id))
+      .map((p) => ({
+        network: p.network,
+        gb: p.gb,
+        price: Number(p.agentPrice) + Number(priceMap.get(p.id) || 0),
+      }));
+  }
+
+  function flyerPayload() {
+    const store = storeCache;
+    const slug = store?.slug;
+    return {
+      name: store?.name || profile.full_name || "My Data Hub",
+      tagline: store?.tagline || "Your Trusted Data Plug",
+      phone: prettyPhone(flyerPhone?.value || profile.phone || ""),
+      phoneIntl: intlPhone(flyerPhone?.value || profile.phone || ""),
+      hours: flyerHours?.value || "8am - 9pm Each day",
+      url: storeLink(slug),
+      packages: flyerPackages(),
+    };
+  }
+
+  async function renderFlyerPreview() {
+    const error = document.getElementById("flyer-error");
+    const hint = document.getElementById("flyer-url-hint");
+    const canvas = document.getElementById("flyer-canvas");
+    if (!canvas || !window.DataLogsFlyer) return;
+    error.hidden = true;
+    if (!storeCache) {
+      error.hidden = false;
+      error.textContent = "Save your mini store first, then generate a flyer.";
+    } else if (!flyerPackages().length) {
+      error.hidden = false;
+      error.textContent = "Set store prices first. Only priced packages appear on the flyer.";
+    }
+    const data = flyerPayload();
+    if (hint) hint.textContent = `Caption: ${data.url}`;
+    try {
+      await DataLogsFlyer.render(canvas, flyerStyle, data);
+    } catch (err) {
+      error.hidden = false;
+      error.textContent = err.message || "Could not draw the flyer.";
+    }
+  }
+
+  document.getElementById("flyer-styles")?.addEventListener("click", (event) => {
+    const btn = event.target.closest("[data-flyer-style]");
+    if (!btn) return;
+    flyerStyle = btn.dataset.flyerStyle;
+    document.querySelectorAll("#flyer-styles .flyer-style").forEach((el) => {
+      el.classList.toggle("active", el === btn);
+    });
+    renderFlyerPreview();
+  });
+
+  document.getElementById("flyer-preview-btn")?.addEventListener("click", () => renderFlyerPreview());
+  document.getElementById("flyer-phone")?.addEventListener("change", () => renderFlyerPreview());
+  document.getElementById("flyer-hours")?.addEventListener("change", () => renderFlyerPreview());
+
+  document.getElementById("flyer-download-btn")?.addEventListener("click", async () => {
+    const canvas = document.getElementById("flyer-canvas");
+    const error = document.getElementById("flyer-error");
+    error.hidden = true;
+    if (!storeCache) {
+      error.hidden = false;
+      error.textContent = "Save your mini store first, then download a flyer.";
+      return;
+    }
+    try {
+      await renderFlyerPreview();
+      const slug = storeCache.slug || "store";
+      await DataLogsFlyer.download(canvas, `${slug}-${flyerStyle}-flyer.jpg`);
+    } catch (err) {
+      error.hidden = false;
+      error.textContent = err.message || "Could not download the flyer.";
+    }
+  });
+
   // Overview labels already set in HTML
 
   packages = await DataLogsAPI.fetchPackages();
@@ -488,10 +1108,12 @@
   priceMap = new Map(prices.map((p) => [p.package_id, Number(p.profit)]));
   await refreshStoreUI();
   await renderOverview();
+  startLiveOverview();
   renderPricing();
   renderWholesale();
   await renderOrders();
   await renderCustomers();
   await renderWallet();
   await renderWithdrawals();
+  await renderApiKeys();
 })();

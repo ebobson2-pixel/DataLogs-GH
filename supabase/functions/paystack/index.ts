@@ -1,0 +1,271 @@
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const CORS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+};
+const PAYSTACK = "https://api.paystack.co";
+const MOMO: Record<string, string> = { mtn: "mtn", telecel: "vod", airteltigo: "atl", vod: "vod", atl: "atl" };
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
+  if (req.method !== "POST") return json({ ok: false, message: "POST only" }, 405);
+
+  try {
+    const body = await req.json().catch(() => ({}));
+    const action = String(body.action || "charge");
+    const admin = createAdmin();
+
+    if (action === "charge") return json(await startCharge(req, admin, body));
+    if (action === "submit_otp") return json(await submit(admin, body, "/charge/submit_otp", { otp: body.otp, reference: body.reference }));
+    if (action === "submit_pin") return json(await submit(admin, body, "/charge/submit_pin", { pin: body.pin, reference: body.reference }));
+    if (action === "submit_phone") {
+      return json(await submit(admin, body, "/charge/submit_phone", { phone: digits(body.phone), reference: body.reference }));
+    }
+    if (action === "status" || action === "check") return json(await paymentStatus(admin, String(body.reference || "")));
+    return json({ ok: false, message: "Unknown action" }, 400);
+  } catch (err) {
+    return json({ ok: false, message: err instanceof Error ? err.message : "Payment failed" }, 400);
+  }
+});
+
+function json(payload: Record<string, unknown>, status = 200) {
+  return new Response(JSON.stringify(payload), {
+    status,
+    headers: { ...CORS, "Content-Type": "application/json" },
+  });
+}
+
+function createAdmin() {
+  return createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, {
+    auth: { persistSession: false },
+  });
+}
+
+function secret() {
+  const key = Deno.env.get("PAYSTACK_SECRET_KEY") || "";
+  if (!key) throw new Error("Paystack is not configured");
+  return key;
+}
+
+function digits(value: unknown) {
+  return String(value || "").replace(/\D/g, "");
+}
+
+function ghanaPhone(value: unknown) {
+  let phone = digits(value);
+  if (phone.startsWith("233") && phone.length === 12) phone = `0${phone.slice(3)}`;
+  if (phone.length === 9) phone = `0${phone}`;
+  return phone;
+}
+
+function pesewas(amount: number) {
+  return Math.round(Number(amount) * 100);
+}
+
+async function authUser(req: Request, admin: ReturnType<typeof createAdmin>) {
+  const header = req.headers.get("Authorization") || "";
+  const jwt = header.replace(/^Bearer\s+/i, "");
+  if (!jwt || jwt.length < 40) return null;
+  const { data } = await admin.auth.getUser(jwt);
+  return data.user || null;
+}
+
+async function startCharge(req: Request, admin: ReturnType<typeof createAdmin>, body: Record<string, unknown>) {
+  const user = await authUser(req, admin);
+  const kind = String(body.kind || "order");
+  const channel = String(body.channel || "momo");
+  const email = String(body.email || user?.email || "").trim().toLowerCase();
+  if (!email.includes("@")) throw new Error("Enter a valid email for your payment receipt");
+
+  let amount = 0;
+  let metadata: Record<string, unknown> = {};
+  let userId = user?.id || null;
+
+  if (kind === "wallet_topup") {
+    if (!user) throw new Error("Sign in to top up your wallet");
+    const { data: profile } = await admin.from("profiles").select("role, blocked").eq("id", user.id).maybeSingle();
+    if (!profile || !["agent", "admin"].includes(profile.role)) throw new Error("Only agents can top up a wallet");
+    if (profile.blocked) throw new Error("This account is blocked");
+    amount = Number(body.amount);
+    if (!Number.isFinite(amount) || amount < 5) throw new Error("Minimum top-up is GH₵ 5");
+    if (amount > 5000) throw new Error("Maximum top-up is GH₵ 5,000");
+    metadata = { agent_id: user.id };
+  } else {
+    const packageId = String(body.packageId || body.package_id || "");
+    const recipient = String(body.recipientNumber || body.recipient_number || "");
+    const pricingTier = String(body.pricingTier || body.pricing_tier || "retail");
+    const storeId = body.agentStoreId || body.agent_store_id || null;
+    if (!packageId || !recipient) throw new Error("Package and recipient are required");
+    if (pricingTier === "agent" && !user) throw new Error("Sign in as an agent to buy wholesale");
+
+    const { data: quoted, error } = await admin.rpc("quote_order_amount", {
+      p_package_id: packageId,
+      p_pricing_tier: pricingTier,
+      p_agent_store_id: storeId,
+      p_buyer_id: user?.id || null,
+    });
+    if (error) throw error;
+    amount = Number(quoted);
+    if (!amount || amount <= 0) throw new Error("Could not price this package");
+    metadata = {
+      package_id: packageId,
+      recipient_number: recipient,
+      pricing_tier: pricingTier,
+      agent_store_id: storeId,
+      buyer_id: user?.id || null,
+    };
+  }
+
+  const reference = `DLG-${crypto.randomUUID().replace(/-/g, "").slice(0, 18).toUpperCase()}`;
+  const { error: insertErr } = await admin.from("payments").insert({
+    reference,
+    kind,
+    status: "pending",
+    amount,
+    currency: "GHS",
+    email,
+    channel,
+    user_id: userId,
+    metadata,
+  });
+  if (insertErr) throw insertErr;
+
+  const payload: Record<string, unknown> = {
+    email,
+    amount: pesewas(amount),
+    currency: "GHS",
+    reference,
+    metadata: { kind, ...metadata },
+  };
+
+  if (channel === "card") {
+    const card = (body.card || {}) as Record<string, string>;
+    const number = digits(card.number);
+    if (number.length < 13) throw new Error("Enter a valid card number");
+    payload.card = {
+      number,
+      cvv: String(card.cvv || "").trim(),
+      expiry_month: String(card.expiry_month || card.month || "").padStart(2, "0"),
+      expiry_year: String(card.expiry_year || card.year || "").slice(-2),
+    };
+  } else {
+    const momo = (body.momo || {}) as Record<string, string>;
+    const phone = ghanaPhone(momo.phone || body.momoPhone);
+    const provider = MOMO[String(momo.provider || body.momoProvider || "mtn")] || "mtn";
+    if (phone.length < 10) throw new Error("Enter the Mobile Money number that will pay");
+    payload.mobile_money = { phone, provider };
+  }
+
+  const charged = await paystack("/charge", payload);
+  const data = (charged.data || {}) as Record<string, unknown>;
+  await admin.from("payments").update({
+    paystack_id: data.id != null ? String(data.id) : null,
+    last_error: charged.status ? null : charged.message || "Charge failed",
+  }).eq("reference", reference);
+
+  return present(admin, reference, data, charged.message);
+}
+
+async function submit(
+  admin: ReturnType<typeof createAdmin>,
+  body: Record<string, unknown>,
+  path: string,
+  payload: Record<string, unknown>
+) {
+  const reference = String(body.reference || payload.reference || "");
+  if (!reference) throw new Error("Missing payment reference");
+  const charged = await paystack(path, payload);
+  const data = (charged.data || {}) as Record<string, unknown>;
+  return present(admin, reference, data, charged.message);
+}
+
+async function paymentStatus(admin: ReturnType<typeof createAdmin>, reference: string) {
+  if (!reference) throw new Error("Missing payment reference");
+  const { data: row } = await admin.from("payments").select("*").eq("reference", reference).maybeSingle();
+  if (!row) throw new Error("Payment not found");
+  if (row.status === "pending") {
+    const verified = await paystack(`/transaction/verify/${encodeURIComponent(reference)}`, null, "GET");
+    const status = String(verified.data?.status || "");
+    if (status === "success") {
+      await admin.rpc("complete_confirmed_payment", { p_reference: reference }).catch(() => {});
+    } else if (status === "failed" || status === "abandoned") {
+      await admin.from("payments").update({ status: status === "failed" ? "failed" : "abandoned" }).eq("reference", reference);
+    }
+  }
+  const { data: fresh } = await admin.from("payments").select("*").eq("reference", reference).maybeSingle();
+  let order = null;
+  if (fresh?.order_id) {
+    const { data } = await admin.from("orders").select("*").eq("id", fresh.order_id).maybeSingle();
+    order = data;
+  }
+  return {
+    ok: true,
+    reference,
+    status: fresh?.status,
+    next: fresh?.status === "success" ? "success" : "pending",
+    amount: fresh?.amount,
+    order,
+    payment: { kind: fresh?.kind, status: fresh?.status, order_id: fresh?.order_id },
+  };
+}
+
+async function present(
+  admin: ReturnType<typeof createAdmin>,
+  reference: string,
+  data: Record<string, unknown>,
+  message?: string
+) {
+  const status = String(data.status || "");
+  let next = "pending";
+  let hint = message || "Complete the payment on your phone.";
+  if (status === "success" || status === "successful") {
+    next = "success";
+    hint = "Payment confirmed.";
+    const paid = await paymentStatus(admin, reference);
+    return { ...paid, next: "success", display_text: hint };
+  }
+  if (status === "send_otp") {
+    next = "otp";
+    hint = String(data.display_text || "Enter the OTP sent to your phone.");
+  } else if (status === "send_pin") {
+    next = "pin";
+    hint = "Enter your card PIN.";
+  } else if (status === "send_phone") {
+    next = "phone";
+    hint = "Confirm the phone number on this card.";
+  } else if (status === "pay_offline" || status === "pending" || status === "open_url") {
+    next = "offline";
+    hint = String(data.display_text || "Approve the Mobile Money prompt on your phone.");
+  } else if (status === "failed") {
+    next = "failed";
+    hint = String(data.message || message || "Payment failed.");
+    await admin.from("payments").update({ status: "failed", last_error: hint }).eq("reference", reference);
+  }
+  return {
+    ok: next !== "failed",
+    reference,
+    next,
+    display_text: hint,
+    status,
+    url: data.url || data.redirecturl || null,
+  };
+}
+
+async function paystack(path: string, body: Record<string, unknown> | null, method = "POST") {
+  const res = await fetch(`${PAYSTACK}${path}`, {
+    method,
+    headers: {
+      Authorization: `Bearer ${secret()}`,
+      "Content-Type": "application/json",
+    },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok && !data.status) {
+    throw new Error(data.message || "Paystack request failed");
+  }
+  if (data.status === false) throw new Error(data.message || "Paystack request failed");
+  return data;
+}

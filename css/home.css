@@ -18,10 +18,17 @@
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(ellipse 70% 55% at 50% 0%, rgba(46, 200, 230, 0.18), transparent 60%),
-    radial-gradient(circle at 15% 70%, rgba(46, 200, 230, 0.08), transparent 35%),
+    radial-gradient(ellipse 70% 55% at 50% 0%, rgba(var(--accent-rgb), 0.18), transparent 60%),
+    radial-gradient(circle at 15% 70%, rgba(var(--accent-rgb), 0.08), transparent 35%),
     linear-gradient(180deg, #0d1214 0%, #0b0b0b 55%, #0b0b0b 100%);
   z-index: -2;
+}
+
+html[data-theme="light"] .home-hero::before {
+  background:
+    radial-gradient(ellipse 70% 55% at 50% 0%, rgba(var(--accent-rgb), 0.16), transparent 60%),
+    radial-gradient(circle at 15% 70%, rgba(var(--accent-rgb), 0.1), transparent 35%),
+    linear-gradient(180deg, #e8f4f8 0%, #f3f8fb 55%, #f3f8fb 100%);
 }
 
 .home-hero-inner {
@@ -37,6 +44,7 @@
   font-weight: 800;
   font-size: clamp(1.6rem, 4vw, 2.4rem);
   letter-spacing: -0.05em;
+  color: var(--text);
 }
 
 .home-brand span {
@@ -49,6 +57,7 @@
   font-size: clamp(2.8rem, 8vw, 5.4rem);
   line-height: 0.95;
   letter-spacing: -0.06em;
+  color: var(--text);
 }
 
 .home-hero h1 em {
@@ -86,7 +95,7 @@
   color: var(--yellow);
   opacity: 0.14;
   animation: adinkra-float 9s ease-in-out infinite;
-  filter: drop-shadow(0 0 18px rgba(46, 200, 230, 0.15));
+  filter: drop-shadow(0 0 18px rgba(var(--accent-rgb), 0.15));
 }
 
 .adinkra.a1 { top: 12%; left: 8%; animation-delay: 0s; }
@@ -177,8 +186,8 @@
   padding: 36px 40px;
   border-radius: 28px;
   background:
-    linear-gradient(120deg, rgba(46, 200, 230, 0.16), transparent 45%),
-    #121212;
+    linear-gradient(120deg, rgba(var(--accent-rgb), 0.16), transparent 45%),
+    var(--bg-elevated);
   border: 1px solid var(--line);
   position: relative;
   overflow: hidden;
@@ -192,7 +201,7 @@
   right: -30px;
   bottom: -40px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(46, 200, 230, 0.22), transparent 70%);
+  background: radial-gradient(circle, rgba(var(--accent-rgb), 0.22), transparent 70%);
   animation: pulse-glow 4s ease-in-out infinite;
 }
 
@@ -233,6 +242,26 @@
   .adinkra.a6,
   .adinkra.a3 {
     opacity: 0.08;
+  }
+}
+
+@media (max-width: 480px) {
+  .home-lede {
+    letter-spacing: 0.04em;
+    font-size: 0.92rem;
+  }
+
+  .home-hero .hero-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .home-hero .hero-actions .btn {
+    width: 100%;
+  }
+
+  .home-cta .btn {
+    width: 100%;
   }
 }
 
