@@ -1,18 +1,16 @@
 (async function dashboard() {
   const profile = await DataLogsAPI.requireProfile(["agent", "admin"], "auth.html");
   if (!profile) return;
-  if (profile.role === "admin") {
-    window.location.href = "../admin/dashboard.html";
-    return;
-  }
-  try {
-    const access = await DataLogsAPI.syncAgentActivation();
-    if (access.required && !access.activated) {
-      window.location.href = "activate.html";
-      return;
+  if (profile.role !== "admin") {
+    try {
+      const access = await DataLogsAPI.syncAgentActivation();
+      if (access.required && !access.activated) {
+        window.location.href = "activate.html";
+        return;
+      }
+    } catch {
+      /* continue; dashboard still loads if sync fails after auth */
     }
-  } catch {
-    /* continue; dashboard still loads if sync fails after auth */
   }
 
   const shell = document.getElementById("dash-shell");
@@ -20,7 +18,7 @@
     overview: ["Overview", "Live sales, profit, and traffic"],
     store: ["Mini store", "Your unique storefront"],
     flyer: ["Flyers", "Download a price poster for your store"],
-    pricing: ["Store pricing", "Base + your profit = sell price"],
+    pricing: ["Store pricing", "Markup all bundles for one network"],
     wholesale: ["Buy wholesale", "Subsidized agent rates"],
     orders: ["Orders", "Store sales & wholesale"],
     customers: ["Customers", "People who bought from your store"],
@@ -31,7 +29,7 @@
   };
 
   let wholesaleFilter = "all";
-  let pricingFilter = "all";
+  let pricingFilter = "mtn";
   let ordersFilter = "all";
   let packages = [];
   let priceMap = new Map();
@@ -40,6 +38,8 @@
   document.getElementById("user-name").textContent = profile.full_name || "Agent";
   document.getElementById("user-email").textContent = profile.email || profile.authEmail || "";
   document.getElementById("user-avatar").textContent = (profile.full_name || "A").trim().charAt(0).toUpperCase();
+  const adminBtn = document.getElementById("open-admin-btn");
+  if (adminBtn) adminBtn.hidden = profile.role !== "admin";
   document.getElementById("account-name").value = profile.full_name || "";
   document.getElementById("account-email").value = profile.email || profile.authEmail || "";
   document.getElementById("account-phone").value = profile.phone || "";
@@ -394,49 +394,162 @@
     renderWholesale();
   });
 
-  document.getElementById("pricing-filters").addEventListener("click", (event) => {
+  document.getElementById("pricing-filters")?.addEventListener("click", (event) => {
     const btn = event.target.closest("[data-pfilter]");
     if (!btn) return;
     pricingFilter = btn.dataset.pfilter;
     document.querySelectorAll("#pricing-filters .filter-btn").forEach((el) => {
       el.classList.toggle("active", el === btn);
     });
+    const percent = document.getElementById("markup-percent");
+    if (percent) percent.value = "";
+    const warn = document.getElementById("markup-warn");
+    if (warn) warn.hidden = true;
+    const error = document.getElementById("pricing-error");
+    const success = document.getElementById("pricing-success");
+    if (error) error.hidden = true;
+    if (success) success.hidden = true;
+    updateMarkupCopy();
     renderPricing();
   });
 
-  document.getElementById("pricing-body").addEventListener("click", async (event) => {
-    const btn = event.target.closest("[data-save-profit]");
-    if (!btn) return;
-    const packageId = btn.dataset.saveProfit;
-    const input = document.querySelector(`[data-profit-input="${packageId}"]`);
+  function roundCedi(value) {
+    return Math.round((Number(value) + Number.EPSILON) * 100) / 100;
+  }
+
+  function selectedNetworkName() {
+    return NETWORKS[pricingFilter]?.name || pricingFilter;
+  }
+
+  function updateMarkupCopy() {
+    const el = document.getElementById("markup-info-copy");
+    if (!el) return;
+    const name = selectedNetworkName();
+    el.innerHTML = `Markup changes all your selling prices for the selected network based on the percentage you want. Markup is applied to the <strong>Base Price</strong> (your cost). For example, if Base Price = GH₵ 4.10, +10% gives GH₵ 4.51. After applying, you must click Save Prices to keep the changes. The markup affects only the currently selected network (${name}).`;
+  }
+
+  function markupPercentValue() {
+    const raw = String(document.getElementById("markup-percent")?.value || "")
+      .replace("%", "")
+      .replace(/\s/g, "")
+      .trim();
+    if (raw === "" || raw === "+" || raw === "-") return null;
+    const value = Number(raw);
+    return Number.isFinite(value) ? value : null;
+  }
+
+  function currentSellPrice(pkg) {
+    if (priceMap.has(pkg.id)) return roundCedi(pkg.agentPrice + Number(priceMap.get(pkg.id) || 0));
+    return roundCedi(pkg.agentPrice);
+  }
+
+  function updateRowProfit(packageId) {
+    const pkg = packages.find((p) => p.id === packageId);
+    const input = document.querySelector(`[data-sell-input="${packageId}"]`);
+    const profitEl = document.querySelector(`[data-profit-preview="${packageId}"]`);
+    if (!pkg || !input || !profitEl) return;
+    const sell = Number(input.value);
+    if (!Number.isFinite(sell)) {
+      profitEl.textContent = "—";
+      return;
+    }
+    const profit = roundCedi(sell - pkg.agentPrice);
+    profitEl.textContent = formatCedi(profit);
+    profitEl.classList.toggle("is-low", profit < 0);
+  }
+
+  document.getElementById("markup-apply")?.addEventListener("click", () => {
+    const error = document.getElementById("pricing-error");
+    const success = document.getElementById("pricing-success");
+    const warn = document.getElementById("markup-warn");
+    error.hidden = true;
+    success.hidden = true;
+    warn.hidden = true;
+    const percent = markupPercentValue();
+    if (percent == null) {
+      error.hidden = false;
+      error.textContent = "Enter a markup % such as +10 or -3.";
+      return;
+    }
+    const list = packagesFor(pricingFilter, packages);
+    if (!list.length) {
+      error.hidden = false;
+      error.textContent = `No bundles found for ${selectedNetworkName()}.`;
+      return;
+    }
+    const rate = percent / 100;
+    let belowCost = false;
+    list.forEach((pkg) => {
+      const input = document.querySelector(`[data-sell-input="${pkg.id}"]`);
+      if (!input) return;
+      let newSell = roundCedi(pkg.agentPrice + pkg.agentPrice * rate);
+      if (newSell < pkg.agentPrice) {
+        newSell = roundCedi(pkg.agentPrice);
+        belowCost = true;
+      }
+      if (newSell < 0) newSell = 0;
+      input.value = newSell.toFixed(2);
+      updateRowProfit(pkg.id);
+    });
+    const signed = `${percent > 0 ? "+" : ""}${percent}`;
+    document.getElementById("markup-percent").value = signed;
+    warn.hidden = false;
+    warn.textContent = belowCost
+      ? `Prices cannot go below cost. ${selectedNetworkName()} rows were set to base price. Click Save Prices to confirm.`
+      : `This will update all prices for ${selectedNetworkName()}. Click Save Prices to confirm.`;
+  });
+
+  document.getElementById("markup-save")?.addEventListener("click", async () => {
     const error = document.getElementById("pricing-error");
     const success = document.getElementById("pricing-success");
     error.hidden = true;
     success.hidden = true;
+    const inputs = [...document.querySelectorAll("#pricing-body [data-sell-input]")];
+    if (!inputs.length) {
+      error.hidden = false;
+      error.textContent = "No bundles to save for this network.";
+      return;
+    }
+    const items = [];
+    for (const input of inputs) {
+      const pkg = packages.find((p) => p.id === input.dataset.sellInput);
+      const sell = Number(input.value);
+      if (!pkg || !Number.isFinite(sell)) {
+        error.hidden = false;
+        error.textContent = "Enter a valid selling price for every bundle.";
+        return;
+      }
+      const profit = roundCedi(sell - pkg.agentPrice);
+      if (profit < 0) {
+        error.hidden = false;
+        error.textContent = "Selling price cannot be below base cost.";
+        return;
+      }
+      items.push({ packageId: pkg.id, profit });
+    }
+    const btn = document.getElementById("markup-save");
+    if (btn) btn.disabled = true;
     try {
-      const row = await DataLogsAPI.setAgentPackageProfit(packageId, input.value);
-      priceMap.set(packageId, Number(row.profit));
+      const rows = await DataLogsAPI.setAgentPackageProfits(items);
+      rows.forEach((row) => priceMap.set(row.package_id, Number(row.profit)));
       success.hidden = false;
-      success.textContent = "Price saved. Your store will sell at base + profit.";
+      success.textContent = `Saved ${rows.length} ${selectedNetworkName()} store price${rows.length === 1 ? "" : "s"}.`;
+      const warn = document.getElementById("markup-warn");
+      if (warn) warn.hidden = true;
       renderPricing();
       await renderOverview();
     } catch (err) {
       error.hidden = false;
-      error.textContent = err.message || "Could not save profit.";
+      error.textContent = err.message || "Could not save prices.";
+    } finally {
+      if (btn) btn.disabled = false;
     }
   });
 
   document.getElementById("pricing-body").addEventListener("input", (event) => {
-    const input = event.target.closest("[data-profit-input]");
+    const input = event.target.closest("[data-sell-input]");
     if (!input) return;
-    const packageId = input.dataset.profitInput;
-    const pkg = packages.find((p) => p.id === packageId);
-    if (!pkg) return;
-    const sellEl = document.querySelector(`[data-sell-preview="${packageId}"]`);
-    if (sellEl) {
-      const profit = Math.max(0, Number(input.value) || 0);
-      sellEl.textContent = formatCedi(pkg.agentPrice + profit);
-    }
+    updateRowProfit(input.dataset.sellInput);
   });
 
   document.getElementById("orders-filters").addEventListener("click", (event) => {
@@ -644,22 +757,24 @@
   });
 
   function renderPricing() {
-    const list = packagesFor(pricingFilter, packages);
+    const list = packagesFor(pricingFilter, packages).slice().sort((a, b) => a.gb - b.gb);
     const body = document.getElementById("pricing-body");
+    if (!list.length) {
+      body.innerHTML = `<tr><td colspan="4">No ${selectedNetworkName()} bundles yet.</td></tr>`;
+      return;
+    }
     body.innerHTML = list
       .map((item) => {
-        const profit = priceMap.has(item.id) ? Number(priceMap.get(item.id)) : "";
-        const sell = profit === "" ? item.agentPrice : item.agentPrice + Number(profit || 0);
+        const sell = currentSellPrice(item);
+        const profit = roundCedi(sell - item.agentPrice);
         return `
           <tr>
-            <td>${NETWORKS[item.network]?.name || item.network}</td>
-            <td>${item.gb} GB</td>
+            <td>${item.gb}GB</td>
             <td>${formatCedi(item.agentPrice)}</td>
             <td>
-              <input data-profit-input="${item.id}" type="number" min="0" step="0.01" value="${profit}" placeholder="0.00" style="width:110px;background:#101010;border:1px solid var(--line);color:var(--text);border-radius:10px;padding:8px 10px">
+              <input class="markup-sell-input" data-sell-input="${item.id}" type="number" min="0" step="0.01" value="${sell.toFixed(2)}">
             </td>
-            <td data-sell-preview="${item.id}">${formatCedi(sell)}</td>
-            <td><button class="btn btn-primary" type="button" data-save-profit="${item.id}">Save</button></td>
+            <td class="markup-profit${profit < 0 ? " is-low" : ""}" data-profit-preview="${item.id}">${formatCedi(profit)}</td>
           </tr>`;
       })
       .join("");
@@ -1261,7 +1376,7 @@
     }
   });
 
-  let flyerStyle = "hub";
+  let flyerStyle = "shop";
   const flyerPhone = document.getElementById("flyer-phone");
   const flyerHours = document.getElementById("flyer-hours");
   if (flyerPhone) flyerPhone.value = profile.phone || "";
@@ -1301,6 +1416,13 @@
       }));
   }
 
+  function websiteAccent() {
+    const id = document.documentElement.getAttribute("data-accent") || window.DataLogsTheme?.currentAccent?.() || "sea";
+    const found = window.DataLogsTheme?.ACCENTS?.find((a) => a.id === id);
+    const css = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim();
+    return found?.hex || css || "#2ec8e6";
+  }
+
   function flyerPayload() {
     const store = storeCache;
     const slug = store?.slug;
@@ -1312,6 +1434,7 @@
       hours: flyerHours?.value || "8am - 9pm Each day",
       url: storeLink(slug),
       packages: flyerPackages(),
+      accent: websiteAccent(),
     };
   }
 
@@ -1371,17 +1494,31 @@
     }
   });
 
-  // Overview labels already set in HTML
+  new MutationObserver(() => {
+    const panel = document.querySelector('[data-panel-view="flyer"]');
+    if (panel?.classList.contains("active")) renderFlyerPreview();
+  }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-accent"] });
 
-  packages = await DataLogsAPI.fetchPackages();
-  window.__PACKAGES = packages;
-  const prices = await DataLogsAPI.getAgentStorePrices(profile.id);
-  priceMap = new Map(prices.map((p) => [p.package_id, Number(p.profit)]));
-  await refreshStoreUI();
-  await renderOverview();
+  // Overview labels already set in HTML
+  try {
+    packages = await DataLogsAPI.fetchPackages();
+    window.__PACKAGES = packages;
+    const prices = await DataLogsAPI.getAgentStorePrices(profile.id);
+    priceMap = new Map(prices.map((p) => [p.package_id, Number(p.profit)]));
+    await refreshStoreUI();
+  } catch (err) {
+    console.error(err);
+  }
+  try {
+    await renderOverview();
+  } catch (err) {
+    console.error(err);
+  }
   startLiveOverview();
+  updateMarkupCopy();
   renderPricing();
   renderWholesale();
+  renderFlyerPreview();
   await renderOrders();
   await renderCustomers();
   await renderWallet();

@@ -978,9 +978,29 @@
 
 .flyer-styles {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
   margin-top: 16px;
+}
+
+.flyer-color-match {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--yellow-soft);
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.flyer-swatch-shop {
+  background:
+    linear-gradient(180deg, rgba(var(--accent-rgb), 0.45), transparent 55%),
+    linear-gradient(90deg, #ffcc00 0 33%, #2563eb 33% 66%, #e11d2e 66%),
+    #05070b;
 }
 
 .flyer-style {
@@ -1224,4 +1244,137 @@
   background: var(--bg);
   word-break: break-all;
   font-size: 0.86rem;
+}
+
+.markup-card {
+  padding-top: 18px;
+}
+
+.markup-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.markup-toolbar .filters {
+  margin: 0;
+  gap: 8px;
+}
+
+.markup-inline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text);
+  font-weight: 600;
+}
+
+.markup-inline input {
+  width: 72px;
+  text-align: center;
+  background: var(--input-bg, var(--bg));
+  border: 1px solid var(--line);
+  color: var(--text);
+  border-radius: 10px;
+  padding: 8px 8px;
+  font: inherit;
+  font-weight: 700;
+}
+
+.markup-apply {
+  background: none;
+  border: 0;
+  color: var(--yellow);
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+  padding: 0;
+}
+
+.markup-apply:hover {
+  text-decoration: underline;
+}
+
+.markup-info {
+  margin-top: 16px;
+  padding: 16px 18px;
+  border-radius: 14px;
+  background: rgba(var(--accent-rgb), 0.14);
+  border: 1px solid rgba(var(--accent-rgb), 0.28);
+}
+
+.markup-info-title {
+  margin: 0;
+  font-weight: 800;
+  font-size: 0.95rem;
+}
+
+.markup-info-sub {
+  margin: 10px 0 8px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.markup-info p:last-child {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.markup-formula-line {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
+.markup-warn {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(251, 146, 60, 0.14);
+  border: 1px solid rgba(251, 146, 60, 0.35);
+  color: var(--text);
+  font-size: 0.86rem;
+}
+
+.markup-table input.markup-sell-input {
+  width: 110px;
+  background: var(--input-bg, #141414);
+  border: 1px solid var(--line);
+  color: var(--text);
+  border-radius: 10px;
+  padding: 8px 10px;
+  font: inherit;
+}
+
+.markup-profit {
+  color: var(--success);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.markup-profit.is-low {
+  color: #f87171;
+}
+
+.markup-save-wrap {
+  margin-top: 16px;
+}
+
+@media (max-width: 720px) {
+  .markup-toolbar {
+    align-items: stretch;
+  }
+
+  .markup-inline {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .markup-save-wrap .btn {
+    width: 100%;
+  }
 }

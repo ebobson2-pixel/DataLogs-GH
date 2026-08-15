@@ -4,12 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <script>try{var d=document.documentElement,t=localStorage.getItem("datalogs_theme"),a=localStorage.getItem("datalogs_accent");if(t==="light")d.setAttribute("data-theme","light");if(a)d.setAttribute("data-accent",a);}catch(e){}</script>
-  <title>Agent API docs — DataLogs GH</title>
+  <title>Agent API docs â€” DataLogs GH</title>
   <meta name="description" content="Connect your website to DataLogs GH. Generate an API key and sell MTN, AirtelTigo and Telecel data with a few requests.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/styles.css?v=9">
+  <link rel="stylesheet" href="css/styles.css?v=11">
   <link rel="stylesheet" href="css/docs.css?v=7">
   <link rel="icon" href="assets/logo-mark.svg" type="image/svg+xml">
 </head>
@@ -21,7 +21,7 @@
         <p class="kicker">Agent API</p>
         <h1>Connect your website to DataLogs GH</h1>
         <p>Generate an API key in your dashboard, then buy data for customers from your own site. The live base URL is <code>https://datalogsgh.shop/api/v1</code>.</p>
-        <p class="api-status" id="api-status">Checking API…</p>
+        <p class="api-status" id="api-status">Checking APIâ€¦</p>
       </div>
     </section>
 
@@ -45,7 +45,7 @@
             <ol class="docs-steps">
               <li>Sign in to your <a href="agent/auth.html">agent dashboard</a>.</li>
               <li>Open <strong>API keys</strong> in the sidebar.</li>
-              <li>Name the key (for example “My website”) and tap <strong>Generate API key</strong>.</li>
+              <li>Name the key (for example â€œMy websiteâ€) and tap <strong>Generate API key</strong>.</li>
               <li>Copy the secret immediately. It starts with <code>dlg_live_</code> and is shown only once.</li>
             </ol>
             <p>You can keep up to 5 active keys. Revoke a key if it leaks. After you revoke it, that website must use a new key.</p>
@@ -66,7 +66,7 @@ X-API-Key: dlg_live_your_key_here</code></pre>
             <h2>3. List packages</h2>
             <p>Use this to show bundles on your site. Prices are your wholesale rate, including any custom price DataLogs GH set for you.</p>
             <p><code>GET /packages</code></p>
-            <p>Optional filter: <code>GET /packages?network=mtn</code> · also <code>airteltigo</code> or <code>telecel</code>.</p>
+            <p>Optional filter: <code>GET /packages?network=mtn</code> Â· also <code>airteltigo</code> or <code>telecel</code>.</p>
             <pre><code>curl "https://datalogsgh.shop/api/v1/packages" \
   -H "Authorization: Bearer dlg_live_your_key_here"</code></pre>
             <p>Example response</p>
@@ -144,7 +144,7 @@ X-API-Key: dlg_live_your_key_here</code></pre>
                   <tr><th>HTTP</th><th>error</th><th>What to do</th></tr>
                 </thead>
                 <tbody>
-                  <tr><td>200 / 201</td><td>—</td><td>Request worked.</td></tr>
+                  <tr><td>200 / 201</td><td>â€”</td><td>Request worked.</td></tr>
                   <tr><td>400</td><td>bad_request</td><td>Fix the number, network, or package.</td></tr>
                   <tr><td>401</td><td>unauthorized</td><td>Check the key. Generate a new one if it was revoked.</td></tr>
                   <tr><td>404</td><td>not_found</td><td>Wrong URL or unknown order code.</td></tr>
@@ -153,8 +153,8 @@ X-API-Key: dlg_live_your_key_here</code></pre>
             </div>
             <p><strong>Order status for your customers</strong></p>
             <ul>
-              <li><code>processing</code> — payment recorded, bundle is being sent.</li>
-              <li><code>completed</code> — delivery is done.</li>
+              <li><code>processing</code> â€” payment recorded, bundle is being sent.</li>
+              <li><code>completed</code> â€” delivery is done.</li>
             </ul>
             <p>Do not show any other status on your website.</p>
             <p>Health check (no key): <code>GET https://datalogsgh.shop/api/v1/health</code></p>
@@ -239,7 +239,7 @@ print(r.json())</code></pre>
   <script src="js/data.js"></script>
   <script src="js/api.js?v=6"></script>
   <script src="js/whatsapp-fab.js"></script>
-  <script src="js/order-tracker.js?v=2"></script>
+  <script src="js/order-tracker.js?v=3"></script>
   <script src="js/theme.js"></script>
   <script src="js/app.js?v=2"></script>
   <script src="js/docs.js"></script>

@@ -1677,7 +1677,7 @@ body.pay-open {
   position: absolute;
   right: 0;
   bottom: 58px;
-  width: min(360px, calc(100vw - 28px));
+  width: min(420px, calc(100vw - 28px));
   background: var(--modal-bg);
   border: 1px solid var(--line);
   border-radius: 18px;
@@ -1732,9 +1732,16 @@ body.pay-open {
 .track-results {
   margin-top: 12px;
   display: grid;
-  gap: 10px;
-  max-height: 320px;
+  gap: 12px;
+  max-height: min(62vh, 520px);
   overflow: auto;
+  padding-right: 2px;
+}
+
+.track-summary {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.82rem;
 }
 
 .track-empty {
@@ -1746,8 +1753,8 @@ body.pay-open {
 .track-card {
   background: var(--input-bg);
   border: 1px solid var(--line);
-  border-radius: 14px;
-  padding: 12px;
+  border-radius: 16px;
+  padding: 14px;
 }
 
 .track-card p {
@@ -1755,11 +1762,23 @@ body.pay-open {
   font-size: 0.9rem;
 }
 
+.track-bundle {
+  font-weight: 700;
+  font-size: 1.05rem !important;
+  margin-top: 12px !important;
+}
+
+.track-hint {
+  color: var(--muted);
+  font-size: 0.84rem !important;
+  line-height: 1.45;
+}
+
 .track-card-top {
   display: flex;
   justify-content: space-between;
   gap: 8px;
-  align-items: center;
+  align-items: flex-start;
 }
 
 .track-status {
@@ -1770,6 +1789,7 @@ body.pay-open {
   border-radius: 999px;
   background: var(--yellow-soft);
   color: var(--yellow);
+  flex-shrink: 0;
 }
 
 .track-card.is-processing .track-status {
@@ -1777,9 +1797,123 @@ body.pay-open {
   color: var(--yellow);
 }
 
+.track-card.is-delivered .track-status {
+  background: rgba(125, 255, 154, 0.16);
+  color: var(--success);
+}
+
+.track-timeline {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.track-timeline li {
+  display: grid;
+  grid-template-columns: 14px 1fr;
+  gap: 10px;
+  align-items: center;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.track-timeline li.done {
+  color: var(--success);
+}
+
+.track-timeline li.active {
+  color: var(--yellow);
+  font-weight: 600;
+}
+
+.track-timeline-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.12);
+}
+
+.track-details {
+  margin-top: 14px;
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+  display: grid;
+  gap: 8px;
+}
+
+.track-detail-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.84rem;
+  color: var(--muted);
+}
+
+.track-detail-row strong {
+  color: var(--text);
+  text-align: right;
+  word-break: break-word;
+}
+
 .track-meta {
   color: var(--muted) !important;
   font-size: 0.8rem !important;
+}
+
+.price-bulk-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: end;
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--input-bg);
+}
+
+.price-bulk-field {
+  display: grid;
+  gap: 6px;
+  min-width: 140px;
+  flex: 1 1 140px;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.price-bulk-field input,
+.price-bulk-field select {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  color: var(--text);
+  border-radius: 10px;
+  padding: 9px 11px;
+  font: inherit;
+}
+
+.price-inline-input {
+  width: 110px;
+  max-width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  color: var(--text);
+  border-radius: 10px;
+  padding: 8px 10px;
+  font: inherit;
+}
+
+@media (max-width: 560px) {
+  .price-bulk-bar {
+    align-items: stretch;
+  }
+
+  .price-bulk-bar .btn {
+    width: 100%;
+  }
 }
 
 .store-body .track-panel {

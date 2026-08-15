@@ -393,6 +393,25 @@ const DataLogsAPI = (() => {
     return data;
   }
 
+  async function setAgentPackageProfits(items) {
+    const list = Array.isArray(items) ? items : [];
+    const results = [];
+    for (const item of list) {
+      const row = await setAgentPackageProfit(item.packageId, item.profit);
+      results.push(row);
+    }
+    return results;
+  }
+
+  async function upsertPackages(payloads) {
+    const list = Array.isArray(payloads) ? payloads : [];
+    const results = [];
+    for (const payload of list) {
+      results.push(await upsertPackage(payload));
+    }
+    return results;
+  }
+
   async function trackOrdersByPhone(phone) {
     const { data, error } = await client.rpc("track_orders_by_phone", {
       p_phone: phone,
@@ -544,6 +563,7 @@ const DataLogsAPI = (() => {
     signOut,
     fetchPackages,
     upsertPackage,
+    upsertPackages,
     deletePackage,
     getStoreByAgent,
     getStoreBySlug,
@@ -566,6 +586,7 @@ const DataLogsAPI = (() => {
     reviewWithdrawal,
     getAgentStorePrices,
     setAgentPackageProfit,
+    setAgentPackageProfits,
     trackOrdersByPhone,
     getSiteSettings,
     updateSiteSettings,

@@ -1,19 +1,6 @@
--- Public order tracking by recipient (or buyer) phone number.
--- Public callers only receive completed / processing — never failed.
+-- Richer public order tracking details (still masks failed delivery).
 
-create or replace function public.phone_last9(p_phone text)
-returns text
-language sql
-immutable
-as $$
-  select case
-    when length(digits) >= 9 then right(digits, 9)
-    else null
-  end
-  from (
-    select regexp_replace(coalesce(p_phone, ''), '[^0-9]', '', 'g') as digits
-  ) s;
-$$;
+drop function if exists public.track_orders_by_phone(text);
 
 create or replace function public.track_orders_by_phone(p_phone text)
 returns table (
@@ -24,8 +11,13 @@ returns table (
   amount_paid numeric,
   delivery_status text,
   payment_status text,
+  payment_method text,
+  pricing_tier text,
+  validity text,
   source text,
-  created_at timestamptz
+  store_name text,
+  created_at timestamptz,
+  updated_at timestamptz
 )
 language plpgsql
 security definer
@@ -46,21 +38,27 @@ begin
     ord.recipient_number,
     ord.amount_paid::numeric,
     case
-      when ord.delivery_status = 'delivered' then 'completed'::text
+      when ord.delivery_status in ('delivered', 'completed') then 'completed'::text
       else 'processing'::text
     end,
     case
       when ord.payment_status = 'paid' then 'paid'::text
       else 'processing'::text
     end,
+    coalesce(ord.payment_method, 'momo')::text,
+    ord.pricing_tier::text,
+    coalesce(pkg.validity, 'Non expiry')::text,
     case
-      when ord.agent_store_id is not null then coalesce('Agent store · ' || store.name, 'Agent store')
-      when ord.pricing_tier = 'agent' then 'Agent wholesale'
-      else 'Main website'
+      when ord.agent_store_id is not null then 'Agent store'::text
+      when ord.pricing_tier = 'agent' then 'Agent wholesale'::text
+      else 'Main website'::text
     end,
-    ord.created_at
+    store.name::text,
+    ord.created_at,
+    ord.updated_at
   from public.orders ord
   left join public.agent_stores store on store.id = ord.agent_store_id
+  left join public.packages pkg on pkg.id = ord.package_id
   left join public.profiles buyer on buyer.id = ord.buyer_id
   where
     public.phone_last9(ord.recipient_number) = key
@@ -70,5 +68,6 @@ begin
 end;
 $$;
 
-grant execute on function public.phone_last9(text) to anon, authenticated;
 grant execute on function public.track_orders_by_phone(text) to anon, authenticated;
+
+notify pgrst, 'reload schema';

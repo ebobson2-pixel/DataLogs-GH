@@ -89,9 +89,9 @@ window.DataLogsFlyer = (() => {
 
   function byNetwork(packages) {
     return {
-      mtn: (packages || []).filter((p) => p.network === "mtn").sort((a, b) => a.gb - b.gb).slice(0, 12),
-      airteltigo: (packages || []).filter((p) => p.network === "airteltigo").sort((a, b) => a.gb - b.gb).slice(0, 12),
-      telecel: (packages || []).filter((p) => p.network === "telecel").sort((a, b) => a.gb - b.gb).slice(0, 12),
+      mtn: (packages || []).filter((p) => p.network === "mtn").sort((a, b) => a.gb - b.gb).slice(0, 16),
+      airteltigo: (packages || []).filter((p) => p.network === "airteltigo").sort((a, b) => a.gb - b.gb).slice(0, 16),
+      telecel: (packages || []).filter((p) => p.network === "telecel").sort((a, b) => a.gb - b.gb).slice(0, 16),
     };
   }
 
@@ -463,6 +463,234 @@ window.DataLogsFlyer = (() => {
     drawCaption(ctx, data.url);
   }
 
+  function hexToRgb(hex) {
+    const raw = String(hex || "").replace("#", "").trim();
+    const full = raw.length === 3 ? raw.split("").map((c) => c + c).join("") : raw;
+    const n = parseInt(full, 16);
+    if (!Number.isFinite(n)) return { r: 46, g: 200, b: 230 };
+    return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
+  }
+
+  function contrastInk(hex) {
+    const { r, g, b } = hexToRgb(hex);
+    return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.55 ? "#0b0b0b" : "#ffffff";
+  }
+
+  function rgba(hex, a) {
+    const { r, g, b } = hexToRgb(hex);
+    return `rgba(${r},${g},${b},${a})`;
+  }
+
+  function strokeRound(ctx, x, y, w, h, r, color, width) {
+    ctx.strokeStyle = color;
+    ctx.lineWidth = width || 2;
+    roundRect(ctx, x, y, w, h, r);
+    ctx.stroke();
+  }
+
+  function drawBolt(ctx, x, y, s, color) {
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(x + s * 0.56, y + s * 0.12);
+    ctx.lineTo(x + s * 0.3, y + s * 0.54);
+    ctx.lineTo(x + s * 0.5, y + s * 0.54);
+    ctx.lineTo(x + s * 0.4, y + s * 0.88);
+    ctx.lineTo(x + s * 0.74, y + s * 0.42);
+    ctx.lineTo(x + s * 0.52, y + s * 0.42);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  const SHOP_NETS = [
+    {
+      key: "mtn",
+      name: "MTN",
+      title: "MTN DATA BUNDLES",
+      tab: "MTN",
+      color: "#ffcc00",
+      btn: "#ffcc00",
+      btnInk: "#111111",
+      ink: "#ffcc00",
+    },
+    {
+      key: "airteltigo",
+      name: "AIRTELTIGO",
+      title: "AIRTELTIGO DATA BUNDLES",
+      tab: "AIRTELTIGO",
+      color: "#3b82f6",
+      btn: "#2563eb",
+      btnInk: "#ffffff",
+      ink: "#60a5fa",
+    },
+    {
+      key: "telecel",
+      name: "TELECEL",
+      title: "TELECEL DATA BUNDLES",
+      tab: "TELECEL",
+      color: "#e11d2e",
+      btn: "#e11d2e",
+      btnInk: "#ffffff",
+      ink: "#fb7185",
+    },
+  ];
+
+  function shopHeight(groups) {
+    const cols = 4;
+    const cardH = 208;
+    const gap = 16;
+    let h = 560;
+    SHOP_NETS.forEach((net) => {
+      const list = groups[net.key] || [];
+      if (!list.length) return;
+      const rows = Math.ceil(list.length / cols);
+      h += 86 + rows * (cardH + gap) + 24;
+    });
+    return Math.max(1440, h + 140);
+  }
+
+  async function drawShop(ctx, data, canvas) {
+    const accent = data.accent || "#2ec8e6";
+    const onAccent = contrastInk(accent);
+    const groups = byNetwork(data.packages);
+    SHOP_NETS.forEach((net) => {
+      groups[net.key] = (groups[net.key] || []).slice(0, 16);
+    });
+    const height = shopHeight(groups);
+    canvas.height = height;
+    canvas.width = W;
+
+    ctx.fillStyle = "#05070b";
+    ctx.fillRect(0, 0, W, height);
+    const glow = ctx.createRadialGradient(W * 0.72, 40, 20, W * 0.55, 120, 640);
+    glow.addColorStop(0, rgba(accent, 0.28));
+    glow.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = glow;
+    ctx.fillRect(0, 0, W, 520);
+
+    const pad = 44;
+    fillRound(ctx, pad, 36, 64, 64, 16, accent);
+    drawBolt(ctx, pad + 4, 40, 56, onAccent);
+
+    ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
+    ctx.fillStyle = "#fff";
+    ctx.font = "800 34px Montserrat, Outfit, sans-serif";
+    const storeName = String(data.name || "DATA HUB").toUpperCase();
+    ctx.fillText(storeName, pad + 80, 68);
+    ctx.fillStyle = accent;
+    ctx.font = "600 16px Outfit, sans-serif";
+    ctx.fillText((data.tagline || "Affordable. Instant. Reliable.").slice(0, 42), pad + 80, 96);
+
+    fillRound(ctx, W - pad - 200, 44, 200, 48, 24, accent);
+    ctx.fillStyle = onAccent;
+    ctx.font = "800 16px Outfit, sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("Visit store →", W - pad - 100, 68);
+
+    ctx.textAlign = "left";
+    ctx.fillStyle = "#fff";
+    ctx.font = "800 42px Montserrat, Outfit, sans-serif";
+    ctx.textBaseline = "alphabetic";
+    ctx.fillText("DATA BUNDLES – ALL NETWORKS", pad, 180);
+    ctx.fillStyle = "rgba(255,255,255,0.62)";
+    ctx.font = "600 20px Outfit, sans-serif";
+    ctx.fillText("Affordable. Instant. Reliable.", pad, 214);
+
+    const chips = [
+      { label: "WHATSAPP / CALL", value: data.phone || "Add your number", bg: "#0f1720", color: "#fff" },
+      { label: "WORKING HOURS", value: data.hours || "8am - 9pm Each day", bg: "#0f1720", color: "#fff" },
+      { label: "CHAT ON WHATSAPP", value: "Chat now", bg: "#25d366", color: "#06240f" },
+    ];
+    const chipW = (W - pad * 2 - 24) / 3;
+    chips.forEach((chip, i) => {
+      const x = pad + i * (chipW + 12);
+      fillRound(ctx, x, 242, chipW, 96, 18, chip.bg);
+      ctx.fillStyle = "rgba(255,255,255,0.55)";
+      ctx.font = "700 13px Outfit, sans-serif";
+      ctx.textAlign = "left";
+      ctx.fillText(chip.label, x + 18, 272);
+      ctx.fillStyle = chip.color;
+      ctx.font = "800 22px Outfit, sans-serif";
+      fitText(ctx, chip.value, chipW - 36, (s) => `800 ${s}px Outfit, sans-serif`);
+      ctx.fillText(chip.value, x + 18, 308);
+    });
+
+    const visibleNets = SHOP_NETS.filter((net) => (groups[net.key] || []).length);
+    const tabs = visibleNets.length ? visibleNets : SHOP_NETS;
+    const tabW = (W - pad * 2 - 16 * (tabs.length - 1)) / tabs.length;
+    tabs.forEach((net, i) => {
+      const x = pad + i * (tabW + 16);
+      fillRound(ctx, x, 364, tabW, 70, 16, net.btn);
+      ctx.fillStyle = net.btnInk;
+      ctx.font = "800 24px Montserrat, Outfit, sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(net.tab, x + tabW / 2, 399);
+    });
+
+    let y = 470;
+    const cols = 4;
+    const gap = 16;
+    const cardW = (W - pad * 2 - gap * (cols - 1)) / cols;
+    const cardH = 208;
+
+    visibleNets.forEach((net) => {
+      const list = groups[net.key] || [];
+      ctx.textAlign = "left";
+      ctx.textBaseline = "alphabetic";
+      ctx.fillStyle = net.ink;
+      ctx.font = "800 28px Montserrat, Outfit, sans-serif";
+      ctx.fillText(net.title, pad, y);
+      net.key === "mtn" ? drawMtnLogo(ctx, W - pad - 28, y - 12, 24) : net.key === "telecel" ? drawTelecelLogo(ctx, W - pad - 28, y - 12, 24) : drawAtLogo(ctx, W - pad - 28, y - 12, 24);
+      y += 28;
+
+      list.forEach((pkg, i) => {
+        const col = i % cols;
+        const row = Math.floor(i / cols);
+        const x = pad + col * (cardW + gap);
+        const cy = y + row * (cardH + gap);
+        fillRound(ctx, x, cy, cardW, cardH, 18, "#0d1118");
+        strokeRound(ctx, x, cy, cardW, cardH, 18, net.color, 3);
+        ctx.textAlign = "left";
+        ctx.textBaseline = "alphabetic";
+        ctx.fillStyle = "#fff";
+        ctx.font = "800 34px Montserrat, Outfit, sans-serif";
+        ctx.fillText(gbLabel(pkg.gb), x + 16, cy + 48);
+        ctx.fillStyle = net.ink;
+        ctx.font = "800 14px Outfit, sans-serif";
+        ctx.fillText(net.name, x + 16, cy + 74);
+        ctx.fillStyle = "#fff";
+        ctx.font = "800 22px Montserrat, Outfit, sans-serif";
+        ctx.fillText(priceLabel(pkg.price, "ghc").replace(" ", ""), x + 16, cy + 112);
+        fillRound(ctx, x + 14, cy + cardH - 58, cardW - 28, 40, 10, net.btn);
+        ctx.fillStyle = net.btnInk;
+        ctx.font = "800 16px Outfit, sans-serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("BUY NOW", x + cardW / 2, cy + cardH - 38);
+      });
+
+      const rows = Math.ceil(list.length / cols);
+      y += rows * (cardH + gap) + 36;
+    });
+
+    if (!visibleNets.length) {
+      ctx.fillStyle = "rgba(255,255,255,0.7)";
+      ctx.font = "700 24px Outfit, sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText("Set store prices to fill this flyer.", W / 2, 620);
+    }
+
+    fillRound(ctx, pad, height - 92, W - pad * 2, 52, 16, accent);
+    ctx.fillStyle = onAccent;
+    ctx.font = "700 20px Outfit, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    const label = String(data.url || "").replace(/^https?:\/\//, "");
+    fitText(ctx, label, W - pad * 2 - 40, (s) => `700 ${s}px Outfit, sans-serif`);
+    ctx.fillText(label, W / 2, height - 66);
+  }
+
   async function render(canvas, style, data) {
     const ctx = canvas.getContext("2d");
     canvas.width = W;
@@ -472,7 +700,8 @@ window.DataLogsFlyer = (() => {
     if (document.fonts?.ready) await document.fonts.ready;
     if (style === "plug") await drawPlug(ctx, data);
     else if (style === "package") await drawPackage(ctx, data);
-    else await drawHub(ctx, data);
+    else if (style === "hub") await drawHub(ctx, data);
+    else await drawShop(ctx, data, canvas);
     return canvas;
   }
 
@@ -493,5 +722,5 @@ window.DataLogsFlyer = (() => {
     });
   }
 
-  return { render, download, templates: ["hub", "plug", "package"] };
+  return { render, download, templates: ["shop", "hub", "plug", "package"] };
 })();

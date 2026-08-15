@@ -30,6 +30,7 @@
   };
 
   let orderFilter = "all";
+  let packageFilter = "mtn";
   let withdrawFilter = "pending";
   let withdrawalsCache = [];
   let ordersCache = [];
@@ -267,6 +268,48 @@
     };
   }
 
+  function filteredPackages() {
+    if (packageFilter === "all") return packagesCache;
+    return packagesCache.filter((p) => p.network === packageFilter);
+  }
+
+  function renderPackagesTable() {
+    const body = document.getElementById("packages-body");
+    if (!body) return;
+    const list = filteredPackages();
+    if (!packagesCache.length) {
+      body.innerHTML = `<tr><td colspan="6">No packages yet.</td></tr>`;
+      return;
+    }
+    if (!list.length) {
+      body.innerHTML = `<tr><td colspan="6">No packages for this network filter.</td></tr>`;
+      return;
+    }
+    body.innerHTML = list
+      .map((p) => {
+        const agent = Number(p.defaultAgentPrice ?? p.agentPrice);
+        const retail = Number(p.retail);
+        const payload = JSON.stringify(p).replace(/'/g, "&#39;");
+        return `
+      <tr data-package-row="${p.id}">
+        <td>${NETWORKS[p.network]?.name || p.network}</td>
+        <td>${p.gb}</td>
+        <td>
+          <input class="price-inline-input" type="number" min="0" step="0.01" data-pkg-retail="${p.id}" value="${retail}">
+        </td>
+        <td>
+          <input class="price-inline-input" type="number" min="0" step="0.01" data-pkg-agent="${p.id}" value="${agent}">
+        </td>
+        <td>${p.validity || "Non expiry"}</td>
+        <td>
+          <button class="btn btn-ghost" type="button" data-edit-package='${payload}'>Edit</button>
+          <button class="btn btn-ghost" type="button" data-delete-package="${p.id}">Delete</button>
+        </td>
+      </tr>`;
+      })
+      .join("");
+  }
+
   function showLoadError(message) {
     const text = message || "Could not load dashboard data.";
     const overview = document.getElementById("overview-orders");
@@ -309,24 +352,7 @@
           .join("")}</tbody></table></div>`
       : `<div class="empty-state">No orders yet.</div>`;
 
-    document.getElementById("packages-body").innerHTML = packagesCache.length
-      ? packagesCache
-          .map(
-            (p) => `
-      <tr>
-        <td>${NETWORKS[p.network]?.name || p.network}</td>
-        <td>${p.gb}</td>
-        <td>${formatCedi(p.retail)}</td>
-        <td>${formatCedi(p.defaultAgentPrice ?? p.agentPrice)}</td>
-        <td>${p.validity || "Non expiry"}</td>
-        <td>
-          <button class="btn btn-ghost" type="button" data-edit-package='${JSON.stringify(p).replace(/'/g, "&#39;")}'>Edit</button>
-          <button class="btn btn-ghost" type="button" data-delete-package="${p.id}">Delete</button>
-        </td>
-      </tr>`
-          )
-          .join("")
-      : `<tr><td colspan="6">No packages yet.</td></tr>`;
+    renderPackagesTable();
 
     document.getElementById("users-body").innerHTML = usersCache.length
       ? usersCache
@@ -703,6 +729,135 @@
       el.classList.toggle("active", el === btn);
     });
     renderAdminOrders();
+  });
+
+  document.getElementById("package-filters")?.addEventListener("click", (event) => {
+    const btn = event.target.closest("[data-pkgfilter]");
+    if (!btn) return;
+    packageFilter = btn.dataset.pkgfilter;
+    document.querySelectorAll("#package-filters .filter-btn").forEach((el) => {
+      el.classList.toggle("active", el === btn);
+    });
+    const percent = document.getElementById("markup-percent");
+    if (percent) percent.value = "";
+    const warn = document.getElementById("markup-warn");
+    if (warn) warn.hidden = true;
+    const error = document.getElementById("package-bulk-error");
+    const ok = document.getElementById("package-bulk-ok");
+    if (error) error.hidden = true;
+    if (ok) ok.hidden = true;
+    updateAdminMarkupCopy();
+    renderPackagesTable();
+  });
+
+  function roundCedi(value) {
+    return Math.round((Number(value) + Number.EPSILON) * 100) / 100;
+  }
+
+  function updateAdminMarkupCopy() {
+    const el = document.getElementById("markup-info-copy");
+    if (!el) return;
+    const name = packageFilter === "all" ? "All" : NETWORKS[packageFilter]?.name || packageFilter;
+    el.innerHTML = `Markup changes all Public and Agent prices for the selected network. Example: GH₵ 4.10 at +10% becomes GH₵ 4.51. After applying, click Save Prices. Markup only affects the currently selected network (${name}).`;
+  }
+
+  function markupPercentValue() {
+    const raw = String(document.getElementById("markup-percent")?.value || "")
+      .replace("%", "")
+      .replace(/\s/g, "")
+      .trim();
+    if (raw === "" || raw === "+" || raw === "-") return null;
+    const value = Number(raw);
+    return Number.isFinite(value) ? value : null;
+  }
+
+  document.getElementById("markup-apply")?.addEventListener("click", () => {
+    const error = document.getElementById("package-bulk-error");
+    const ok = document.getElementById("package-bulk-ok");
+    const warn = document.getElementById("markup-warn");
+    error.hidden = true;
+    ok.hidden = true;
+    warn.hidden = true;
+    if (packageFilter === "all") {
+      error.hidden = false;
+      error.textContent = "Select MTN, AirtelTigo, or Telecel first. Markup does not run on All.";
+      return;
+    }
+    const percent = markupPercentValue();
+    if (percent == null) {
+      error.hidden = false;
+      error.textContent = "Enter a markup % such as +10 or -3.";
+      return;
+    }
+    const rows = [...document.querySelectorAll("#packages-body [data-package-row]")];
+    if (!rows.length) {
+      error.hidden = false;
+      error.textContent = `No ${NETWORKS[packageFilter]?.name || packageFilter} packages to mark up.`;
+      return;
+    }
+    const rate = percent / 100;
+    rows.forEach((row) => {
+      const id = row.getAttribute("data-package-row");
+      ["data-pkg-retail", "data-pkg-agent"].forEach((attr) => {
+        const input = row.querySelector(`[${attr}="${id}"]`);
+        if (!input) return;
+        const current = Number(input.value);
+        if (!Number.isFinite(current)) return;
+        input.value = String(Math.max(0, roundCedi(current + current * rate)).toFixed(2));
+      });
+    });
+    const name = NETWORKS[packageFilter]?.name || packageFilter;
+    const signed = `${percent > 0 ? "+" : ""}${percent}`;
+    document.getElementById("markup-percent").value = signed;
+    warn.hidden = false;
+    warn.textContent = `This will update all prices for ${name}. Click Save Prices to confirm.`;
+  });
+
+  document.getElementById("package-save-all")?.addEventListener("click", async () => {
+    const error = document.getElementById("package-bulk-error");
+    const ok = document.getElementById("package-bulk-ok");
+    error.hidden = true;
+    ok.hidden = true;
+    const rows = [...document.querySelectorAll("#packages-body [data-package-row]")];
+    if (!rows.length) {
+      error.hidden = false;
+      error.textContent = "No packages to save.";
+      return;
+    }
+    const btn = document.getElementById("package-save-all");
+    if (btn) btn.disabled = true;
+    try {
+      const payloads = rows.map((row) => {
+        const id = row.getAttribute("data-package-row");
+        const pkg = packagesCache.find((p) => p.id === id);
+        if (!pkg) throw new Error("Package list is out of date. Refresh and try again.");
+        const retail = Number(row.querySelector(`[data-pkg-retail="${id}"]`)?.value);
+        const agent = Number(row.querySelector(`[data-pkg-agent="${id}"]`)?.value);
+        if (Number.isNaN(retail) || Number.isNaN(agent) || retail < 0 || agent < 0) {
+          throw new Error(`Invalid price for ${NETWORKS[pkg.network]?.name || pkg.network} ${pkg.gb}GB.`);
+        }
+        return {
+          id: pkg.id,
+          network: pkg.network,
+          gb: pkg.gb,
+          retail_price: retail,
+          agent_price: agent,
+          validity: pkg.validity || "Non expiry",
+          tag: pkg.tag || null,
+          sort_order: pkg.sortOrder ?? pkg.sort_order ?? Math.round(Number(pkg.gb) * 10),
+          active: pkg.active !== false,
+        };
+      });
+      await DataLogsAPI.upsertPackages(payloads);
+      ok.hidden = false;
+      ok.textContent = `Saved ${payloads.length} package price${payloads.length === 1 ? "" : "s"}.`;
+      await refreshAll();
+    } catch (err) {
+      error.hidden = false;
+      error.textContent = err.message || "Could not save package prices.";
+    } finally {
+      if (btn) btn.disabled = false;
+    }
   });
 
   document.getElementById("packages-body").addEventListener("click", async (event) => {
