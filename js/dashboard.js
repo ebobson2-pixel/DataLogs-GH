@@ -1,16 +1,18 @@
 (async function dashboard() {
   const profile = await DataLogsAPI.requireProfile(["agent", "admin"], "auth.html");
   if (!profile) return;
-  if (profile.role !== "admin") {
-    try {
-      const access = await DataLogsAPI.syncAgentActivation();
-      if (access.required && !access.activated) {
-        window.location.href = "activate.html";
-        return;
-      }
-    } catch {
-      /* continue; dashboard still loads if sync fails after auth */
+  if (profile.role === "admin") {
+    window.location.href = "../admin/dashboard.html";
+    return;
+  }
+  try {
+    const access = await DataLogsAPI.syncAgentActivation();
+    if (access.required && !access.activated) {
+      window.location.href = "activate.html";
+      return;
     }
+  } catch {
+    /* continue; dashboard still loads if sync fails after auth */
   }
 
   const shell = document.getElementById("dash-shell");
@@ -38,8 +40,6 @@
   document.getElementById("user-name").textContent = profile.full_name || "Agent";
   document.getElementById("user-email").textContent = profile.email || profile.authEmail || "";
   document.getElementById("user-avatar").textContent = (profile.full_name || "A").trim().charAt(0).toUpperCase();
-  const adminBtn = document.getElementById("open-admin-btn");
-  if (adminBtn) adminBtn.hidden = profile.role !== "admin";
   document.getElementById("account-name").value = profile.full_name || "";
   document.getElementById("account-email").value = profile.email || profile.authEmail || "";
   document.getElementById("account-phone").value = profile.phone || "";

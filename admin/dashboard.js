@@ -9,7 +9,7 @@
 
   let profile;
   try {
-    profile = await DataLogsAPI.requireProfile(["admin"], "../agent/auth.html");
+    profile = await DataLogsAPI.requireProfile(["admin"], "../index.html");
   } catch (err) {
     bootError(err.message || "Could not load the admin session.");
     return;
