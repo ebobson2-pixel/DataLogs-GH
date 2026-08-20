@@ -105,7 +105,8 @@
           </div>
         </div>
         <div class="wrap footer-bottom">
-          <span>© ${new Date().getFullYear()} DataLogs GH.</span>
+          <span>&copy; ${new Date().getFullYear()} DataLogs GH.</span>
+          <span class="footer-powered">POWERED BY FSTech</span>
         </div>
       </footer>
     `;
