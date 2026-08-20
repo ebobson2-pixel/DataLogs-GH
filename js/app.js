@@ -132,30 +132,77 @@
         group.querySelectorAll("[data-filter]").forEach((item) => item.classList.remove("active"));
         btn.classList.add("active");
         const grid = document.querySelector(group.dataset.filterGroup);
-        if (grid) renderPackages(grid, btn.dataset.filter);
+        if (grid) renderPackages(grid, btn.dataset.filter, Number(grid.dataset.limit || 0));
       });
     });
   });
 })();
 
-function renderPackages(grid, network, limit) {
-  const list = packagesFor(network).slice(0, limit || undefined);
-  if (!list.length) {
-    grid.innerHTML = `<p class="hint">No packages available right now.</p>`;
-    return;
-  }
-  grid.innerHTML = list
-    .map(
-      (item) => `
+const NETWORK_ORDER = ["mtn", "airteltigo", "telecel"];
+
+function sortPackages(list) {
+  return [...list].sort((a, b) => {
+    const orderDiff = (Number(a.sort_order) || 0) - (Number(b.sort_order) || 0);
+    if (orderDiff !== 0) return orderDiff;
+    return Number(a.gb) - Number(b.gb);
+  });
+}
+
+function packageCardHTML(item) {
+  return `
       <button class="card package-card package-card--${item.network}" type="button" data-buy="${item.id}" data-tier="retail">
         ${item.tag ? `<span class="tag">${item.tag}</span>` : ""}
         <div class="pill">${NETWORKS[item.network].name}</div>
         <div class="gb">${item.gb}<span> GB</span></div>
-        <div class="meta">${item.validity} · Instant send</div>
+        <div class="meta">${item.validity} &middot; Instant send</div>
         <div class="price">${formatCedi(item.price)}</div>
-        <div class="tap-hint">Tap to buy →</div>
+        <div class="tap-hint">Tap to buy &rarr;</div>
       </button>
-    `
-    )
-    .join("");
+    `;
+}
+
+function renderPackages(grid, network, limit) {
+  const perNetworkLimit = Number(grid.dataset.limitPerNetwork || 0);
+  const useGrouped =
+    network === "all" &&
+    (grid.dataset.grouped !== undefined || grid.id === "all-packages");
+
+  if (useGrouped) {
+    grid.classList.add("package-groups");
+    grid.classList.remove("package-grid");
+    const sections = NETWORK_ORDER.map((netId) => {
+      let list = sortPackages(packagesFor(netId));
+      const cap = perNetworkLimit || limit || 0;
+      if (cap > 0) list = list.slice(0, cap);
+      if (!list.length) return "";
+      const net = NETWORKS[netId];
+      return `
+        <section class="network-packages-section network-packages-section--${netId}">
+          <div class="network-packages-head">
+            <span class="pill">${net.name}</span>
+            <h3>${net.name} bundles</h3>
+            <p class="hint">${net.blurb}</p>
+          </div>
+          <div class="package-grid">
+            ${list.map(packageCardHTML).join("")}
+          </div>
+        </section>
+      `;
+    }).filter(Boolean);
+
+    grid.innerHTML = sections.length
+      ? sections.join("")
+      : `<p class="hint">No packages available right now.</p>`;
+    return;
+  }
+
+  grid.classList.remove("package-groups");
+  grid.classList.add("package-grid");
+  let list = sortPackages(packagesFor(network));
+  if (limit > 0) list = list.slice(0, limit);
+  if (!list.length) {
+    grid.innerHTML = `<p class="hint">No packages available right now.</p>`;
+    return;
+  }
+  grid.innerHTML = list.map(packageCardHTML).join("");
 }

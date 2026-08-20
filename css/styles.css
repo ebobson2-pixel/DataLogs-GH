@@ -648,6 +648,60 @@ html[data-theme="light"] .theme-toggle .icon-moon { display: none; }
   grid-template-columns: repeat(auto-fill, minmax(min(220px, 100%), 1fr));
 }
 
+.package-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 42px;
+}
+
+.network-packages-section {
+  padding-top: 8px;
+}
+
+.network-packages-section + .network-packages-section {
+  border-top: 1px solid var(--line);
+  padding-top: 36px;
+}
+
+.network-packages-head {
+  margin-bottom: 18px;
+  max-width: 42rem;
+}
+
+.network-packages-head h3 {
+  margin: 10px 0 6px;
+  font-family: var(--font-display);
+  font-size: clamp(1.35rem, 2.5vw, 1.75rem);
+  letter-spacing: -0.04em;
+}
+
+.network-packages-head .hint {
+  margin: 0;
+}
+
+.network-packages-section--mtn .network-packages-head .pill {
+  background: rgba(255, 225, 53, 0.18);
+  color: #ffe135;
+}
+
+.network-packages-section--airteltigo .network-packages-head .pill {
+  background: rgba(31, 111, 255, 0.18);
+  color: #6ea8ff;
+}
+
+.network-packages-section--telecel .network-packages-head .pill {
+  background: rgba(225, 29, 46, 0.18);
+  color: #ff6b78;
+}
+
+.home-package-groups {
+  gap: 36px;
+}
+
+.home-package-groups .network-packages-section + .network-packages-section {
+  padding-top: 28px;
+}
+
 .feature-grid,
 .step-grid {
   grid-template-columns: repeat(3, minmax(0, 1fr));
