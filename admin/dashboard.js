@@ -42,9 +42,16 @@
   document.getElementById("user-email").textContent = profile.email || profile.authEmail || "";
   document.getElementById("user-avatar").textContent = (profile.full_name || "A").charAt(0).toUpperCase();
 
+  function setCollapseIcon(collapsed) {
+    var btn = document.getElementById("collapse-btn");
+    if (!btn) return;
+    btn.setAttribute("data-icon", collapsed ? "expand" : "collapse");
+    window.DashIcons?.paint(btn);
+  }
+
   document.getElementById("collapse-btn").addEventListener("click", () => {
     shell.classList.toggle("collapsed");
-    document.getElementById("collapse-btn").textContent = shell.classList.contains("collapsed") ? "»" : "«";
+    setCollapseIcon(shell.classList.contains("collapsed"));
   });
   document.getElementById("mobile-menu-btn").addEventListener("click", () => shell.classList.toggle("mobile-open"));
   document.getElementById("dash-scrim")?.addEventListener("click", () => shell.classList.remove("mobile-open"));
@@ -440,10 +447,10 @@
     DataLogsAPI.providerBalance()
       .then((bal) => {
         if (bal?.ok) document.getElementById("stat-provider").textContent = formatCedi(bal.balance || 0);
-        else document.getElementById("stat-provider").textContent = "GH₵ —";
+        else document.getElementById("stat-provider").textContent = "GH\u20B5 \u2014";
       })
       .catch(() => {
-        document.getElementById("stat-provider").textContent = "GH₵ —";
+        document.getElementById("stat-provider").textContent = "GH\u20B5 \u2014";
       });
   }
 
@@ -567,7 +574,7 @@
         </div>
         <form class="form" id="user-credit-form">
           <div class="split" style="grid-template-columns:1fr 1fr;gap:12px">
-            <label>Credit amount (GH₵)
+            <label>Credit amount (GH\u20B5)
               <input type="number" name="amount" min="0.01" step="0.01" required placeholder="50.00">
             </label>
             <label>Note
@@ -758,7 +765,7 @@
     const el = document.getElementById("markup-info-copy");
     if (!el) return;
     const name = packageFilter === "all" ? "All" : NETWORKS[packageFilter]?.name || packageFilter;
-    el.innerHTML = `Markup changes all Public and Agent prices for the selected network. Example: GH₵ 4.10 at +10% becomes GH₵ 4.51. After applying, click Save Prices. Markup only affects the currently selected network (${name}).`;
+    el.innerHTML = "Markup changes all Public and Agent prices for the selected network. Example: GH\u20B5 4.10 at +10% becomes GH\u20B5 4.51. After applying, click Save Prices. Markup only affects the currently selected network (" + name + ").";
   }
 
   function markupPercentValue() {

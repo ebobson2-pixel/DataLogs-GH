@@ -312,6 +312,24 @@
   text-align: center;
   flex-shrink: 0;
   font-size: 0.95rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.side-ico svg,
+.collapse-btn svg,
+.mobile-menu-btn svg {
+  width: 18px;
+  height: 18px;
+  display: block;
+}
+
+.collapse-btn,
+.mobile-menu-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .side-foot {

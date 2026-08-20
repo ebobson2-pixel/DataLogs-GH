@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../css/styles.css?v=13">
-  <link rel="stylesheet" href="../css/agent.css?v=12">
+  <link rel="stylesheet" href="../css/agent.css?v=13">
 </head>
 <body class="dash-body">
   <div class="dash-shell" id="dash-shell">
@@ -21,27 +21,27 @@
           <span class="logo-mark" aria-hidden="true"><img src="../assets/logo-mark.svg" alt="" width="28" height="28"></span>
           <span class="brand-text">Admin <span>GH</span></span>
         </a>
-        <button class="collapse-btn" id="collapse-btn" type="button" title="Collapse sidebar" aria-label="Collapse sidebar">Â«</button>
+        <button class="collapse-btn" id="collapse-btn" type="button" title="Collapse sidebar" aria-label="Collapse sidebar" data-icon="collapse"></button>
       </div>
       <nav class="side-nav">
-        <button class="side-link active" type="button" data-panel="overview"><span class="side-ico">âŒ‚</span><span class="side-label">Overview</span></button>
-        <button class="side-link" type="button" data-panel="packages"><span class="side-ico">â–£</span><span class="side-label">Packages</span></button>
-        <button class="side-link" type="button" data-panel="orders"><span class="side-ico">â˜°</span><span class="side-label">Orders</span></button>
-        <button class="side-link" type="button" data-panel="users"><span class="side-ico">â˜º</span><span class="side-label">Users</span></button>
-        <button class="side-link" type="button" data-panel="stores"><span class="side-ico">â—Ž</span><span class="side-label">Stores</span></button>
-        <button class="side-link" type="button" data-panel="api"><span class="side-ico">{ }</span><span class="side-label">API</span></button>
-        <button class="side-link" type="button" data-panel="withdrawals"><span class="side-ico">â†‘</span><span class="side-label">Withdrawals</span></button>
-        <button class="side-link" type="button" data-panel="settings"><span class="side-ico">âš™</span><span class="side-label">Settings</span></button>
+        <button class="side-link active" type="button" data-panel="overview"><span class="side-ico" data-icon="overview" aria-hidden="true"></span><span class="side-label">Overview</span></button>
+        <button class="side-link" type="button" data-panel="packages"><span class="side-ico" data-icon="store" aria-hidden="true"></span><span class="side-label">Packages</span></button>
+        <button class="side-link" type="button" data-panel="orders"><span class="side-ico" data-icon="orders" aria-hidden="true"></span><span class="side-label">Orders</span></button>
+        <button class="side-link" type="button" data-panel="users"><span class="side-ico" data-icon="account" aria-hidden="true"></span><span class="side-label">Users</span></button>
+        <button class="side-link" type="button" data-panel="stores"><span class="side-ico" data-icon="wholesale" aria-hidden="true"></span><span class="side-label">Stores</span></button>
+        <button class="side-link" type="button" data-panel="api"><span class="side-ico" data-icon="developer" aria-hidden="true"></span><span class="side-label">API</span></button>
+        <button class="side-link" type="button" data-panel="withdrawals"><span class="side-ico" data-icon="withdrawal" aria-hidden="true"></span><span class="side-label">Withdrawals</span></button>
+        <button class="side-link" type="button" data-panel="settings"><span class="side-ico" data-icon="settings" aria-hidden="true"></span><span class="side-label">Settings</span></button>
       </nav>
       <div class="side-foot">
         <div class="side-user">
           <div class="avatar" id="user-avatar">A</div>
           <div class="side-user-meta">
             <strong id="user-name">Admin</strong>
-            <span id="user-email">â€”</span>
+            <span id="user-email">&mdash;</span>
           </div>
         </div>
-        <button class="side-link" type="button" id="logout-btn"><span class="side-ico">â†’</span><span class="logout-label">Sign out</span></button>
+        <button class="side-link" type="button" id="logout-btn"><span class="side-ico" data-icon="logout" aria-hidden="true"></span><span class="logout-label">Sign out</span></button>
       </div>
     </aside>
     <div class="dash-scrim" id="dash-scrim"></div>
@@ -49,7 +49,7 @@
     <div class="dash-main">
       <header class="dash-topbar">
         <div style="display:flex;align-items:center;gap:12px">
-          <button class="mobile-menu-btn" id="mobile-menu-btn" type="button" aria-label="Open menu">â˜°</button>
+          <button class="mobile-menu-btn" id="mobile-menu-btn" type="button" aria-label="Open menu" data-icon="menu"></button>
           <div>
             <h1 id="panel-title">Overview</h1>
             <p id="panel-sub">Control center</p>
@@ -67,13 +67,13 @@
             <article class="stat-card"><span>Users</span><strong id="stat-users">0</strong></article>
             <article class="stat-card"><span>Packages</span><strong id="stat-packages">0</strong></article>
             <article class="stat-card"><span>Orders</span><strong id="stat-orders">0</strong></article>
-            <article class="stat-card"><span>Revenue</span><strong id="stat-revenue">GHâ‚µ 0.00</strong></article>
-            <article class="stat-card"><span>Provider wallet</span><strong id="stat-provider">GHâ‚µ â€”</strong></article>
+            <article class="stat-card"><span>Revenue</span><strong id="stat-revenue">GH&#8373; 0.00</strong></article>
+            <article class="stat-card"><span>Provider wallet</span><strong id="stat-provider">GH&#8373; &mdash;</strong></article>
             <article class="stat-card"><span>Needs retry</span><strong id="stat-retry">0</strong></article>
           </div>
           <div class="panel-card">
             <h3>Latest orders</h3>
-            <div id="overview-orders" class="empty-state">Loadingâ€¦</div>
+            <div id="overview-orders" class="empty-state">Loading&hellip;</div>
           </div>
         </section>
 
@@ -91,8 +91,8 @@
                   </select>
                 </label>
                 <label>Size (GB)<input type="number" name="gb" min="0.1" step="0.1" required placeholder="e.g. 5"></label>
-                <label>Public price (GHâ‚µ)<input type="number" name="retail_price" min="0" step="0.01" required></label>
-                <label>Agent price (GHâ‚µ)<input type="number" name="agent_price" min="0" step="0.01" required></label>
+                <label>Public price (GH&#8373;)<input type="number" name="retail_price" min="0" step="0.01" required></label>
+                <label>Agent price (GH&#8373;)<input type="number" name="agent_price" min="0" step="0.01" required></label>
               </div>
               <p class="hint" style="margin-top:10px">Validity is always set to <strong>Non expiry</strong>. Active status, sort order and tags are applied automatically.</p>
               <p class="error" id="package-error" hidden></p>
@@ -121,7 +121,7 @@
             <div class="markup-info">
               <p class="markup-info-title">USE Markup if you feel lazy and do not want to edit each GB price one by one</p>
               <p class="markup-info-sub">Markup Explanation (Remember to click save after applying markup)</p>
-              <p id="markup-info-copy">Markup changes all Public and Agent prices for the selected network. Example: GH₵ 4.10 at +10% becomes GH₵ 4.51. After applying, click Save Prices. Markup only affects the currently selected network (MTN).</p>
+              <p id="markup-info-copy">Markup changes all Public and Agent prices for the selected network. Example: GH&#8373; 4.10 at +10% becomes GH&#8373; 4.51. After applying, click Save Prices. Markup only affects the currently selected network (MTN).</p>
             </div>
             <p class="markup-formula-line">Formula: Base Price + (Base Price × %). Pick a network first — All is view-only.</p>
             <p class="markup-warn" id="markup-warn" hidden></p>
@@ -170,7 +170,7 @@
                     <th></th>
                   </tr>
                 </thead>
-                <tbody id="orders-body"><tr><td colspan="12">Loadingâ€¦</td></tr></tbody>
+                <tbody id="orders-body"><tr><td colspan="12">Loading&hellip;</td></tr></tbody>
               </table>
             </div>
           </div>
@@ -181,7 +181,7 @@
             <div class="panel-card">
               <h3>Users & roles</h3>
               <p class="custom-price-hint">Open a user to see their wallet, orders, block/promote controls, and custom pricing.</p>
-              <div id="users-body" class="user-card-list"><div class="empty-state">Loadingâ€¦</div></div>
+              <div id="users-body" class="user-card-list"><div class="empty-state">Loading&hellip;</div></div>
             </div>
           </div>
           <div id="user-detail-view" class="is-hidden">
@@ -199,7 +199,7 @@
                     <th>Store</th><th>Slug</th><th>Agent</th><th>Published</th><th>Updated</th>
                   </tr>
                 </thead>
-                <tbody id="stores-body"><tr><td colspan="5">Loadingâ€¦</td></tr></tbody>
+                <tbody id="stores-body"><tr><td colspan="5">Loading&hellip;</td></tr></tbody>
               </table>
             </div>
           </div>
@@ -216,7 +216,7 @@
           </div>
           <div class="panel-card">
             <h3>Issue an API key</h3>
-            <p class="custom-price-hint">Create a key for an agent. The secret is shown once â€” copy it and send it to them securely.</p>
+            <p class="custom-price-hint">Create a key for an agent. The secret is shown once &mdash; copy it and send it to them securely.</p>
             <form class="form" id="admin-api-key-form">
               <div class="split" style="grid-template-columns:1.4fr 1fr;gap:12px">
                 <label>Agent
@@ -326,7 +326,7 @@
             <p class="custom-price-hint">The WhatsApp channel button appears on the public site once a link is saved. Support contact is shown to agents on their dashboard.</p>
             <form class="form" id="settings-form">
               <label>WhatsApp channel URL
-                <input type="url" name="whatsapp_channel_url" id="setting-wa" placeholder="https://whatsapp.com/channel/â€¦">
+                <input type="url" name="whatsapp_channel_url" id="setting-wa" placeholder="https://whatsapp.com/channel/&hellip;">
               </label>
               <label>Support label
                 <input type="text" name="support_label" id="setting-support-label" placeholder="Support" maxlength="40">
@@ -334,7 +334,7 @@
               <label>Support contact
                 <input type="text" name="support_contact" id="setting-support" placeholder="Phone, WhatsApp, or email">
               </label>
-              <label>Withdrawal threshold (GHâ‚µ)
+              <label>Withdrawal threshold (GH&#8373;)
                 <input type="number" name="withdrawal_threshold" id="setting-withdraw-threshold" min="0" step="0.01" placeholder="10">
               </label>
               <p class="custom-price-hint">Agents cannot request less than this amount.</p>
@@ -342,7 +342,7 @@
                 <input type="checkbox" id="setting-activation-enabled">
                 <span>Require agent activation fee</span>
               </label>
-              <label>Activation fee (GHâ‚µ)
+              <label>Activation fee (GH&#8373;)
                 <input type="number" name="agent_activation_fee" id="setting-activation-fee" min="0" step="0.01" placeholder="50">
               </label>
               <p class="custom-price-hint">When this is on, new agents must pay before they can open the dashboard. Turn it off to make signup free.</p>
@@ -361,6 +361,7 @@
   <script src="../js/data.js"></script>
   <script src="../js/api.js?v=10"></script>
   <script src="../js/theme.js"></script>
-  <script src="dashboard.js?v=11"></script>
+  <script src="../js/dash-icons.js?v=1"></script>
+  <script src="dashboard.js?v=12"></script>
 </body>
 </html>

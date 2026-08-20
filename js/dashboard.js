@@ -78,16 +78,23 @@
 
   DataLogsAPI.getSiteSettings().then(paintSupport).catch(() => {});
 
+  function setCollapseIcon(collapsed) {
+    var btn = document.getElementById("collapse-btn");
+    if (!btn) return;
+    btn.setAttribute("data-icon", collapsed ? "expand" : "collapse");
+    window.DashIcons?.paint(btn);
+  }
+
   document.getElementById("collapse-btn").addEventListener("click", () => {
     shell.classList.toggle("collapsed");
     const collapsed = shell.classList.contains("collapsed");
-    document.getElementById("collapse-btn").textContent = collapsed ? "»" : "«";
+    setCollapseIcon(collapsed);
     localStorage.setItem("datalogs_sidebar", collapsed ? "1" : "0");
   });
 
   if (localStorage.getItem("datalogs_sidebar") === "1" && window.innerWidth > 980) {
     shell.classList.add("collapsed");
-    document.getElementById("collapse-btn").textContent = "»";
+    setCollapseIcon(true);
   }
 
   document.getElementById("mobile-menu-btn").addEventListener("click", () => {
@@ -425,7 +432,7 @@
     const el = document.getElementById("markup-info-copy");
     if (!el) return;
     const name = selectedNetworkName();
-    el.innerHTML = `Markup changes all your selling prices for the selected network based on the percentage you want. Markup is applied to the <strong>Base Price</strong> (your cost). For example, if Base Price = GH₵ 4.10, +10% gives GH₵ 4.51. After applying, you must click Save Prices to keep the changes. The markup affects only the currently selected network (${name}).`;
+    el.innerHTML = "Markup changes all your selling prices for the selected network based on the percentage you want. Markup is applied to the <strong>Base Price</strong> (your cost). For example, if Base Price = GH\u20B5 4.10, +10% gives GH\u20B5 4.51. After applying, you must click Save Prices to keep the changes. The markup affects only the currently selected network (" + name + ").";
   }
 
   function markupPercentValue() {
@@ -450,7 +457,7 @@
     if (!pkg || !input || !profitEl) return;
     const sell = Number(input.value);
     if (!Number.isFinite(sell)) {
-      profitEl.textContent = "—";
+      profitEl.textContent = "\u2014";
       return;
     }
     const profit = roundCedi(sell - pkg.agentPrice);
@@ -961,12 +968,12 @@
           <div>
             <div class="pill">Wallet top-up</div>
             <h3 id="topup-title">How much do you want to add?</h3>
-            <p class="hint">Minimum GH₵ 5 · Maximum GH₵ 5,000</p>
+            <p class="hint">Minimum GH\u20B5 5 \u00B7 Maximum GH\u20B5 5,000</p>
           </div>
           <button class="close-btn" type="button" data-close-topup aria-label="Close">×</button>
         </div>
         <form class="form pay-fields-in" id="topup-amount-form">
-          <label>Amount (GH₵)
+          <label>Amount (GH\u20B5)
             <input type="number" id="topup-amount" min="5" step="0.01" required placeholder="50" value="${escapeHtml(String(topup.amount || ""))}">
           </label>
           <label>Email for receipt
@@ -984,7 +991,7 @@
         const error = topupPopup.querySelector("#topup-popup-error");
         if (!Number.isFinite(amount) || amount < 5) {
           error.hidden = false;
-          error.textContent = "Enter at least GH₵ 5.";
+          error.textContent = "Enter at least GH\u20B5 5.";
           return;
         }
         topup.amount = amount;

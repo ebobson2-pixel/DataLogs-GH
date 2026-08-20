@@ -4,12 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <script>try{var d=document.documentElement,t=localStorage.getItem("datalogs_theme"),a=localStorage.getItem("datalogs_accent");if(t==="light")d.setAttribute("data-theme","light");if(a)d.setAttribute("data-accent",a);}catch(e){}</script>
-  <title>Agent dashboard â€” DataLogs GH</title>
+  <title>Agent dashboard &mdash; DataLogs GH</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&family=Montserrat:wght@600;700;800;900&family=Outfit:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../css/styles.css?v=13">
-  <link rel="stylesheet" href="../css/agent.css?v=12">
+  <link rel="stylesheet" href="../css/agent.css?v=13">
 </head>
 <body class="dash-body">
   <div class="dash-shell" id="dash-shell">
@@ -19,21 +19,21 @@
           <span class="logo-mark" aria-hidden="true"><img src="../assets/logo-mark.svg" alt="" width="28" height="28"></span>
           <span class="brand-text">DataLogs <span>GH</span></span>
         </a>
-        <button class="collapse-btn" id="collapse-btn" type="button" title="Collapse sidebar" aria-label="Collapse sidebar">Â«</button>
+        <button class="collapse-btn" id="collapse-btn" type="button" title="Collapse sidebar" aria-label="Collapse sidebar" data-icon="collapse"></button>
       </div>
 
       <nav class="side-nav">
-        <button class="side-link active" type="button" data-panel="overview"><span class="side-ico">âŒ‚</span><span class="side-label">Overview</span></button>
-        <button class="side-link" type="button" data-panel="store"><span class="side-ico">â–£</span><span class="side-label">Mini store</span></button>
-        <button class="side-link" type="button" data-panel="flyer"><span class="side-ico">â–¤</span><span class="side-label">Flyers</span></button>
-        <button class="side-link" type="button" data-panel="pricing"><span class="side-ico">ï¼‹</span><span class="side-label">Store pricing</span></button>
-        <button class="side-link" type="button" data-panel="wholesale"><span class="side-ico">â—Ž</span><span class="side-label">Buy wholesale</span></button>
-        <button class="side-link" type="button" data-panel="orders"><span class="side-ico">â˜°</span><span class="side-label">Orders</span></button>
-        <button class="side-link" type="button" data-panel="customers"><span class="side-ico">ðŸ‘¥</span><span class="side-label">Customers</span></button>
-        <button class="side-link" type="button" data-panel="wallet"><span class="side-ico">â‚µ</span><span class="side-label">My Wallet</span></button>
-        <button class="side-link" type="button" data-panel="withdrawal"><span class="side-ico">â†‘</span><span class="side-label">Withdrawal</span></button>
-        <button class="side-link" type="button" data-panel="developer"><span class="side-ico">{ }</span><span class="side-label">API keys</span></button>
-        <button class="side-link" type="button" data-panel="account"><span class="side-ico">â˜º</span><span class="side-label">Account</span></button>
+        <button class="side-link active" type="button" data-panel="overview"><span class="side-ico" data-icon="overview" aria-hidden="true"></span><span class="side-label">Overview</span></button>
+        <button class="side-link" type="button" data-panel="store"><span class="side-ico" data-icon="store" aria-hidden="true"></span><span class="side-label">Mini store</span></button>
+        <button class="side-link" type="button" data-panel="flyer"><span class="side-ico" data-icon="flyer" aria-hidden="true"></span><span class="side-label">Flyers</span></button>
+        <button class="side-link" type="button" data-panel="pricing"><span class="side-ico" data-icon="pricing" aria-hidden="true"></span><span class="side-label">Store pricing</span></button>
+        <button class="side-link" type="button" data-panel="wholesale"><span class="side-ico" data-icon="wholesale" aria-hidden="true"></span><span class="side-label">Buy wholesale</span></button>
+        <button class="side-link" type="button" data-panel="orders"><span class="side-ico" data-icon="orders" aria-hidden="true"></span><span class="side-label">Orders</span></button>
+        <button class="side-link" type="button" data-panel="customers"><span class="side-ico" data-icon="customers" aria-hidden="true"></span><span class="side-label">Customers</span></button>
+        <button class="side-link" type="button" data-panel="wallet"><span class="side-ico" data-icon="wallet" aria-hidden="true"></span><span class="side-label">My Wallet</span></button>
+        <button class="side-link" type="button" data-panel="withdrawal"><span class="side-ico" data-icon="withdrawal" aria-hidden="true"></span><span class="side-label">Withdrawal</span></button>
+        <button class="side-link" type="button" data-panel="developer"><span class="side-ico" data-icon="developer" aria-hidden="true"></span><span class="side-label">API keys</span></button>
+        <button class="side-link" type="button" data-panel="account"><span class="side-ico" data-icon="account" aria-hidden="true"></span><span class="side-label">Account</span></button>
       </nav>
 
       <div class="side-foot">
@@ -41,10 +41,10 @@
           <div class="avatar" id="user-avatar">A</div>
           <div class="side-user-meta">
             <strong id="user-name">Agent</strong>
-            <span id="user-email">â€”</span>
+            <span id="user-email">&mdash;</span>
           </div>
         </div>
-        <button class="side-link" type="button" id="logout-btn"><span class="side-ico">â†’</span><span class="logout-label">Sign out</span></button>
+        <button class="side-link" type="button" id="logout-btn"><span class="side-ico" data-icon="logout" aria-hidden="true"></span><span class="logout-label">Sign out</span></button>
       </div>
     </aside>
     <div class="dash-scrim" id="dash-scrim"></div>
@@ -52,7 +52,7 @@
     <div class="dash-main">
       <header class="dash-topbar">
         <div style="display:flex;align-items:center;gap:12px">
-          <button class="mobile-menu-btn" id="mobile-menu-btn" type="button" aria-label="Open menu">â˜°</button>
+          <button class="mobile-menu-btn" id="mobile-menu-btn" type="button" aria-label="Open menu" data-icon="menu"></button>
           <div>
             <h1 id="panel-title">Overview</h1>
             <p id="panel-sub">Live sales, profit, and traffic</p>
@@ -69,7 +69,7 @@
         <section class="dash-panel active" data-panel-view="overview">
           <div class="overview-livebar">
             <div class="live-badge"><span class="live-dot"></span> Live</div>
-            <p class="overview-updated" id="overview-updated">Connectingâ€¦</p>
+            <p class="overview-updated" id="overview-updated">Connecting&hellip;</p>
           </div>
 
           <div class="panel-card support-card" id="overview-support" hidden>
@@ -98,12 +98,12 @@
             </article>
             <article class="stat-card">
               <span>Profit earned</span>
-              <strong>GHâ‚µ <span id="stat-profit" data-run="cedi">0.00</span></strong>
+              <strong>GH&#8373; <span id="stat-profit" data-run="cedi">0.00</span></strong>
               <svg class="sparkline" id="spark-profit" viewBox="0 0 120 36" aria-hidden="true"></svg>
             </article>
             <article class="stat-card">
               <span>Wallet</span>
-              <strong>GHâ‚µ <span id="stat-saved" data-run="cedi">0.00</span></strong>
+              <strong>GH&#8373; <span id="stat-saved" data-run="cedi">0.00</span></strong>
               <small>withdrawable now</small>
             </article>
             <article class="stat-card">
@@ -118,7 +118,7 @@
               <div class="chart-head">
                 <div>
                   <h3>Sales this week</h3>
-                  <p class="hint">Store vs wholesale Â· last 7 days</p>
+                  <p class="hint">Store vs wholesale &middot; last 7 days</p>
                 </div>
                 <div class="chart-legend" id="sales-legend"></div>
               </div>
@@ -255,7 +255,7 @@
             <div class="markup-info">
               <p class="markup-info-title">USE Markup if you feel lazy and do not want to edit each GB price one by one</p>
               <p class="markup-info-sub">Markup Explanation (Remember to click save after applying markup)</p>
-              <p id="markup-info-copy">Markup changes all your selling prices for the selected network based on the percentage you want. Markup is applied to the <strong>Base Price</strong> (your cost). For example, if Base Price = GH₵ 4.10, +10% gives GH₵ 4.51. After applying, you must click Save Prices to keep the changes. The markup affects only the currently selected network (MTN).</p>
+              <p id="markup-info-copy">Markup changes all your selling prices for the selected network based on the percentage you want. Markup is applied to the <strong>Base Price</strong> (your cost). For example, if Base Price = GH&#8373; 4.10, +10% gives GH&#8373; 4.51. After applying, you must click Save Prices to keep the changes. The markup affects only the currently selected network (MTN).</p>
             </div>
             <p class="markup-formula-line">Your profit = Selling Price − Base Price. Use markup to increase all prices by a % (based on base price).</p>
             <p class="markup-warn" id="markup-warn" hidden></p>
@@ -345,7 +345,7 @@
 
         <section class="dash-panel" data-panel-view="wallet">
           <div class="stat-grid stat-grid-2">
-            <article class="stat-card"><span>Available balance</span><strong id="wallet-balance">GHâ‚µ 0.00</strong></article>
+            <article class="stat-card"><span>Available balance</span><strong id="wallet-balance">GH&#8373; 0.00</strong></article>
             <article class="stat-card"><span>Lifetime</span><strong id="wallet-tx-count">0</strong></article>
           </div>
           <div class="panel-card">
@@ -382,7 +382,7 @@
             <h3>Request withdrawal</h3>
             <p class="hint" id="withdraw-hint">Withdraw your wallet profits to Mobile Money. Admin must approve before money leaves your balance.</p>
             <form class="form" id="withdraw-form" style="margin-top:14px;max-width:420px">
-              <label>Amount (GHâ‚µ)<input type="number" name="amount" id="withdraw-amount" min="1" step="0.01" required placeholder="50"></label>
+              <label>Amount (GH&#8373;)<input type="number" name="amount" id="withdraw-amount" min="1" step="0.01" required placeholder="50"></label>
               <label>MoMo network
                 <select name="network" id="withdraw-network" required>
                   <option value="mtn">MTN MoMo</option>
@@ -473,6 +473,7 @@
   <script src="../js/paystack.js?v=1"></script>
   <script src="../js/checkout.js?v=5"></script>
   <script src="../js/flyer.js?v=3"></script>
-  <script src="../js/dashboard.js?v=19"></script>
+  <script src="../js/dash-icons.js?v=1"></script>
+  <script src="../js/dashboard.js?v=20"></script>
 </body>
 </html>

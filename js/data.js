@@ -20,7 +20,7 @@ const NETWORKS = {
 };
 
 function formatCedi(amount) {
-  return `GH₵ ${Number(amount).toFixed(2)}`;
+  return "GH\u20B5 " + Number(amount).toFixed(2);
 }
 
 function mapPackage(row) {
