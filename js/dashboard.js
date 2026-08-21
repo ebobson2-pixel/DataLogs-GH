@@ -351,6 +351,7 @@
         name: form.get("name"),
         slug: form.get("slug"),
         tagline: form.get("tagline"),
+        accent_color: document.getElementById("store-accent-input")?.value || "sea",
         networks,
         published: form.get("published") === "on",
       });
@@ -610,12 +611,36 @@
     if (type === "success") success.textContent = message;
   }
 
+  function paintStoreAccentSwatches(selectedId) {
+    const wrap = document.getElementById("store-accent-swatches");
+    const input = document.getElementById("store-accent-input");
+    if (!wrap || !window.DataLogsTheme) return;
+    const selected = selectedId || input?.value || "sea";
+    wrap.innerHTML = window.DataLogsTheme.ACCENTS.map(
+      (a) =>
+        `<button type="button" class="store-accent-swatch${a.id === selected ? " active" : ""}" data-store-accent="${a.id}" style="background:${a.hex}" aria-label="${a.label}" aria-pressed="${a.id === selected}"></button>`
+    ).join("");
+    if (input) input.value = selected;
+    wrap.querySelectorAll("[data-store-accent]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        wrap.querySelectorAll(".store-accent-swatch").forEach((b) => {
+          b.classList.remove("active");
+          b.setAttribute("aria-pressed", "false");
+        });
+        btn.classList.add("active");
+        btn.setAttribute("aria-pressed", "true");
+        if (input) input.value = btn.dataset.storeAccent;
+      });
+    });
+  }
+
   async function refreshStoreUI() {
     storeCache = await DataLogsAPI.getStoreByAgent(profile.id);
     const openBtn = document.getElementById("open-store-btn");
     if (!storeCache) {
       document.getElementById("share-url").value = "";
       openBtn.href = "#";
+      paintStoreAccentSwatches("sea");
       return;
     }
     storeForm.name.value = storeCache.name;
@@ -625,6 +650,7 @@
     storeForm.querySelectorAll("[name=networks]").forEach((box) => {
       box.checked = (storeCache.networks || []).includes(box.value);
     });
+    paintStoreAccentSwatches(storeCache.accent_color || "sea");
     const url = DataLogsAPI.storePublicUrl(storeCache.slug);
     document.getElementById("share-url").value = url;
     document.getElementById("preview-link").href = url;
@@ -1441,7 +1467,7 @@
       hours: flyerHours?.value || "8am - 9pm Each day",
       url: storeLink(slug),
       packages: flyerPackages(),
-      accent: websiteAccent(),
+      accent: window.DataLogsTheme?.accentHex?.(store?.accent_color) || websiteAccent(),
     };
   }
 

@@ -1,5 +1,15 @@
 (function storePage() {
   const NETWORK_ORDER = ["mtn", "airteltigo", "telecel"];
+  const STORE_ACCENTS = [
+    { id: "sea", hex: "#2ec8e6" },
+    { id: "gold", hex: "#f5c400" },
+    { id: "lime", hex: "#a3e635" },
+    { id: "violet", hex: "#a78bfa" },
+    { id: "coral", hex: "#fb7185" },
+    { id: "orange", hex: "#fb923c" },
+    { id: "mint", hex: "#2dd4bf" },
+    { id: "sky", hex: "#38bdf8" },
+  ];
   const NET_UI = {
     mtn: { tab: "MTN", title: "MTN Data Bundles", chip: "Yellow SIM · 024, 025, 053+" },
     airteltigo: { tab: "AirtelTigo", title: "AirtelTigo Data Bundles", chip: "AT · 026, 027, 056+" },
@@ -80,6 +90,44 @@
   function setText(id, text) {
     const el = document.getElementById(id);
     if (el) el.textContent = text;
+  }
+
+  function hexToRgb(hex) {
+    const raw = String(hex || "").replace("#", "");
+    const h = raw.length === 3 ? raw.split("").map((c) => c + c).join("") : raw;
+    const n = parseInt(h, 16);
+    return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
+  }
+
+  function applyStoreAccent(accentId) {
+    const accent =
+      window.DataLogsTheme?.accentById?.(accentId) ||
+      STORE_ACCENTS.find((a) => a.id === accentId) ||
+      STORE_ACCENTS[0];
+    const hex = accent.hex;
+    const rgb = hexToRgb(hex);
+    document.documentElement.style.setProperty("--store-accent", hex);
+    document.documentElement.style.setProperty("--store-accent-rgb", `${rgb.r}, ${rgb.g}, ${rgb.b}`);
+    document.documentElement.setAttribute("data-store-accent", accent.id || accentId || "sea");
+  }
+
+  function bindWhatsApp(wa, agentPhone) {
+    const waTop = document.getElementById("store-wa-top");
+    const quickLink = document.getElementById("store-quick-link");
+    if (wa && waTop) {
+      waTop.href = wa;
+      waTop.hidden = false;
+    }
+    if (quickLink) {
+      if (wa) {
+        quickLink.classList.add("is-clickable");
+        quickLink.addEventListener("click", () => window.open(wa, "_blank", "noopener,noreferrer"));
+      } else {
+        const cta = document.getElementById("store-wa-chip-label");
+        if (cta) cta.textContent = "MoMo & Card checkout";
+      }
+    }
+    if (agentPhone) setText("store-phone-chip", agentPhone);
   }
 
   async function init() {
@@ -172,47 +220,19 @@
 
     sessionStorage.removeItem(`datalogs_store_reloads_${slug}`);
     window.__STORE_ID = store.id;
+    applyStoreAccent(store.accent_color || "sea");
 
     const agentName = store.profiles?.full_name || "";
     const agentPhone = store.profiles?.phone || "";
-    const initials =
-      store.name
-        .trim()
-        .split(/\s+/)
-        .slice(0, 2)
-        .map((w) => w[0])
-        .join("")
-        .toUpperCase() || "AS";
 
     document.title = `${store.name} | DataLogs GH`;
     setText("store-name", store.name);
     setText("store-top-name", store.name);
-    setText("store-tagline", store.tagline || "Affordable. Instant. Reliable.");
-    setText("store-initials", initials);
-    setText("store-hero-sub", store.tagline || "Tap a bundle, enter your number, pay with MoMo or card.");
+    setText("store-tagline", store.tagline || "Faster and cheaper.");
+    setText("store-brand-sub", store.tagline || "Affordable data bundles");
 
     const wa = whatsAppHref(agentPhone);
-    const waChip = document.getElementById("store-wa-chip");
-    const waTop = document.getElementById("store-wa-top");
-    if (wa && waTop) {
-      waTop.href = wa;
-      waTop.hidden = false;
-    }
-    if (waChip) {
-      if (wa) {
-        waChip.style.cursor = "pointer";
-        waChip.addEventListener("click", () => window.open(wa, "_blank", "noopener,noreferrer"));
-      } else {
-        waChip.classList.remove("store-chip--wa");
-        const label = document.getElementById("store-wa-chip-label");
-        const value = document.getElementById("store-wa-chip-value");
-        if (label) label.textContent = "Secure payment";
-        if (value) value.textContent = "MoMo & Card";
-      }
-    }
-    if (agentPhone) {
-      setText("store-phone-chip", agentPhone);
-    }
+    bindWhatsApp(wa, agentPhone);
 
     const networks = store.networks || NETWORK_ORDER;
     setText("store-net-count", String(networks.length));

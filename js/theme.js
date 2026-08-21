@@ -162,12 +162,22 @@
     start();
   }
 
+  function accentById(id) {
+    return ACCENTS.find((a) => a.id === id) || ACCENTS[0];
+  }
+
+  function accentHex(id) {
+    return accentById(id).hex;
+  }
+
   global.DataLogsTheme = {
     ACCENTS,
     currentTheme,
     currentAccent,
     applyTheme,
     applyAccent,
+    accentById,
+    accentHex,
     toolsHTML,
     bind,
     mount,

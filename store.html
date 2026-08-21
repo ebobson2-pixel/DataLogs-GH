@@ -9,20 +9,24 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css?v=15">
-  <link rel="stylesheet" href="css/store.css?v=9">
+  <link rel="stylesheet" href="css/store.css?v=10">
+  <link rel="icon" href="assets/logo-mark.svg" type="image/svg+xml">
 </head>
 <body class="store-body">
+  <div class="store-accent-bar" aria-hidden="true"></div>
+
   <header class="store-header">
     <div class="store-header-inner">
       <a class="store-brand" href="#" id="store-brand-link">
-        <span class="store-badge" id="store-initials">AS</span>
-        <div>
+        <img class="store-logo" src="assets/logo-mark.svg" alt="" width="26" height="26">
+        <div class="store-brand-text">
           <strong id="store-top-name">Agent store</strong>
-          <span>Data reseller</span>
+          <span id="store-brand-sub">Affordable data bundles</span>
         </div>
       </a>
-      <div class="store-header-actions">
-        <a class="store-wa-btn" id="store-wa-top" href="#" target="_blank" rel="noopener noreferrer" hidden>Chat on WhatsApp</a>
+      <div class="store-header-end">
+        <span class="store-platform-mark">DataLogs <span>GH</span></span>
+        <a class="store-wa-btn" id="store-wa-top" href="#" target="_blank" rel="noopener noreferrer" hidden>WhatsApp</a>
       </div>
     </div>
   </header>
@@ -30,40 +34,51 @@
   <section class="store-hero">
     <div class="store-hero-glow" aria-hidden="true"></div>
     <div class="store-hero-inner">
-      <p class="store-eyebrow">Trusted local data shop</p>
+      <p class="store-eyebrow">We sell affordable data bundles</p>
       <h1 id="store-name">Loading&hellip;</h1>
-      <p class="store-hero-lede" id="store-tagline">Finding this mini storefront.</p>
-      <p class="store-hero-sub" id="store-hero-sub">Affordable. Instant. Reliable.</p>
+      <p class="store-hero-lede" id="store-tagline">Faster and cheaper.</p>
       <div class="store-trust-row">
-        <span><strong id="store-pack-count">0</strong> bundles live</span>
+        <span><strong id="store-pack-count">0</strong> plans</span>
         <span><strong id="store-net-count">3</strong> networks</span>
         <span>From <strong id="store-from-price">GH&#8373; 0.00</strong></span>
       </div>
     </div>
   </section>
 
-  <section class="store-chips">
-    <div class="store-chips-inner">
-      <article class="store-chip">
-        <span class="store-chip-label">WhatsApp / Call</span>
-        <span class="store-chip-value" id="store-phone-chip">Agent contact</span>
-      </article>
-      <article class="store-chip">
-        <span class="store-chip-label">Working hours</span>
-        <span class="store-chip-value">8am &ndash; 9pm daily</span>
-      </article>
-      <article class="store-chip store-chip--wa" id="store-wa-chip">
-        <span class="store-chip-label" id="store-wa-chip-label">Chat on WhatsApp</span>
-        <span class="store-chip-value" id="store-wa-chip-value">Chat now &rarr;</span>
-      </article>
+  <section class="store-services">
+    <div class="store-services-inner">
+      <h2 class="store-services-title">Check our services below</h2>
+      <div class="store-services-grid">
+        <article class="store-service-card">
+          <h3>Opening hours</h3>
+          <p class="store-service-main">Monday &ndash; Saturday</p>
+          <p class="store-service-sub">8:00am &ndash; 8:00pm</p>
+          <p class="store-service-main" style="margin-top:10px">Sundays</p>
+          <p class="store-service-sub">12:00pm &ndash; 8:00pm</p>
+        </article>
+        <article class="store-service-card">
+          <h3>Delivery time</h3>
+          <ul class="store-delivery-list">
+            <li><strong>MTN</strong> <span>30 &ndash; 40 min</span></li>
+            <li><strong>AirtelTigo</strong> <span>Instant</span></li>
+            <li><strong>Telecel</strong> <span>Under 10 min</span></li>
+          </ul>
+        </article>
+        <article class="store-service-card store-service-card--link" id="store-quick-link">
+          <h3>Quick link</h3>
+          <p class="store-service-main" id="store-phone-chip">Contact agent</p>
+          <p class="store-service-sub">Tap WhatsApp to chat support</p>
+          <span class="store-service-cta" id="store-wa-chip-label">Chat now &rarr;</span>
+        </article>
+      </div>
     </div>
   </section>
 
   <main class="store-main">
     <div class="store-main-head">
       <div>
-        <h2>Data bundles &mdash; all networks</h2>
-        <p class="hint">Choose your network, pick a size, and pay securely with MoMo or card.</p>
+        <h2>Choose your network</h2>
+        <p class="hint">Select a bundle below and pay with MoMo or card.</p>
       </div>
     </div>
 
@@ -86,36 +101,12 @@
         <article class="store-step-card">
           <span class="store-step-num">2</span>
           <h3>Enter recipient number</h3>
-          <p>We check the prefix so the bundle lands on the right network.</p>
+          <p>We verify the prefix so data lands on the correct network.</p>
         </article>
         <article class="store-step-card">
           <span class="store-step-num">3</span>
           <h3>Pay &amp; receive</h3>
-          <p>Pay with Mobile Money or card. Data is sent within minutes.</p>
-        </article>
-      </div>
-    </div>
-  </section>
-
-  <section class="store-features">
-    <div class="store-features-inner">
-      <h2>Why shop here</h2>
-      <div class="store-feature-grid">
-        <article class="store-feature-card">
-          <strong>Instant delivery</strong>
-          <p>Bundles are pushed to the network right after payment confirms.</p>
-        </article>
-        <article class="store-feature-card">
-          <strong>Secure checkout</strong>
-          <p>Paystack-powered MoMo and card payments you can trust.</p>
-        </article>
-        <article class="store-feature-card">
-          <strong>All major networks</strong>
-          <p>MTN, AirtelTigo and Telecel in one clean storefront.</p>
-        </article>
-        <article class="store-feature-card">
-          <strong>Local agent support</strong>
-          <p>Questions? Reach the store owner on WhatsApp anytime.</p>
+          <p>Complete MoMo or card payment. Delivery starts within minutes.</p>
         </article>
       </div>
     </div>
@@ -123,9 +114,12 @@
 
   <footer class="store-footer" hidden>
     <div class="store-footer-inner">
-      <div>
-        <strong id="store-foot-name">Agent store</strong>
-        <p id="store-foot-agent">Powered by DataLogs GH</p>
+      <div class="store-footer-brand">
+        <img class="store-logo store-logo--foot" src="assets/logo-mark.svg" alt="" width="22" height="22">
+        <div>
+          <strong id="store-foot-name">Agent store</strong>
+          <p id="store-foot-agent">Powered by DataLogs GH</p>
+        </div>
       </div>
       <div class="store-footer-meta">
         <span>&copy; <span id="store-year"></span> DataLogs GH</span>
@@ -139,11 +133,11 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/config.js"></script>
   <script src="js/data.js"></script>
-  <script src="js/api.js?v=10"></script>
+  <script src="js/api.js?v=11"></script>
   <script src="js/order-tracker.js?v=3"></script>
   <script src="js/paystack.js?v=1"></script>
   <script src="js/checkout.js?v=5"></script>
-  <script src="js/store.js?v=1"></script>
+  <script src="js/store.js?v=2"></script>
   <script>document.getElementById("store-year").textContent = new Date().getFullYear();</script>
 </body>
 </html>

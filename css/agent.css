@@ -1014,6 +1014,32 @@
   font-weight: 600;
 }
 
+.store-color-field {
+  margin: 4px 0 12px;
+}
+
+.store-accent-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.store-accent-swatch {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  padding: 0;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.12);
+}
+
+.store-accent-swatch.active {
+  border-color: var(--text);
+  box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--yellow);
+}
+
 .flyer-swatch-shop {
   background:
     linear-gradient(180deg, rgba(var(--accent-rgb), 0.45), transparent 55%),

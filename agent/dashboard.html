@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&family=Montserrat:wght@600;700;800;900&family=Outfit:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../css/styles.css?v=13">
-  <link rel="stylesheet" href="../css/agent.css?v=13">
+  <link rel="stylesheet" href="../css/agent.css?v=14">
 </head>
 <body class="dash-body">
   <div class="dash-shell" id="dash-shell">
@@ -154,7 +154,13 @@
             <form class="form" id="store-form" style="margin-top:16px">
               <label>Store name<input name="name" required placeholder="Kwame Data Hub"></label>
               <label>Store link slug<input name="slug" required placeholder="kwame-data" pattern="[a-z0-9\-]+" title="Lowercase letters, numbers and dashes"></label>
-              <label>Tagline<input name="tagline" placeholder="Fast data for Accra & beyond"></label>
+              <label>Tagline<input name="tagline" placeholder="Affordable data bundles — fast &amp; cheap"></label>
+              <div class="store-color-field">
+                <div style="font-weight:600;margin-bottom:8px">Store colour</div>
+                <p class="hint">Header, buttons and highlights on your public store page.</p>
+                <input type="hidden" name="accent_color" id="store-accent-input" value="sea">
+                <div class="store-accent-swatches" id="store-accent-swatches" role="listbox" aria-label="Store accent colour"></div>
+              </div>
               <div>
                 <div style="font-weight:600;margin-bottom:8px">Networks to sell</div>
                 <div class="network-checks">
@@ -185,7 +191,7 @@
         <section class="dash-panel" data-panel-view="flyer">
           <div class="panel-card">
             <h3>Store flyer</h3>
-            <p class="hint">Looks like your store page. Bundle cards keep MTN / AirtelTigo / Telecel colours. Header, buttons, and glow follow <strong>your website colour</strong> (the dots at the top of this dashboard).</p>
+            <p class="hint">Looks like your store page. Bundle cards keep MTN / AirtelTigo / Telecel colours. Header, buttons, and glow follow <strong>your store colour</strong> saved in Mini store.</p>
             <div class="flyer-color-match" id="flyer-color-match">
               <span class="accent-dot" aria-hidden="true"></span>
               <span>Flyer colour matches your website colour</span>
@@ -474,6 +480,6 @@
   <script src="../js/checkout.js?v=5"></script>
   <script src="../js/flyer.js?v=3"></script>
   <script src="../js/dash-icons.js?v=1"></script>
-  <script src="../js/dashboard.js?v=20"></script>
+  <script src="../js/dashboard.js?v=21"></script>
 </body>
 </html>

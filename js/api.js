@@ -186,6 +186,7 @@ const DataLogsAPI = (() => {
       name: payload.name.trim(),
       slug,
       tagline: (payload.tagline || "").trim(),
+      accent_color: String(payload.accent_color || "sea").trim() || "sea",
       networks: payload.networks,
       published: payload.published !== false,
     };
