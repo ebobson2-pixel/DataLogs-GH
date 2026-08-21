@@ -31,7 +31,7 @@ create table if not exists public.agent_stores (
   name text not null,
   slug text not null unique,
   tagline text,
-  accent_color text not null default 'sea',
+  accent_color text not null default 'green',
   networks text[] not null default array['mtn','airteltigo','telecel']::text[],
   published boolean not null default false,
   created_at timestamptz not null default now(),

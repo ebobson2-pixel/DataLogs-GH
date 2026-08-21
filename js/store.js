@@ -1,6 +1,7 @@
 (function storePage() {
   const NETWORK_ORDER = ["mtn", "airteltigo", "telecel"];
   const STORE_ACCENTS = [
+    { id: "green", hex: "#16a34a" },
     { id: "sea", hex: "#2ec8e6" },
     { id: "gold", hex: "#f5c400" },
     { id: "lime", hex: "#a3e635" },
@@ -108,16 +109,35 @@
     const rgb = hexToRgb(hex);
     document.documentElement.style.setProperty("--store-accent", hex);
     document.documentElement.style.setProperty("--store-accent-rgb", `${rgb.r}, ${rgb.g}, ${rgb.b}`);
-    document.documentElement.setAttribute("data-store-accent", accent.id || accentId || "sea");
+    document.documentElement.setAttribute("data-store-accent", accent.id || accentId || "green");
   }
 
-  function bindWhatsApp(wa, agentPhone) {
-    const waTop = document.getElementById("store-wa-top");
+  function telHref(phone) {
+    const digits = String(phone || "").replace(/\D/g, "");
+    if (digits.length < 9) return null;
+    return `tel:${digits.startsWith("0") ? digits : `+${digits}`}`;
+  }
+
+  function bindStoreMenu(wa, agentPhone) {
+    const call = document.getElementById("store-nav-call");
+    const waNav = document.getElementById("store-nav-wa");
+    const track = document.getElementById("store-nav-track");
     const quickLink = document.getElementById("store-quick-link");
-    if (wa && waTop) {
-      waTop.href = wa;
-      waTop.hidden = false;
+
+    const tel = telHref(agentPhone);
+    if (tel && call) {
+      call.href = tel;
+      call.hidden = false;
     }
+    if (wa && waNav) {
+      waNav.href = wa;
+      waNav.hidden = false;
+    }
+
+    track?.addEventListener("click", () => {
+      window.DataLogsTrack?.open?.();
+    });
+
     if (quickLink) {
       if (wa) {
         quickLink.classList.add("is-clickable");
@@ -220,7 +240,7 @@
 
     sessionStorage.removeItem(`datalogs_store_reloads_${slug}`);
     window.__STORE_ID = store.id;
-    applyStoreAccent(store.accent_color || "sea");
+    applyStoreAccent(store.accent_color || "green");
 
     const agentName = store.profiles?.full_name || "";
     const agentPhone = store.profiles?.phone || "";
@@ -232,7 +252,7 @@
     setText("store-brand-sub", store.tagline || "Affordable data bundles");
 
     const wa = whatsAppHref(agentPhone);
-    bindWhatsApp(wa, agentPhone);
+    bindStoreMenu(wa, agentPhone);
 
     const networks = store.networks || NETWORK_ORDER;
     setText("store-net-count", String(networks.length));

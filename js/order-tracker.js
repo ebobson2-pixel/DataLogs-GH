@@ -26,6 +26,7 @@
 
   const fab = root.querySelector("#track-fab");
   const panel = root.querySelector("#track-panel");
+  if (document.body.classList.contains("store-body")) fab.hidden = true;
   const form = root.querySelector("#track-form");
   const phoneInput = root.querySelector("#track-phone");
   const errorEl = root.querySelector("#track-error");
@@ -205,4 +206,6 @@
       pollTimer = setInterval(() => lookup(lastPhone, { silent: true }), 8000);
     }
   });
+
+  window.DataLogsTrack = { open: openPanel, close: closePanel };
 })();

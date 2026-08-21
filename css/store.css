@@ -1,15 +1,15 @@
-/* Agent store — full data hub layout (kreatindatahub-inspired) */
+/* Agent store — clean white & green layout */
 :root {
-  --store-bg: #05070b;
-  --store-bg-soft: #0b1018;
-  --store-card: #0f1720;
-  --store-card-hover: #141f2b;
-  --store-ink: #f8fafc;
-  --store-muted: rgba(248, 250, 252, 0.62);
-  --store-line: rgba(255, 255, 255, 0.08);
-  --store-accent: #2ec8e6;
-  --store-accent-rgb: 46, 200, 230;
-  --store-accent-soft: rgba(var(--store-accent-rgb), 0.14);
+  --store-bg: #f7fbf8;
+  --store-bg-soft: #eef6f0;
+  --store-card: #ffffff;
+  --store-card-hover: #f4faf6;
+  --store-ink: #14201b;
+  --store-muted: #5d6f67;
+  --store-line: #d8e6dc;
+  --store-accent: #16a34a;
+  --store-accent-rgb: 22, 163, 74;
+  --store-accent-soft: rgba(var(--store-accent-rgb), 0.12);
   --store-mtn: #ffe135;
   --store-mtn-ink: #0b0b0b;
   --store-at: #1f6fff;
@@ -44,8 +44,9 @@
   top: 0;
   z-index: 30;
   backdrop-filter: blur(14px);
-  background: rgba(5, 7, 11, 0.92);
+  background: rgba(255, 255, 255, 0.96);
   border-bottom: 1px solid var(--store-line);
+  box-shadow: 0 4px 18px rgba(20, 32, 27, 0.05);
 }
 
 .store-header-inner {
@@ -122,6 +123,81 @@
   color: var(--store-accent);
 }
 
+/* Menu bar */
+.store-menu-bar {
+  position: sticky;
+  top: 56px;
+  z-index: 29;
+  background: #fff;
+  border-bottom: 1px solid var(--store-line);
+  box-shadow: 0 6px 16px rgba(20, 32, 27, 0.04);
+}
+
+.store-menu-inner {
+  width: min(1140px, calc(100% - 32px));
+  margin: 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 0 12px;
+}
+
+.store-menu-item {
+  flex: 1 1 0;
+  min-width: 88px;
+  max-width: 160px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 58px;
+  padding: 8px 6px;
+  border: 1px solid var(--store-line);
+  border-radius: 14px;
+  background: var(--store-bg-soft);
+  color: var(--store-ink);
+  font-family: var(--store-font);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  text-align: center;
+  cursor: pointer;
+  transition: 0.15s ease;
+}
+
+.store-menu-item[hidden] {
+  display: none !important;
+}
+
+.store-menu-item:hover,
+.store-menu-item:focus-visible {
+  border-color: rgba(var(--store-accent-rgb), 0.45);
+  background: var(--store-accent-soft);
+  color: var(--store-accent);
+  outline: none;
+}
+
+.store-menu-item--wa:hover,
+.store-menu-item--wa:focus-visible {
+  border-color: rgba(37, 211, 102, 0.45);
+  background: rgba(37, 211, 102, 0.12);
+  color: #128c41;
+}
+
+.store-menu-item--track {
+  border-color: rgba(var(--store-accent-rgb), 0.35);
+  background: rgba(var(--store-accent-rgb), 0.08);
+  color: var(--store-accent);
+}
+
+.store-menu-ico {
+  font-size: 1.05rem;
+  line-height: 1;
+}
+
 .store-wa-btn {
   display: inline-flex;
   align-items: center;
@@ -144,16 +220,12 @@
 .store-hero {
   position: relative;
   overflow: hidden;
-  padding: 48px 0 28px;
+  padding: 40px 0 24px;
+  background: linear-gradient(180deg, rgba(var(--store-accent-rgb), 0.08) 0%, transparent 72%);
 }
 
 .store-hero-glow {
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(ellipse 70% 60% at 50% -10%, rgba(var(--store-accent-rgb), 0.28), transparent 55%),
-    radial-gradient(circle at 85% 20%, rgba(31, 111, 255, 0.12), transparent 35%);
-  pointer-events: none;
+  display: none;
 }
 
 .store-hero-inner {
@@ -207,10 +279,11 @@
 .store-trust-row span {
   padding: 8px 14px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.05);
+  background: #fff;
   border: 1px solid var(--store-line);
   font-size: 0.84rem;
   color: var(--store-muted);
+  box-shadow: 0 4px 14px rgba(20, 32, 27, 0.04);
 }
 
 .store-trust-row strong {
@@ -245,10 +318,11 @@
 }
 
 .store-service-card {
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--store-card);
   border: 1px solid var(--store-line);
   border-radius: 18px;
   padding: 18px;
+  box-shadow: 0 8px 22px rgba(20, 32, 27, 0.05);
 }
 
 .store-service-card h3 {
@@ -352,7 +426,7 @@
   border: 0;
   cursor: pointer;
   background: var(--store-accent);
-  color: #041018;
+  color: #fff;
   font-weight: 700;
   border-radius: 999px;
   padding: 10px 16px;
@@ -380,12 +454,13 @@
 }
 
 .store-tab:hover {
-  border-color: rgba(255, 255, 255, 0.18);
+  border-color: rgba(var(--store-accent-rgb), 0.35);
   color: var(--store-ink);
+  background: var(--store-accent-soft);
 }
 
 .store-tab.active {
-  color: #041018;
+  color: #fff;
   border-color: transparent;
   background: var(--store-accent);
 }
@@ -454,13 +529,13 @@
 }
 
 .store-network-block--airteltigo .store-network-badge {
-  background: rgba(31, 111, 255, 0.18);
-  color: #6ea8ff;
+  background: rgba(31, 111, 255, 0.12);
+  color: var(--store-at);
 }
 
 .store-network-block--telecel .store-network-badge {
-  background: rgba(225, 29, 46, 0.18);
-  color: #ff6b78;
+  background: rgba(225, 29, 46, 0.12);
+  color: var(--store-tel);
 }
 
 .store-network-block--mtn .store-network-head h3 {
@@ -468,11 +543,11 @@
 }
 
 .store-network-block--airteltigo .store-network-head h3 {
-  color: #6ea8ff;
+  color: var(--store-at);
 }
 
 .store-network-block--telecel .store-network-head h3 {
-  color: #ff6b78;
+  color: var(--store-tel);
 }
 
 /* Bundle cards */
@@ -493,12 +568,14 @@
   cursor: pointer;
   transition: 0.15s ease;
   overflow: hidden;
+  box-shadow: 0 8px 22px rgba(20, 32, 27, 0.05);
 }
 
 .store-bundle:hover {
   transform: translateY(-4px);
   background: var(--store-card-hover);
-  border-color: rgba(255, 255, 255, 0.14);
+  border-color: rgba(var(--store-accent-rgb), 0.35);
+  box-shadow: 0 14px 28px rgba(20, 32, 27, 0.08);
 }
 
 .store-bundle-tag {
@@ -509,7 +586,8 @@
   font-weight: 700;
   padding: 4px 8px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--store-accent-soft);
+  color: var(--store-accent);
 }
 
 .store-bundle-net {
@@ -581,11 +659,11 @@
 }
 
 .store-bundle--airteltigo .store-bundle-price {
-  color: #6ea8ff;
+  color: var(--store-at);
 }
 
 .store-bundle--telecel .store-bundle-price {
-  color: #ff6b78;
+  color: var(--store-tel);
 }
 
 .store-empty {
@@ -757,13 +835,13 @@
 }
 
 .store-body .btn-primary {
-  background: #0f766e;
+  background: var(--store-accent);
   color: #fff;
 }
 
 .store-body .pill {
-  background: #ccfbf1;
-  color: #0f766e;
+  background: var(--store-accent-soft);
+  color: var(--store-accent);
 }
 
 .store-body .receipt {
@@ -778,10 +856,23 @@
   color: #5d6f67;
 }
 
+.store-body #order-tracker-root {
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%);
+  width: min(420px, calc(100vw - 28px));
+}
+
+.store-body .track-panel {
+  position: fixed;
+  left: 50%;
+  right: auto;
+  bottom: max(18px, env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+}
+
 .store-body .track-fab {
-  background: linear-gradient(135deg, #c48a2a, #a66b12);
-  color: #fff;
-  box-shadow: 0 10px 28px rgba(196, 138, 42, 0.35);
+  display: none;
 }
 
 @media (max-width: 900px) {
@@ -800,6 +891,7 @@
 
 @media (max-width: 640px) {
   .store-header-inner,
+  .store-menu-inner,
   .store-hero-inner,
   .store-services-inner,
   .store-main,
@@ -813,9 +905,26 @@
     min-height: 60px;
   }
 
-  .store-wa-btn {
-    padding: 8px 12px;
-    font-size: 0.8rem;
+  .store-menu-inner {
+    gap: 6px;
+    padding: 8px 0 10px;
+  }
+
+  .store-menu-item {
+    min-width: 64px;
+    max-width: none;
+    min-height: 52px;
+    font-size: 0.62rem;
+    padding: 6px 4px;
+    border-radius: 12px;
+  }
+
+  .store-menu-ico {
+    font-size: 0.95rem;
+  }
+
+  .store-menu-bar {
+    top: 52px;
   }
 
   .store-hero {

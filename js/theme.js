@@ -2,6 +2,7 @@
   const THEME_KEY = "datalogs_theme";
   const ACCENT_KEY = "datalogs_accent";
   const ACCENTS = [
+    { id: "green", label: "Green", hex: "#16a34a" },
     { id: "sea", label: "Sea", hex: "#2ec8e6" },
     { id: "gold", label: "Gold", hex: "#f5c400" },
     { id: "lime", label: "Lime", hex: "#a3e635" },
