@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css?v=15">
-  <link rel="stylesheet" href="css/store.css?v=11">
+  <link rel="stylesheet" href="css/store.css?v=12">
   <link rel="icon" href="assets/logo-mark.svg" type="image/svg+xml">
 </head>
 <body class="store-body">
@@ -24,34 +24,22 @@
           <span id="store-brand-sub">Affordable data bundles</span>
         </div>
       </a>
-      <span class="store-platform-mark">DataLogs <span>GH</span></span>
+
+      <div class="store-header-right">
+        <nav class="store-nav-tabs" id="store-nav-tabs" aria-label="Store menu" hidden>
+          <a class="store-nav-tab" href="agent/auth.html">Agent</a>
+          <a class="store-nav-tab" href="agent/dashboard.html">Dashboard</a>
+          <a class="store-nav-tab" id="store-nav-call" href="#" hidden>Call</a>
+          <a class="store-nav-tab store-nav-tab--wa" id="store-nav-wa" href="#" target="_blank" rel="noopener noreferrer" hidden>WhatsApp</a>
+          <button class="store-nav-tab store-nav-tab--track" type="button" id="store-nav-track">Track order</button>
+        </nav>
+        <button class="store-menu-toggle" type="button" id="store-menu-toggle" aria-expanded="false" aria-controls="store-nav-tabs">
+          <span class="store-menu-toggle-icon" aria-hidden="true"></span>
+          <span class="store-menu-toggle-label">Menu</span>
+        </button>
+      </div>
     </div>
   </header>
-
-  <nav class="store-menu-bar" aria-label="Store menu">
-    <div class="store-menu-inner">
-      <a class="store-menu-item" href="agent/auth.html">
-        <span class="store-menu-ico" aria-hidden="true">&#9733;</span>
-        <span>Agent</span>
-      </a>
-      <a class="store-menu-item" href="agent/dashboard.html">
-        <span class="store-menu-ico" aria-hidden="true">&#9632;</span>
-        <span>Dashboard</span>
-      </a>
-      <a class="store-menu-item" id="store-nav-call" href="#" hidden>
-        <span class="store-menu-ico" aria-hidden="true">&#9742;</span>
-        <span>Call</span>
-      </a>
-      <a class="store-menu-item store-menu-item--wa" id="store-nav-wa" href="#" target="_blank" rel="noopener noreferrer" hidden>
-        <span class="store-menu-ico" aria-hidden="true">&#9993;</span>
-        <span>WhatsApp</span>
-      </a>
-      <button class="store-menu-item store-menu-item--track" type="button" id="store-nav-track">
-        <span class="store-menu-ico" aria-hidden="true">&#8982;</span>
-        <span>Track order</span>
-      </button>
-    </div>
-  </nav>
 
   <section class="store-hero">
     <div class="store-hero-inner">
@@ -88,7 +76,7 @@
         <article class="store-service-card store-service-card--link" id="store-quick-link">
           <h3>Contact</h3>
           <p class="store-service-main" id="store-phone-chip">Agent phone</p>
-          <p class="store-service-sub">Call or WhatsApp from the menu above</p>
+          <p class="store-service-sub">Call or WhatsApp from the menu</p>
           <span class="store-service-cta" id="store-wa-chip-label">We are here to help &rarr;</span>
         </article>
       </div>
@@ -158,7 +146,7 @@
   <script src="js/order-tracker.js?v=4"></script>
   <script src="js/paystack.js?v=1"></script>
   <script src="js/checkout.js?v=5"></script>
-  <script src="js/store.js?v=3"></script>
+  <script src="js/store.js?v=4"></script>
   <script>document.getElementById("store-year").textContent = new Date().getFullYear();</script>
 </body>
 </html>
