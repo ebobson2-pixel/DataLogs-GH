@@ -7,204 +7,143 @@
   <meta name="description" content="Buy MTN, AirtelTigo and Telecel data from an agent mini store.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/styles.css?v=11">
-  <link rel="stylesheet" href="css/store.css?v=8">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css?v=15">
+  <link rel="stylesheet" href="css/store.css?v=9">
 </head>
 <body class="store-body">
-  <header class="store-top">
-    <div class="store-top-inner">
+  <header class="store-header">
+    <div class="store-header-inner">
       <a class="store-brand" href="#" id="store-brand-link">
         <span class="store-badge" id="store-initials">AS</span>
         <div>
           <strong id="store-top-name">Agent store</strong>
+          <span>Data reseller</span>
         </div>
       </a>
+      <div class="store-header-actions">
+        <a class="store-wa-btn" id="store-wa-top" href="#" target="_blank" rel="noopener noreferrer" hidden>Chat on WhatsApp</a>
+      </div>
     </div>
   </header>
 
   <section class="store-hero">
-    <p class="eyebrow">Local agent storefront</p>
-    <h1 id="store-name">Loading&hellip;</h1>
-    <p id="store-tagline">Finding this mini storefront.</p>
+    <div class="store-hero-glow" aria-hidden="true"></div>
+    <div class="store-hero-inner">
+      <p class="store-eyebrow">Trusted local data shop</p>
+      <h1 id="store-name">Loading&hellip;</h1>
+      <p class="store-hero-lede" id="store-tagline">Finding this mini storefront.</p>
+      <p class="store-hero-sub" id="store-hero-sub">Affordable. Instant. Reliable.</p>
+      <div class="store-trust-row">
+        <span><strong id="store-pack-count">0</strong> bundles live</span>
+        <span><strong id="store-net-count">3</strong> networks</span>
+        <span>From <strong id="store-from-price">GH&#8373; 0.00</strong></span>
+      </div>
+    </div>
   </section>
 
-  <main class="store-wrap">
-    <div id="store-status" class="store-status" style="display:none;margin-bottom:16px"></div>
-    <div class="store-filters" id="store-filters" hidden></div>
-    <div id="store-packages" class="store-grid"></div>
+  <section class="store-chips">
+    <div class="store-chips-inner">
+      <article class="store-chip">
+        <span class="store-chip-label">WhatsApp / Call</span>
+        <span class="store-chip-value" id="store-phone-chip">Agent contact</span>
+      </article>
+      <article class="store-chip">
+        <span class="store-chip-label">Working hours</span>
+        <span class="store-chip-value">8am &ndash; 9pm daily</span>
+      </article>
+      <article class="store-chip store-chip--wa" id="store-wa-chip">
+        <span class="store-chip-label" id="store-wa-chip-label">Chat on WhatsApp</span>
+        <span class="store-chip-value" id="store-wa-chip-value">Chat now &rarr;</span>
+      </article>
+    </div>
+  </section>
+
+  <main class="store-main">
+    <div class="store-main-head">
+      <div>
+        <h2>Data bundles &mdash; all networks</h2>
+        <p class="hint">Choose your network, pick a size, and pay securely with MoMo or card.</p>
+      </div>
+    </div>
+
+    <div id="store-status" class="store-status" hidden></div>
+
+    <div class="store-tabs" id="store-filters" hidden></div>
+
+    <div id="store-packages" class="store-catalog"></div>
   </main>
 
-  <footer class="store-foot" hidden></footer>
+  <section class="store-steps">
+    <div class="store-steps-inner">
+      <h2>How to buy</h2>
+      <div class="store-step-grid">
+        <article class="store-step-card">
+          <span class="store-step-num">1</span>
+          <h3>Pick network &amp; size</h3>
+          <p>Select MTN, AirtelTigo or Telecel and tap the GB you need.</p>
+        </article>
+        <article class="store-step-card">
+          <span class="store-step-num">2</span>
+          <h3>Enter recipient number</h3>
+          <p>We check the prefix so the bundle lands on the right network.</p>
+        </article>
+        <article class="store-step-card">
+          <span class="store-step-num">3</span>
+          <h3>Pay &amp; receive</h3>
+          <p>Pay with Mobile Money or card. Data is sent within minutes.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="store-features">
+    <div class="store-features-inner">
+      <h2>Why shop here</h2>
+      <div class="store-feature-grid">
+        <article class="store-feature-card">
+          <strong>Instant delivery</strong>
+          <p>Bundles are pushed to the network right after payment confirms.</p>
+        </article>
+        <article class="store-feature-card">
+          <strong>Secure checkout</strong>
+          <p>Paystack-powered MoMo and card payments you can trust.</p>
+        </article>
+        <article class="store-feature-card">
+          <strong>All major networks</strong>
+          <p>MTN, AirtelTigo and Telecel in one clean storefront.</p>
+        </article>
+        <article class="store-feature-card">
+          <strong>Local agent support</strong>
+          <p>Questions? Reach the store owner on WhatsApp anytime.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <footer class="store-footer" hidden>
+    <div class="store-footer-inner">
+      <div>
+        <strong id="store-foot-name">Agent store</strong>
+        <p id="store-foot-agent">Powered by DataLogs GH</p>
+      </div>
+      <div class="store-footer-meta">
+        <span>&copy; <span id="store-year"></span> DataLogs GH</span>
+        <span class="store-footer-powered">POWERED BY FSTech</span>
+      </div>
+    </div>
+  </footer>
 
   <div id="checkout-root"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/config.js"></script>
   <script src="js/data.js"></script>
-  <script src="js/api.js?v=6"></script>
+  <script src="js/api.js?v=10"></script>
   <script src="js/order-tracker.js?v=3"></script>
   <script src="js/paystack.js?v=1"></script>
   <script src="js/checkout.js?v=5"></script>
-  <script>
-    (async function () {
-      const params = new URLSearchParams(window.location.search);
-      const storedSlug = (sessionStorage.getItem("datalogs_store_slug") || localStorage.getItem("datalogs_store_slug") || "").toLowerCase();
-      let slug = (params.get("s") || storedSlug || "").toLowerCase();
-
-      if (slug && params.get("s") !== slug) {
-        const next = new URL(window.location.href);
-        next.searchParams.set("s", slug);
-        history.replaceState({}, "", next);
-      }
-
-      if (slug) {
-        sessionStorage.setItem("datalogs_store_slug", slug);
-        localStorage.setItem("datalogs_store_slug", slug);
-      }
-
-      function storeUrl() {
-        const next = new URL(window.location.href);
-        next.search = slug ? `?s=${encodeURIComponent(slug)}` : "";
-        return next.pathname + next.search;
-      }
-
-      const brand = document.getElementById("store-brand-link");
-      brand.setAttribute("href", storeUrl() || "#");
-      brand.addEventListener("click", (event) => {
-        event.preventDefault();
-        window.location.replace(storeUrl());
-      });
-
-      const status = document.getElementById("store-status");
-      const grid = document.getElementById("store-packages");
-      const filters = document.getElementById("store-filters");
-
-      function reloadStore() {
-        window.location.replace(storeUrl() || window.location.pathname + window.location.search);
-      }
-
-      function scheduleReload() {
-        const key = `datalogs_store_reloads_${slug || "none"}`;
-        const n = Number(sessionStorage.getItem(key) || 0);
-        if (n >= 3) return;
-        sessionStorage.setItem(key, String(n + 1));
-        setTimeout(reloadStore, 4000);
-      }
-
-      let loadFailed = false;
-
-      function fail(title, message) {
-        loadFailed = true;
-        document.getElementById("store-name").textContent = title;
-        document.getElementById("store-tagline").textContent = message;
-        document.getElementById("store-top-name").textContent = title;
-        status.style.display = "block";
-        status.innerHTML = `<button class="store-refresh" type="button" id="store-retry">Refresh store</button>`;
-        document.getElementById("store-retry")?.addEventListener("click", reloadStore);
-        scheduleReload();
-      }
-
-      window.addEventListener("online", () => {
-        if (loadFailed) reloadStore();
-      });
-
-      if (!slug) {
-        fail("Store not found", "This link is missing a store.");
-        return;
-      }
-
-      let store;
-      try {
-        store = await DataLogsAPI.getStoreBySlug(slug);
-      } catch (err) {
-        fail("Store error", err.message || "Could not load store.");
-        return;
-      }
-
-      if (!store || !store.published) {
-        fail(
-          "Store unavailable",
-          store ? "This store is still in draft." : "No published store matches this link."
-        );
-        return;
-      }
-
-      sessionStorage.removeItem(`datalogs_store_reloads_${slug}`);
-      window.__STORE_ID = store.id;
-      const initials = store.name.trim().split(/\s+/).slice(0, 2).map((w) => w[0]).join("").toUpperCase() || "AS";
-      document.title = store.name;
-      document.getElementById("store-name").textContent = store.name;
-      document.getElementById("store-top-name").textContent = store.name;
-      document.getElementById("store-initials").textContent = initials;
-      document.getElementById("store-tagline").textContent = store.tagline || "Tap a package and pay.";
-
-      const networks = store.networks || ["mtn", "airteltigo", "telecel"];
-      let packages = [];
-      let priceRows = [];
-      try {
-        [packages, priceRows] = await Promise.all([
-          DataLogsAPI.fetchPackages(),
-          DataLogsAPI.getAgentStorePrices(store.agent_id),
-        ]);
-      } catch (err) {
-        fail("Store error", err.message || "Could not load packages.");
-        return;
-      }
-      const profitByPackage = new Map(priceRows.map((row) => [row.package_id, Number(row.profit)]));
-
-      const storePackages = packages
-        .filter((p) => networks.includes(p.network) && profitByPackage.has(p.id))
-        .map((p) => {
-          const profit = profitByPackage.get(p.id) || 0;
-          return {
-            ...p,
-            price: Number(p.agentPrice) + profit,
-            profit,
-            base: Number(p.agentPrice),
-          };
-        });
-      window.__PACKAGES = storePackages;
-
-      filters.hidden = false;
-      filters.innerHTML = `
-        <button class="filter-btn active" type="button" data-store-filter="all">All</button>
-        ${networks
-          .map((id) => `<button class="filter-btn" type="button" data-store-filter="${id}">${NETWORKS[id].name}</button>`)
-          .join("")}
-      `;
-
-      function paint(filter) {
-        const list = storePackages.filter((p) => filter === "all" || p.network === filter);
-        if (!list.length) {
-          grid.innerHTML = `<div class="store-empty">No priced packages yet. This agent still needs to set store pricing.</div>`;
-          return;
-        }
-        grid.innerHTML = list
-          .map(
-            (item) => `
-          <button class="store-pack ${item.network}" type="button" data-buy="${item.id}" data-tier="retail" data-store-id="${store.id}">
-            ${item.tag ? `<span class="tag">${item.tag}</span>` : ""}
-            <div class="net">${NETWORKS[item.network].name}</div>
-            <div class="gb">${item.gb} GB</div>
-            <div class="meta">${item.validity || "Non expiry"}</div>
-            <div class="price">${formatCedi(item.price)}</div>
-            <div class="cta">Buy now &rarr;</div>
-          </button>`
-          )
-          .join("");
-      }
-
-      filters.addEventListener("click", (event) => {
-        const btn = event.target.closest("[data-store-filter]");
-        if (!btn) return;
-        filters.querySelectorAll(".filter-btn").forEach((el) => el.classList.remove("active"));
-        btn.classList.add("active");
-        paint(btn.dataset.storeFilter);
-      });
-
-      paint("all");
-    })();
-  </script>
+  <script src="js/store.js?v=1"></script>
+  <script>document.getElementById("store-year").textContent = new Date().getFullYear();</script>
 </body>
 </html>
