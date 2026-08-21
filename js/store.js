@@ -1,20 +1,9 @@
 (function storePage() {
   const NETWORK_ORDER = ["mtn", "airteltigo", "telecel"];
-  const STORE_ACCENTS = [
-    { id: "green", hex: "#16a34a" },
-    { id: "sea", hex: "#2ec8e6" },
-    { id: "gold", hex: "#f5c400" },
-    { id: "lime", hex: "#a3e635" },
-    { id: "violet", hex: "#a78bfa" },
-    { id: "coral", hex: "#fb7185" },
-    { id: "orange", hex: "#fb923c" },
-    { id: "mint", hex: "#2dd4bf" },
-    { id: "sky", hex: "#38bdf8" },
-  ];
   const NET_UI = {
-    mtn: { tab: "MTN", title: "MTN Data Bundles", chip: "Yellow SIM · 024, 025, 053+" },
-    airteltigo: { tab: "AirtelTigo", title: "AirtelTigo Data Bundles", chip: "AT · 026, 027, 056+" },
-    telecel: { tab: "Telecel", title: "Telecel Data Bundles", chip: "Telecel · 020, 050" },
+    mtn: { tab: "MTN", chip: "Yellow SIM · 024, 025, 053+" },
+    airteltigo: { tab: "AirtelTigo", chip: "AT · 026, 027, 056+" },
+    telecel: { tab: "Telecel", chip: "Telecel · 020, 050" },
   };
 
   function sortPackages(list) {
@@ -36,30 +25,28 @@
   function bundleCard(item, storeId) {
     const net = NETWORKS[item.network]?.name || item.network;
     return `
-      <button class="store-bundle store-bundle--${item.network}" type="button" data-buy="${item.id}" data-tier="retail" data-store-id="${storeId}">
-        ${item.tag ? `<span class="store-bundle-tag">${escapeHtml(item.tag)}</span>` : ""}
-        <div class="store-bundle-net">${net}</div>
-        <div class="store-bundle-gb">${item.gb}<span>GB</span></div>
-        <div class="store-bundle-meta">${escapeHtml(item.validity || "Non expiry")}</div>
-        <div class="store-bundle-price">${formatCedi(item.price)}</div>
-        <span class="store-bundle-btn">BUY NOW</span>
+      <button class="card package-card package-card--${item.network}" type="button" data-buy="${item.id}" data-tier="retail" data-store-id="${storeId}">
+        ${item.tag ? `<span class="tag">${escapeHtml(item.tag)}</span>` : ""}
+        <div class="pill">${net}</div>
+        <div class="gb">${item.gb}<span> GB</span></div>
+        <div class="meta">${escapeHtml(item.validity || "Non expiry")} &middot; Instant send</div>
+        <div class="price">${formatCedi(item.price)}</div>
+        <div class="tap-hint">Tap to buy &rarr;</div>
       </button>
     `;
   }
 
   function networkBlock(netId, list, storeId) {
     if (!list.length) return "";
-    const ui = NET_UI[netId] || { title: netId, chip: "" };
+    const net = NETWORKS[netId];
     return `
-      <section class="store-network-block store-network-block--${netId}">
-        <div class="store-network-head">
-          <div>
-            <h3>${ui.title}</h3>
-            <p class="hint">${ui.chip}</p>
-          </div>
-          <span class="store-network-badge">${ui.tab}</span>
+      <section class="network-packages-section network-packages-section--${netId}">
+        <div class="network-packages-head">
+          <span class="pill">${net.name}</span>
+          <h3>${net.name} bundles</h3>
+          <p class="hint">${net.blurb || NET_UI[netId]?.chip || ""}</p>
         </div>
-        <div class="store-bundle-grid">
+        <div class="package-grid">
           ${list.map((item) => bundleCard(item, storeId)).join("")}
         </div>
       </section>
@@ -69,11 +56,13 @@
   function paintCatalog(grid, packages, networks, filter, storeId) {
     const scoped = packages.filter((p) => filter === "all" || p.network === filter);
     if (!scoped.length) {
-      grid.innerHTML = `<div class="store-empty">No priced packages yet. This agent still needs to set store pricing.</div>`;
+      grid.className = "";
+      grid.innerHTML = `<p class="hint">No priced packages yet. This agent still needs to set store pricing.</p>`;
       return;
     }
 
     if (filter === "all") {
+      grid.className = "package-groups";
       grid.innerHTML = NETWORK_ORDER.filter((id) => networks.includes(id))
         .map((netId) => networkBlock(netId, sortPackages(scoped.filter((p) => p.network === netId)), storeId))
         .filter(Boolean)
@@ -81,11 +70,8 @@
       return;
     }
 
-    grid.innerHTML = `
-      <div class="store-bundle-grid store-bundle-grid--solo">
-        ${sortPackages(scoped).map((item) => bundleCard(item, storeId)).join("")}
-      </div>
-    `;
+    grid.className = "package-grid";
+    grid.innerHTML = sortPackages(scoped).map((item) => bundleCard(item, storeId)).join("");
   }
 
   function setText(id, text) {
@@ -101,15 +87,15 @@
   }
 
   function applyStoreAccent(accentId) {
-    const accent =
-      window.DataLogsTheme?.accentById?.(accentId) ||
-      STORE_ACCENTS.find((a) => a.id === accentId) ||
-      STORE_ACCENTS[0];
-    const hex = accent.hex;
-    const rgb = hexToRgb(hex);
-    document.documentElement.style.setProperty("--store-accent", hex);
-    document.documentElement.style.setProperty("--store-accent-rgb", `${rgb.r}, ${rgb.g}, ${rgb.b}`);
-    document.documentElement.setAttribute("data-store-accent", accent.id || accentId || "green");
+    const accent = window.DataLogsTheme?.accentById?.(accentId) || { id: "sea", hex: "#2ec8e6" };
+    document.documentElement.removeAttribute("data-theme");
+    document.documentElement.setAttribute("data-accent", accent.id || accentId || "sea");
+    const rgb = hexToRgb(accent.hex);
+    document.documentElement.style.setProperty("--accent", accent.hex);
+    document.documentElement.style.setProperty("--accent-rgb", `${rgb.r}, ${rgb.g}, ${rgb.b}`);
+    document.documentElement.style.setProperty("--yellow", accent.hex);
+    document.documentElement.style.setProperty("--yellow-soft", `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.12)`);
+    document.documentElement.style.setProperty("--yellow-glow", `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.28)`);
   }
 
   function telHref(phone) {
@@ -122,7 +108,6 @@
     const call = document.getElementById("store-nav-call");
     const waNav = document.getElementById("store-nav-wa");
     const track = document.getElementById("store-nav-track");
-    const quickLink = document.getElementById("store-quick-link");
     const navTabs = document.getElementById("store-nav-tabs");
     const menuToggle = document.getElementById("store-menu-toggle");
     const toggleLabel = menuToggle?.querySelector(".store-menu-toggle-label");
@@ -165,17 +150,6 @@
       window.DataLogsTrack?.open?.();
       setMenuOpen(false);
     });
-
-    if (quickLink) {
-      if (wa) {
-        quickLink.classList.add("is-clickable");
-        quickLink.addEventListener("click", () => window.open(wa, "_blank", "noopener,noreferrer"));
-      } else {
-        const cta = document.getElementById("store-wa-chip-label");
-        if (cta) cta.textContent = "MoMo & Card checkout";
-      }
-    }
-    if (agentPhone) setText("store-phone-chip", agentPhone);
   }
 
   async function init() {
@@ -268,7 +242,7 @@
 
     sessionStorage.removeItem(`datalogs_store_reloads_${slug}`);
     window.__STORE_ID = store.id;
-    applyStoreAccent(store.accent_color || "green");
+    applyStoreAccent(store.accent_color || "sea");
 
     const agentName = store.profiles?.full_name || "";
     const agentPhone = store.profiles?.phone || "";
@@ -276,8 +250,8 @@
     document.title = `${store.name} | DataLogs GH`;
     setText("store-name", store.name);
     setText("store-top-name", store.name);
-    setText("store-tagline", store.tagline || "Faster and cheaper.");
-    setText("store-brand-sub", store.tagline || "Affordable data bundles");
+    setText("store-kicker", store.tagline || "Agent store");
+    setText("store-tagline", store.tagline || "Every bundle, one quiet shelf. Tap a size, enter the number, and pay.");
 
     const wa = whatsAppHref(agentPhone);
     bindStoreMenu(wa, agentPhone);
@@ -320,16 +294,16 @@
     if (filters) {
       filters.hidden = false;
       filters.innerHTML = `
-        <button class="store-tab active" type="button" data-store-filter="all">All networks</button>
+        <button class="filter-btn active" type="button" data-store-filter="all">All</button>
         ${networks
-          .map((id) => `<button class="store-tab store-tab--${id}" type="button" data-store-filter="${id}">${NET_UI[id]?.tab || NETWORKS[id]?.name || id}</button>`)
+          .map((id) => `<button class="filter-btn" type="button" data-store-filter="${id}">${NET_UI[id]?.tab || NETWORKS[id]?.name || id}</button>`)
           .join("")}
       `;
 
       filters.addEventListener("click", (event) => {
         const btn = event.target.closest("[data-store-filter]");
         if (!btn) return;
-        filters.querySelectorAll(".store-tab").forEach((el) => el.classList.remove("active"));
+        filters.querySelectorAll(".filter-btn").forEach((el) => el.classList.remove("active"));
         btn.classList.add("active");
         paintCatalog(grid, storePackages, networks, btn.dataset.storeFilter, store.id);
       });
@@ -340,7 +314,7 @@
     if (foot) {
       foot.hidden = false;
       setText("store-foot-name", store.name);
-      if (agentName) setText("store-foot-agent", `Run by ${agentName}`);
+      if (agentName) setText("store-foot-agent", `Run by ${agentName}. Powered by DataLogs GH.`);
     }
   }
 

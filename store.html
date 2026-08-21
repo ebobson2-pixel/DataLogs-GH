@@ -3,28 +3,23 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <script>try{document.documentElement.removeAttribute("data-theme");document.documentElement.setAttribute("data-accent","sea");}catch(e){}</script>
   <title>Agent store &mdash; DataLogs GH</title>
   <meta name="description" content="Buy MTN, AirtelTigo and Telecel data from an agent mini store.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/styles.css?v=15">
-  <link rel="stylesheet" href="css/store.css?v=12">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css?v=16">
+  <link rel="stylesheet" href="css/store.css?v=13">
   <link rel="icon" href="assets/logo-mark.svg" type="image/svg+xml">
 </head>
 <body class="store-body">
-  <div class="store-accent-bar" aria-hidden="true"></div>
-
-  <header class="store-header">
-    <div class="store-header-inner">
-      <a class="store-brand" href="#" id="store-brand-link">
-        <img class="store-logo" src="assets/logo-mark.svg" alt="" width="24" height="24">
-        <div class="store-brand-text">
-          <strong id="store-top-name">Agent store</strong>
-          <span id="store-brand-sub">Affordable data bundles</span>
-        </div>
+  <header class="site-header store-header">
+    <div class="wrap nav">
+      <a class="logo store-brand" href="#" id="store-brand-link" aria-label="Store home">
+        <span class="logo-mark" aria-hidden="true"><img src="assets/logo-mark.svg" alt=""></span>
+        <span id="store-top-name">Agent store</span>
       </a>
-
       <div class="store-header-right">
         <nav class="store-nav-tabs" id="store-nav-tabs" aria-label="Store menu" hidden>
           <a class="store-nav-tab" href="agent/auth.html">Agent</a>
@@ -41,99 +36,47 @@
     </div>
   </header>
 
-  <section class="store-hero">
-    <div class="store-hero-inner">
-      <p class="store-eyebrow">Affordable data bundles</p>
-      <h1 id="store-name">Loading&hellip;</h1>
-      <p class="store-hero-lede" id="store-tagline">Faster and cheaper.</p>
-      <div class="store-trust-row">
-        <span><strong id="store-pack-count">0</strong> plans</span>
-        <span><strong id="store-net-count">3</strong> networks</span>
-        <span>From <strong id="store-from-price">GH&#8373; 0.00</strong></span>
+  <main id="main">
+    <section class="page-hero">
+      <div class="wrap">
+        <p class="kicker" id="store-kicker">Agent store</p>
+        <h1 id="store-name">Loading&hellip;</h1>
+        <p id="store-tagline">Faster and cheaper.</p>
+        <p class="store-stats hint" id="store-stats">
+          <span><strong id="store-pack-count">0</strong> plans</span>
+          &middot;
+          <span><strong id="store-net-count">3</strong> networks</span>
+          &middot;
+          <span>From <strong id="store-from-price">GH&#8373; 0.00</strong></span>
+        </p>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <section class="store-services">
-    <div class="store-services-inner">
-      <h2 class="store-services-title">Check our services below</h2>
-      <div class="store-services-grid">
-        <article class="store-service-card">
-          <h3>Opening hours</h3>
-          <p class="store-service-main">Monday &ndash; Saturday</p>
-          <p class="store-service-sub">8:00am &ndash; 8:00pm</p>
-          <p class="store-service-main" style="margin-top:10px">Sundays</p>
-          <p class="store-service-sub">12:00pm &ndash; 8:00pm</p>
-        </article>
-        <article class="store-service-card">
-          <h3>Delivery time</h3>
-          <ul class="store-delivery-list">
-            <li><strong>MTN</strong> <span>30 &ndash; 40 min</span></li>
-            <li><strong>AirtelTigo</strong> <span>Instant</span></li>
-            <li><strong>Telecel</strong> <span>Under 10 min</span></li>
-          </ul>
-        </article>
-        <article class="store-service-card store-service-card--link" id="store-quick-link">
-          <h3>Contact</h3>
-          <p class="store-service-main" id="store-phone-chip">Agent phone</p>
-          <p class="store-service-sub">Call or WhatsApp from the menu</p>
-          <span class="store-service-cta" id="store-wa-chip-label">We are here to help &rarr;</span>
-        </article>
+    <section class="section">
+      <div class="wrap">
+        <div id="store-status" class="store-status" hidden></div>
+        <div class="filters" id="store-filters" hidden></div>
+        <div id="store-packages"></div>
       </div>
-    </div>
-  </section>
-
-  <main class="store-main">
-    <div class="store-main-head">
-      <div>
-        <h2>Choose your network</h2>
-        <p class="hint">Tap a bundle and pay with MoMo or card.</p>
-      </div>
-    </div>
-
-    <div id="store-status" class="store-status" hidden></div>
-
-    <div class="store-tabs" id="store-filters" hidden></div>
-
-    <div id="store-packages" class="store-catalog"></div>
+    </section>
   </main>
 
-  <section class="store-steps">
-    <div class="store-steps-inner">
-      <h2>How to buy</h2>
-      <div class="store-step-grid">
-        <article class="store-step-card">
-          <span class="store-step-num">1</span>
-          <h3>Pick network &amp; size</h3>
-          <p>Select MTN, AirtelTigo or Telecel and tap the GB you need.</p>
-        </article>
-        <article class="store-step-card">
-          <span class="store-step-num">2</span>
-          <h3>Enter recipient number</h3>
-          <p>We verify the prefix so data lands on the correct network.</p>
-        </article>
-        <article class="store-step-card">
-          <span class="store-step-num">3</span>
-          <h3>Pay &amp; receive</h3>
-          <p>Complete MoMo or card payment. Delivery starts within minutes.</p>
-        </article>
+  <footer class="site-footer store-footer" hidden>
+    <div class="wrap footer-grid">
+      <div>
+        <div class="logo"><span class="logo-mark" aria-hidden="true"><img src="assets/logo-mark.svg" alt=""></span> <span id="store-foot-name">Agent store</span></div>
+        <p class="intro" id="store-foot-agent">Powered by DataLogs GH</p>
+      </div>
+      <div>
+        <strong>Help</strong>
+        <p><a href="packages.html">Main shop</a></p>
+        <p><a href="agent/auth.html">Become an agent</a></p>
+        <p><a href="contact.html">Support</a></p>
       </div>
     </div>
-  </section>
-
-  <footer class="store-footer" hidden>
-    <div class="store-footer-inner">
-      <div class="store-footer-brand">
-        <img class="store-logo store-logo--foot" src="assets/logo-mark.svg" alt="" width="20" height="20">
-        <div>
-          <strong id="store-foot-name">Agent store</strong>
-          <p id="store-foot-agent">Powered by DataLogs GH</p>
-        </div>
-      </div>
-      <div class="store-footer-meta">
-        <span>&copy; <span id="store-year"></span> DataLogs GH</span>
-        <span class="store-footer-powered">POWERED BY FSTech</span>
-      </div>
+    <div class="wrap footer-bottom">
+      <span>&copy; <span id="store-year"></span> DataLogs GH.</span>
+      <span class="footer-powered">POWERED BY FSTech</span>
     </div>
   </footer>
 
@@ -142,11 +85,12 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/config.js"></script>
   <script src="js/data.js"></script>
+  <script src="js/theme.js"></script>
   <script src="js/api.js?v=12"></script>
   <script src="js/order-tracker.js?v=4"></script>
   <script src="js/paystack.js?v=1"></script>
   <script src="js/checkout.js?v=5"></script>
-  <script src="js/store.js?v=4"></script>
+  <script src="js/store.js?v=5"></script>
   <script>document.getElementById("store-year").textContent = new Date().getFullYear();</script>
 </body>
 </html>

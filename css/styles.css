@@ -1980,26 +1980,24 @@ body.pay-open {
 }
 
 .store-body .track-panel {
-  background: #fff;
-  border-color: var(--store-line, #d7e2dc);
-  color: var(--store-ink, #14201b);
+  background: var(--modal-bg);
+  border-color: var(--line);
+  color: var(--text);
 }
 
 .store-body .track-form input {
-  background: #f8faf9;
-  border-color: var(--store-line, #d7e2dc);
-  color: var(--store-ink, #14201b);
+  background: var(--input-bg);
+  border-color: var(--line);
+  color: var(--text);
 }
 
 .store-body .track-fab {
-  background: var(--store-accent, #0f766e);
-  color: #fff;
-  box-shadow: 0 12px 28px rgba(15, 118, 110, 0.28);
+  display: none;
 }
 
 .store-body .track-card {
-  background: #f8faf9;
-  border-color: var(--store-line, #d7e2dc);
+  background: var(--bg-soft);
+  border-color: var(--line);
 }
 
 /* WhatsApp channel floating button */

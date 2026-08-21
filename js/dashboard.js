@@ -351,7 +351,7 @@
         name: form.get("name"),
         slug: form.get("slug"),
         tagline: form.get("tagline"),
-        accent_color: document.getElementById("store-accent-input")?.value || "green",
+        accent_color: document.getElementById("store-accent-input")?.value || "sea",
         networks,
         published: form.get("published") === "on",
       });
@@ -640,7 +640,7 @@
     if (!storeCache) {
       document.getElementById("share-url").value = "";
       openBtn.href = "#";
-      paintStoreAccentSwatches("green");
+      paintStoreAccentSwatches("sea");
       return;
     }
     storeForm.name.value = storeCache.name;
@@ -650,7 +650,7 @@
     storeForm.querySelectorAll("[name=networks]").forEach((box) => {
       box.checked = (storeCache.networks || []).includes(box.value);
     });
-    paintStoreAccentSwatches(storeCache.accent_color || "green");
+    paintStoreAccentSwatches(storeCache.accent_color || "sea");
     const url = DataLogsAPI.storePublicUrl(storeCache.slug);
     document.getElementById("share-url").value = url;
     document.getElementById("preview-link").href = url;
