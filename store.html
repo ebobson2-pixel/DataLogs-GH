@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css?v=16">
-  <link rel="stylesheet" href="css/store.css?v=14">
+  <link rel="stylesheet" href="css/store.css?v=15">
   <link rel="icon" href="assets/logo-mark.svg" type="image/svg+xml">
 </head>
 <body class="store-body">
@@ -30,12 +30,11 @@
       </a>
       <div class="store-header-right">
         <span class="store-platform-mark">DataLogs <span>GH</span></span>
-        <nav class="store-nav-tabs" id="store-nav-tabs" aria-label="Store menu" hidden>
+        <nav class="store-nav-tabs" id="store-nav-tabs" aria-label="Store menu">
           <a class="store-nav-tab" href="agent/auth.html">Agent</a>
+          <a class="store-nav-tab" id="store-nav-call" href="#">Call</a>
           <a class="store-nav-tab" href="agent/dashboard.html">Dashboard</a>
-          <a class="store-nav-tab" id="store-nav-call" href="#" hidden>Call</a>
-          <a class="store-nav-tab store-nav-tab--wa" id="store-nav-wa" href="#" target="_blank" rel="noopener noreferrer" hidden>WhatsApp</a>
-          <button class="store-nav-tab store-nav-tab--track" type="button" id="store-nav-track">Track order</button>
+          <a class="store-nav-tab store-nav-tab--wa" id="store-nav-wa" href="#" target="_blank" rel="noopener noreferrer">WhatsApp</a>
         </nav>
         <button class="store-menu-toggle" type="button" id="store-menu-toggle" aria-expanded="false" aria-controls="store-nav-tabs">
           <span class="store-menu-toggle-icon" aria-hidden="true"></span>
@@ -144,7 +143,7 @@
         </article>
         <article class="store-feature-card">
           <strong>Track orders</strong>
-          <p>Use Track order in the menu to check live delivery status.</p>
+          <p>Check delivery status anytime from the quick link or contact the agent.</p>
         </article>
       </div>
     </div>
@@ -176,7 +175,7 @@
   <script src="js/order-tracker.js?v=4"></script>
   <script src="js/paystack.js?v=1"></script>
   <script src="js/checkout.js?v=5"></script>
-  <script src="js/store.js?v=6"></script>
+  <script src="js/store.js?v=7"></script>
   <script>document.getElementById("store-year").textContent = new Date().getFullYear();</script>
 </body>
 </html>

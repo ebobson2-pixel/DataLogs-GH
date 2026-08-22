@@ -206,15 +206,24 @@
 }
 
 .store-nav-tabs {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: flex-end;
+  display: none;
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 50;
+  flex-direction: column;
+  align-items: stretch;
   gap: 6px;
-  max-width: min(68vw, 520px);
+  min-width: 180px;
+  padding: 8px;
+  border: 1px solid var(--store-line);
+  border-radius: 16px;
+  background: var(--store-card);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45);
 }
 
 .store-nav-tabs.is-open {
+  display: flex;
   animation: storeTabsIn 0.18s ease;
 }
 
@@ -230,11 +239,12 @@
 }
 
 .store-nav-tab {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  justify-content: center;
-  min-height: 34px;
-  padding: 7px 12px;
+  justify-content: flex-start;
+  width: 100%;
+  min-height: 40px;
+  padding: 10px 14px;
   border: 1px solid var(--store-line);
   border-radius: 999px;
   background: var(--store-card);
@@ -250,8 +260,9 @@
   white-space: nowrap;
 }
 
-.store-nav-tab[hidden] {
-  display: none !important;
+.store-nav-tab.is-disabled {
+  opacity: 0.45;
+  pointer-events: none;
 }
 
 .store-nav-tab:hover,
@@ -270,9 +281,7 @@
 }
 
 .store-nav-tab--track {
-  border-color: rgba(var(--store-accent-rgb), 0.35);
-  background: rgba(var(--store-accent-rgb), 0.1);
-  color: var(--store-accent);
+  display: none !important;
 }
 
 /* Hero */
@@ -933,28 +942,6 @@
   .store-features-inner,
   .store-footer-inner {
     width: min(1140px, calc(100% - 20px));
-  }
-
-  .store-nav-tabs.is-open {
-    position: absolute;
-    top: calc(100% + 8px);
-    right: 0;
-    z-index: 50;
-    flex-direction: column;
-    align-items: stretch;
-    min-width: 168px;
-    max-width: min(88vw, 240px);
-    padding: 8px;
-    border: 1px solid var(--store-line);
-    border-radius: 16px;
-    background: var(--store-card);
-    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45);
-  }
-
-  .store-nav-tab {
-    width: 100%;
-    justify-content: flex-start;
-    min-height: 40px;
   }
 
   .store-hero {

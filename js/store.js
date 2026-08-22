@@ -123,7 +123,6 @@
   function bindStoreMenu(wa, agentPhone) {
     const call = document.getElementById("store-nav-call");
     const waNav = document.getElementById("store-nav-wa");
-    const track = document.getElementById("store-nav-track");
     const quickLink = document.getElementById("store-quick-link");
     const navTabs = document.getElementById("store-nav-tabs");
     const menuToggle = document.getElementById("store-menu-toggle");
@@ -132,16 +131,22 @@
     const tel = telHref(agentPhone);
     if (tel && call) {
       call.href = tel;
-      call.hidden = false;
+      call.classList.remove("is-disabled");
+    } else if (call) {
+      call.href = "#";
+      call.classList.add("is-disabled");
     }
     if (wa && waNav) {
       waNav.href = wa;
-      waNav.hidden = false;
+      waNav.classList.remove("is-disabled");
+    } else if (waNav) {
+      waNav.href = "#";
+      waNav.classList.add("is-disabled");
+      waNav.removeAttribute("target");
     }
 
     function setMenuOpen(open) {
       if (!navTabs || !menuToggle) return;
-      navTabs.hidden = !open;
       navTabs.classList.toggle("is-open", open);
       menuToggle.classList.toggle("is-open", open);
       menuToggle.setAttribute("aria-expanded", open ? "true" : "false");
@@ -150,22 +155,17 @@
 
     menuToggle?.addEventListener("click", (event) => {
       event.stopPropagation();
-      setMenuOpen(Boolean(navTabs?.hidden));
+      setMenuOpen(!navTabs?.classList.contains("is-open"));
     });
 
     document.addEventListener("click", (event) => {
-      if (!navTabs || navTabs.hidden) return;
+      if (!navTabs?.classList.contains("is-open")) return;
       if (event.target.closest(".store-header-right")) return;
       setMenuOpen(false);
     });
 
     document.addEventListener("keydown", (event) => {
       if (event.key === "Escape") setMenuOpen(false);
-    });
-
-    track?.addEventListener("click", () => {
-      window.DataLogsTrack?.open?.();
-      setMenuOpen(false);
     });
 
     if (quickLink) {
