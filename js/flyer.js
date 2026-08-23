@@ -81,10 +81,16 @@ window.DataLogsFlyer = (() => {
 
   function priceLabel(amount, kind) {
     const n = Number(amount);
+    if (!Number.isFinite(n)) {
+      return typeof formatCedi === "function" ? formatCedi(0) : "GH\u20B5 0.00";
+    }
+    if (kind === "cent") {
+      const num = Number.isInteger(n) ? String(n) : n.toFixed(2);
+      return `\u00A2${num}`;
+    }
+    if (typeof formatCedi === "function") return formatCedi(n);
     const num = Number.isInteger(n) ? String(n) : n.toFixed(2);
-    if (kind === "ghc") return `GHC ${num}`;
-    if (kind === "cent") return `¢${num}`;
-    return `₵ ${num}`;
+    return `GH\u20B5 ${num}`;
   }
 
   function byNetwork(packages) {
@@ -661,7 +667,7 @@ window.DataLogsFlyer = (() => {
         ctx.fillText(net.name, x + 16, cy + 74);
         ctx.fillStyle = "#fff";
         ctx.font = "800 22px Montserrat, Outfit, sans-serif";
-        ctx.fillText(priceLabel(pkg.price, "ghc").replace(" ", ""), x + 16, cy + 112);
+        ctx.fillText(priceLabel(pkg.price, "ghc"), x + 16, cy + 112);
         fillRound(ctx, x + 14, cy + cardH - 58, cardW - 28, 40, 10, net.btn);
         ctx.fillStyle = net.btnInk;
         ctx.font = "800 16px Outfit, sans-serif";

@@ -51,7 +51,8 @@ begin
           s.*,
           jsonb_build_object(
             'full_name', pr.full_name,
-            'email', pr.email
+            'email', pr.email,
+            'phone', pr.phone
           ) as profiles
         from public.agent_stores s
         left join public.profiles pr on pr.id = s.agent_id

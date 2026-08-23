@@ -20,10 +20,15 @@ const NETWORKS = {
 };
 
 function formatCedi(amount) {
-  return "GH\u20B5 " + Number(amount).toFixed(2);
+  const n = Number(amount);
+  const safe = Number.isFinite(n) ? n : 0;
+  return "GH\u20B5 " + safe.toFixed(2);
 }
 
 function mapPackage(row) {
+  if (row && row.id && Number.isFinite(Number(row.retail ?? row.price)) && Number.isFinite(Number(row.agentPrice))) {
+    return row;
+  }
   const agentPrice = Number(row.agent_price);
   return {
     id: row.id,
@@ -84,16 +89,26 @@ function roundCedi(amount) {
 }
 
 function defaultStoreProfit(pkg) {
-  return Math.max(0, roundCedi(Number(pkg.retail ?? pkg.price) - Number(pkg.agentPrice)));
+  const retail = Number(pkg.retail ?? pkg.price);
+  const base = Number(pkg.agentPrice);
+  if (!Number.isFinite(retail) || !Number.isFinite(base)) return 0;
+  return Math.max(0, roundCedi(retail - base));
 }
 
 function resolveStorePackagePrice(pkg, profitByPackage) {
   const map = profitByPackage instanceof Map ? profitByPackage : new Map();
+  const base = Number(pkg.agentPrice);
+  const retail = Number(pkg.retail ?? pkg.price);
   const custom = map.has(pkg.id);
+  if (!Number.isFinite(base)) {
+    const fallback = Number.isFinite(retail) ? roundCedi(retail) : 0;
+    return { profit: 0, price: fallback, custom: false };
+  }
   const profit = custom ? Number(map.get(pkg.id)) : defaultStoreProfit(pkg);
+  const safeProfit = Number.isFinite(profit) ? profit : 0;
   return {
-    profit,
-    price: roundCedi(Number(pkg.agentPrice) + profit),
+    profit: safeProfit,
+    price: roundCedi(base + safeProfit),
     custom,
   };
 }

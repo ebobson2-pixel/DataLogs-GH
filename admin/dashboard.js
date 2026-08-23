@@ -260,6 +260,9 @@
   }
 
   function mapAdminPackage(row) {
+    if (row && row.id && Number.isFinite(Number(row.retail ?? row.price)) && Number.isFinite(Number(row.agentPrice))) {
+      return row;
+    }
     if (typeof mapPackage === "function") return mapPackage(row);
     const agentPrice = Number(row.agent_price);
     return {
@@ -400,6 +403,10 @@
       : `<tr><td colspan="5">No stores yet.</td></tr>`;
 
     populateFlyerStoreSelect();
+    if (adminFlyerStore) {
+      adminFlyerPackages = packagesCache.slice();
+      renderAdminFlyerPreview().catch(() => {});
+    }
   }
 
   async function refreshAll() {
@@ -425,7 +432,7 @@
       const results = await Promise.allSettled([usersP, packagesP, ordersP, storesP]);
       const [usersRes, packagesRes, ordersRes, storesRes] = results;
       if (usersRes.status === "fulfilled") users = usersRes.value || [];
-      if (packagesRes.status === "fulfilled") packages = packagesRes.value || [];
+      if (packagesRes.status === "fulfilled") packages = (packagesRes.value || []).map(mapAdminPackage);
       if (ordersRes.status === "fulfilled") orders = ordersRes.value || [];
       if (storesRes.status === "fulfilled") stores = storesRes.value || [];
       if (!users.length && !packages.length && !orders.length && !stores.length) {
@@ -1148,7 +1155,6 @@
 
   let adminFlyerStyle = "shop";
   let adminFlyerStore = null;
-  let adminFlyerPrices = new Map();
   let adminFlyerPackages = [];
 
   function populateFlyerStoreSelect() {
@@ -1195,9 +1201,10 @@
     return adminFlyerPackages
       .filter((p) => p.active !== false && networks.includes(p.network))
       .map((p) => {
-        const priced = resolveStorePackagePrice(p, adminFlyerPrices);
-        return { network: p.network, gb: p.gb, price: priced.price };
-      });
+        const retail = roundCedi(Number(p.retail ?? p.price));
+        return { network: p.network, gb: p.gb, price: Number.isFinite(retail) ? retail : 0 };
+      })
+      .filter((p) => p.price > 0);
   }
 
   function adminFlyerPayload() {
@@ -1222,17 +1229,10 @@
 
   async function loadAdminFlyerStore(storeId) {
     adminFlyerStore = storesCache.find((s) => s.id === storeId) || null;
-    adminFlyerPrices = new Map();
-    adminFlyerPackages = packagesCache.map(mapAdminPackage);
+    adminFlyerPackages = packagesCache.slice();
     const phoneInput = document.getElementById("flyer-phone");
     if (phoneInput) phoneInput.value = adminFlyerStore?.profiles?.phone || "";
     if (!adminFlyerStore) return;
-    try {
-      const rows = await DataLogsAPI.getAgentStorePrices(adminFlyerStore.agent_id);
-      adminFlyerPrices = new Map(rows.map((row) => [row.package_id, Number(row.profit)]));
-    } catch {
-      adminFlyerPrices = new Map();
-    }
   }
 
   async function renderAdminFlyerPreview() {
