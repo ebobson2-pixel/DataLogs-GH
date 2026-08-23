@@ -208,13 +208,8 @@
 
         <section class="dash-panel" data-panel-view="flyer">
           <div class="panel-card">
-            <h3>Store flyer</h3>
-            <p class="hint">Generate a price poster for any published agent store. Prices use your admin public (retail) rates from Packages.</p>
-            <label>Agent store
-              <select id="admin-flyer-store">
-                <option value="">Select a store</option>
-              </select>
-            </label>
+            <h3>Site flyer</h3>
+            <p class="hint">Generate a price poster for <strong>datalogs.shop</strong>. Uses your public retail rates from Packages and links customers to the main store.</p>
             <div class="flyer-styles" id="flyer-styles" style="margin-top:16px">
               <button class="flyer-style active" type="button" data-flyer-style="shop">
                 <span class="flyer-style-swatch flyer-swatch-shop"></span>
@@ -239,6 +234,14 @@
             </div>
             <form class="form" id="flyer-form" style="margin-top:16px">
               <div class="split" style="grid-template-columns:1fr 1fr;gap:12px">
+                <label>Site name
+                  <input id="flyer-name" type="text" value="DataLogs GH">
+                </label>
+                <label>Tagline
+                  <input id="flyer-tagline" type="text" value="Data for Ghana. In one tap.">
+                </label>
+              </div>
+              <div class="split" style="grid-template-columns:1fr 1fr;gap:12px;margin-top:12px">
                 <label>WhatsApp / call number
                   <input id="flyer-phone" type="tel" placeholder="024 000 0000">
                 </label>
@@ -255,7 +258,7 @@
           </div>
           <div class="panel-card">
             <h3>Preview</h3>
-            <p class="hint" id="flyer-url-hint">Pick a store to preview its flyer.</p>
+            <p class="hint" id="flyer-url-hint">Preview uses datalogs.shop/packages.html</p>
             <div class="flyer-preview-wrap">
               <canvas id="flyer-canvas" width="1080" height="1440"></canvas>
             </div>
@@ -420,6 +423,6 @@
   <script src="../js/theme.js"></script>
   <script src="../js/dash-icons.js?v=1"></script>
   <script src="../js/flyer.js?v=4"></script>
-  <script src="dashboard.js?v=14"></script>
+  <script src="dashboard.js?v=15"></script>
 </body>
 </html>

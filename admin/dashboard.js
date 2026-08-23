@@ -24,7 +24,7 @@
     orders: ["Orders", "Payments and delivery"],
     users: ["Users", "Tap a user for their full dashboard"],
     stores: ["Stores", "Agent mini storefronts"],
-    flyer: ["Flyers", "Generate posters for agent stores"],
+    flyer: ["Flyers", "Download a price poster for datalogs.shop"],
     api: ["API", "Keys, access, and live requests"],
     withdrawals: ["Withdrawals", "Approve or decline agent cash-outs"],
     settings: ["Settings", "WhatsApp, support, and withdrawal threshold"],
@@ -402,11 +402,7 @@
           .join("")
       : `<tr><td colspan="5">No stores yet.</td></tr>`;
 
-    populateFlyerStoreSelect();
-    if (adminFlyerStore) {
-      adminFlyerPackages = packagesCache.slice();
-      renderAdminFlyerPreview().catch(() => {});
-    }
+    syncAdminFlyerPackages();
   }
 
   async function refreshAll() {
@@ -1154,23 +1150,16 @@
   loadSettingsForm();
 
   let adminFlyerStyle = "shop";
-  let adminFlyerStore = null;
   let adminFlyerPackages = [];
 
-  function populateFlyerStoreSelect() {
-    const select = document.getElementById("admin-flyer-store");
-    if (!select) return;
-    const current = select.value;
-    const published = storesCache.filter((s) => s.published);
-    select.innerHTML =
-      `<option value="">Select a store</option>` +
-      published
-        .map((s) => {
-          const agent = s.profiles?.full_name || s.profiles?.email || "Agent";
-          return `<option value="${s.id}">${escapeHtml(s.name)} (${escapeHtml(agent)})</option>`;
-        })
-        .join("");
-    if (current && published.some((s) => s.id === current)) select.value = current;
+  function mainSiteLink() {
+    const base = (window.DATALOGS_CONFIG?.siteUrl || "https://datalogs.shop").replace(/\/$/, "");
+    return `${base}/packages.html`;
+  }
+
+  function syncAdminFlyerPackages() {
+    adminFlyerPackages = packagesCache.slice();
+    renderAdminFlyerPreview().catch(() => {});
   }
 
   function prettyPhone(raw) {
@@ -1189,17 +1178,9 @@
     return prettyPhone(raw);
   }
 
-  function storeLink(slug) {
-    const base = (window.DATALOGS_CONFIG?.siteUrl || window.location.origin).replace(/\/$/, "");
-    if (slug) return `${base}/store.html?s=${encodeURIComponent(slug)}`;
-    return base;
-  }
-
   function adminFlyerPackagesList() {
-    if (!adminFlyerStore) return [];
-    const networks = adminFlyerStore.networks || ["mtn", "airteltigo", "telecel"];
     return adminFlyerPackages
-      .filter((p) => p.active !== false && networks.includes(p.network))
+      .filter((p) => p.active !== false)
       .map((p) => {
         const retail = roundCedi(Number(p.retail ?? p.price));
         return { network: p.network, gb: p.gb, price: Number.isFinite(retail) ? retail : 0 };
@@ -1210,29 +1191,37 @@
   function adminFlyerPayload() {
     const phoneInput = document.getElementById("flyer-phone");
     const hoursInput = document.getElementById("flyer-hours");
-    const store = adminFlyerStore;
+    const nameInput = document.getElementById("flyer-name");
+    const taglineInput = document.getElementById("flyer-tagline");
+    const accentId = document.documentElement.getAttribute("data-accent") || window.DataLogsTheme?.currentAccent?.() || "sea";
     const accentHex =
-      window.DataLogsTheme?.accentHex?.(store?.accent_color) ||
-      window.DataLogsTheme?.ACCENTS?.find((a) => a.id === store?.accent_color)?.hex ||
+      window.DataLogsTheme?.ACCENTS?.find((a) => a.id === accentId)?.hex ||
+      getComputedStyle(document.documentElement).getPropertyValue("--accent").trim() ||
       "#2ec8e6";
     return {
-      name: store?.name || "Agent store",
-      tagline: store?.tagline || "Affordable data bundles",
-      phone: prettyPhone(phoneInput?.value || store?.profiles?.phone || ""),
-      phoneIntl: intlPhone(phoneInput?.value || store?.profiles?.phone || ""),
+      name: nameInput?.value?.trim() || "DataLogs GH",
+      tagline: taglineInput?.value?.trim() || "Data for Ghana. In one tap.",
+      phone: prettyPhone(phoneInput?.value || ""),
+      phoneIntl: intlPhone(phoneInput?.value || ""),
       hours: hoursInput?.value || "8am - 9pm Each day",
-      url: storeLink(store?.slug),
+      url: mainSiteLink(),
       packages: adminFlyerPackagesList(),
       accent: accentHex,
     };
   }
 
-  async function loadAdminFlyerStore(storeId) {
-    adminFlyerStore = storesCache.find((s) => s.id === storeId) || null;
+  async function initAdminFlyer() {
     adminFlyerPackages = packagesCache.slice();
-    const phoneInput = document.getElementById("flyer-phone");
-    if (phoneInput) phoneInput.value = adminFlyerStore?.profiles?.phone || "";
-    if (!adminFlyerStore) return;
+    try {
+      const settings = await DataLogsAPI.getSiteSettings();
+      const phoneInput = document.getElementById("flyer-phone");
+      if (phoneInput && !phoneInput.value.trim() && settings?.support_contact) {
+        phoneInput.value = settings.support_contact;
+      }
+    } catch {
+      /* optional */
+    }
+    renderAdminFlyerPreview().catch(() => {});
   }
 
   async function renderAdminFlyerPreview() {
@@ -1241,14 +1230,9 @@
     const canvas = document.getElementById("flyer-canvas");
     if (!canvas || !window.DataLogsFlyer) return;
     error.hidden = true;
-    if (!adminFlyerStore) {
-      error.hidden = false;
-      error.textContent = "Select a published agent store first.";
-      return;
-    }
     if (!adminFlyerPackagesList().length) {
       error.hidden = false;
-      error.textContent = "No packages available for this store.";
+      error.textContent = "Add active packages with retail prices first.";
       return;
     }
     const data = adminFlyerPayload();
@@ -1261,9 +1245,9 @@
     }
   }
 
-  document.getElementById("admin-flyer-store")?.addEventListener("change", async (event) => {
-    await loadAdminFlyerStore(event.target.value);
-    renderAdminFlyerPreview();
+  document.getElementById("flyer-preview-btn")?.addEventListener("click", () => renderAdminFlyerPreview());
+  ["flyer-phone", "flyer-hours", "flyer-name", "flyer-tagline"].forEach((id) => {
+    document.getElementById(id)?.addEventListener("input", () => renderAdminFlyerPreview());
   });
 
   document.getElementById("flyer-styles")?.addEventListener("click", (event) => {
@@ -1276,23 +1260,18 @@
     renderAdminFlyerPreview();
   });
 
-  document.getElementById("flyer-preview-btn")?.addEventListener("click", () => renderAdminFlyerPreview());
-  document.getElementById("flyer-phone")?.addEventListener("change", () => renderAdminFlyerPreview());
-  document.getElementById("flyer-hours")?.addEventListener("change", () => renderAdminFlyerPreview());
-
   document.getElementById("flyer-download-btn")?.addEventListener("click", async () => {
     const canvas = document.getElementById("flyer-canvas");
     const error = document.getElementById("flyer-error");
     error.hidden = true;
-    if (!adminFlyerStore) {
+    if (!adminFlyerPackagesList().length) {
       error.hidden = false;
-      error.textContent = "Select a published agent store first.";
+      error.textContent = "Add active packages with retail prices first.";
       return;
     }
     try {
       await renderAdminFlyerPreview();
-      const slug = adminFlyerStore.slug || "store";
-      await DataLogsFlyer.download(canvas, `${slug}-${adminFlyerStyle}-flyer.jpg`);
+      await DataLogsFlyer.download(canvas, `datalogs-${adminFlyerStyle}-flyer.jpg`);
     } catch (err) {
       error.hidden = false;
       error.textContent = err.message || "Could not download the flyer.";
@@ -1300,6 +1279,7 @@
   });
 
   await refreshAll();
+  await initAdminFlyer();
   } catch (err) {
     bootError(err.message || "Admin dashboard failed to start.");
   }
