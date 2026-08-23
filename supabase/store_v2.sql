@@ -153,8 +153,8 @@ stable
 as $$
 declare
   store_json jsonb;
-  store_id uuid;
-  agent_id uuid;
+  v_store_id uuid;
+  v_agent_id uuid;
   networks text[];
   packages jsonb := '[]'::jsonb;
   best_sellers jsonb := '[]'::jsonb;
@@ -169,8 +169,8 @@ begin
     return null;
   end if;
 
-  store_id := (store_json->>'id')::uuid;
-  agent_id := (store_json->>'agent_id')::uuid;
+  v_store_id := (store_json->>'id')::uuid;
+  v_agent_id := (store_json->>'agent_id')::uuid;
   select coalesce(array_agg(n::text), array['mtn','airteltigo','telecel']::text[])
     into networks
   from jsonb_array_elements_text(coalesce(store_json->'networks', '[]'::jsonb)) as n;
@@ -183,15 +183,15 @@ begin
     order by p.sort_order asc, p.gb asc
   loop
     select r.sell_price, r.profit into sell, profit
-    from public.resolve_agent_store_price(agent_id, pkg.id) r;
+    from public.resolve_agent_store_price(v_agent_id, pkg.id) r;
     if sell is null or sell <= 0 then
       continue;
     end if;
     select exists(
       select 1 from public.agent_store_prices asp
-      where asp.agent_id = agent_id and asp.package_id = pkg.id
+      where asp.agent_id = v_agent_id and asp.package_id = pkg.id
     ) into is_custom;
-    packages := packages || jsonb_build_object(
+    packages := packages || jsonb_build_array(jsonb_build_object(
       'id', pkg.id,
       'network', pkg.network,
       'gb', pkg.gb,
@@ -201,7 +201,7 @@ begin
       'price', sell,
       'profit', profit,
       'custom_priced', is_custom
-    );
+    ));
   end loop;
 
   select coalesce(jsonb_agg(jsonb_build_object(
@@ -212,7 +212,7 @@ begin
   from (
     select o.package_id, count(*)::bigint as cnt
     from public.orders o
-    where o.agent_store_id = store_id
+    where o.agent_store_id = v_store_id
       and o.payment_status = 'paid'
       and o.created_at >= now() - interval '30 days'
     group by o.package_id
@@ -224,9 +224,9 @@ begin
   into reviews
   from (
     select id, rating, comment, created_at
-    from public.store_reviews
-    where store_id = store_id
-    order by created_at desc
+    from public.store_reviews sr
+    where sr.store_id = v_store_id
+    order by sr.created_at desc
     limit 12
   ) r;
 

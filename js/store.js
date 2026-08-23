@@ -541,6 +541,42 @@
     document.getElementById("store-retry-btn")?.addEventListener("click", () => window.location.reload());
   }
 
+  function normalizePackages(raw) {
+    const list = Array.isArray(raw) ? raw : raw && typeof raw === "object" ? Object.values(raw) : [];
+    return list.map((p) => ({
+      ...p,
+      price: Number(p.price),
+      gb: Number(p.gb),
+    }));
+  }
+
+  async function loadStoreLegacy(slug) {
+    const store = await DataLogsAPI.getStoreBySlug(slug);
+    if (!store?.published) return { store: null };
+    const [packages, priceRows] = await Promise.all([
+      DataLogsAPI.fetchPackages(),
+      DataLogsAPI.getAgentStorePrices(store.agent_id),
+    ]);
+    const profitByPackage = new Map(priceRows.map((row) => [row.package_id, Number(row.profit)]));
+    const networks = store.networks || NETWORK_ORDER;
+    const priced = packages
+      .filter((p) => p.active !== false && networks.includes(p.network))
+      .map((p) => {
+        const resolved = resolveStorePackagePrice(p, profitByPackage);
+        return {
+          id: p.id,
+          network: p.network,
+          gb: p.gb,
+          validity: p.validity,
+          sort_order: p.sort_order,
+          price: resolved.price,
+          profit: resolved.profit,
+          custom_priced: resolved.custom,
+        };
+      });
+    return { store, packages: priced, best_sellers: [], reviews: [] };
+  }
+
   async function init() {
     const params = new URLSearchParams(window.location.search);
     const storedSlug = (sessionStorage.getItem("datalogs_store_slug") || localStorage.getItem("datalogs_store_slug") || "").toLowerCase();
@@ -574,8 +610,8 @@
     try {
       catalog = await DataLogsAPI.getStoreCatalog(state.slug);
     } catch (err) {
-      showError("Could not load store", err.message || "Please try again in a moment.");
-      return;
+      console.warn("get_store_catalog failed, falling back", err);
+      catalog = await loadStoreLegacy(state.slug);
     }
 
     if (!catalog?.store) {
@@ -586,16 +622,14 @@
     const store = catalog.store;
     state.store = store;
     state.storeId = store.id;
-    state.packages = (catalog.packages || []).map((p) => ({
-      ...p,
-      price: Number(p.price),
-      gb: Number(p.gb),
-    }));
+    state.packages = normalizePackages(catalog.packages);
     window.__STORE_ID = store.id;
     window.__PACKAGES = state.packages;
 
     state.bestSellerIds = new Set((catalog.best_sellers || []).map((b) => b.package_id));
-    state.featuredIds = new Set((store.featured_package_ids || []).filter(Boolean));
+    state.featuredIds = new Set(
+      (Array.isArray(store.featured_package_ids) ? store.featured_package_ids : []).filter(Boolean)
+    );
 
     DataLogsAPI.recordStoreView(state.slug).catch(() => {});
 
