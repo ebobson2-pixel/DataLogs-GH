@@ -1424,6 +1424,18 @@
     renderAdminFlyerPreview();
   });
 
+  function adminFlyerShareFeedback(errorEl, mode) {
+    if (!errorEl || !mode || mode === "shared") return;
+    errorEl.hidden = false;
+    if (mode === "clipboard" || mode === "clipboard-whatsapp") {
+      errorEl.textContent =
+        "Flyer image and message copied. In WhatsApp, paste into the chat to send both together.";
+    } else if (mode === "copy-download" || mode === "copy-download-whatsapp") {
+      errorEl.textContent =
+        "Message copied and flyer downloaded. Attach the JPG in WhatsApp — the text is already filled in.";
+    }
+  }
+
   document.getElementById("flyer-share-btn")?.addEventListener("click", async () => {
     const canvas = document.getElementById("flyer-canvas");
     const error = document.getElementById("flyer-error");
@@ -1437,11 +1449,13 @@
     try {
       shareBtn.disabled = true;
       await renderAdminFlyerPreview();
-      const mode = await DataLogsFlyer.share(canvas, adminFlyerPayload(), `datalogs-${adminFlyerStyle}-flyer.jpg`);
-      if (mode === "copy-download") {
-        error.hidden = false;
-        error.textContent = "Share not supported here — message copied and flyer downloaded.";
-      }
+      const mode = await DataLogsFlyer.share(
+        canvas,
+        adminFlyerPayload(),
+        `datalogs-${adminFlyerStyle}-flyer.jpg`,
+        adminFlyerShareText()
+      );
+      adminFlyerShareFeedback(error, mode);
     } catch (err) {
       if (err?.name !== "AbortError") {
         error.hidden = false;
@@ -1463,8 +1477,12 @@
     }
     try {
       await renderAdminFlyerPreview();
-      window.open(DataLogsFlyer.whatsappShareUrl(adminFlyerShareText()), "_blank", "noopener,noreferrer");
-      if (canvas) await DataLogsFlyer.download(canvas, `datalogs-${adminFlyerStyle}-flyer.jpg`);
+      const mode = await DataLogsFlyer.shareWhatsApp(
+        canvas,
+        adminFlyerShareText(),
+        `datalogs-${adminFlyerStyle}-flyer.jpg`
+      );
+      adminFlyerShareFeedback(error, mode);
     } catch (err) {
       error.hidden = false;
       error.textContent = err.message || "Could not open WhatsApp share.";

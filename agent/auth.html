@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;500;600;700&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../css/styles.css?v=18">
-  <link rel="stylesheet" href="../css/agent.css?v=17">
+  <link rel="stylesheet" href="../css/agent.css?v=19">
 </head>
 <body class="agent-site plug-auth-page">
   <div class="plug-auth-shell">
@@ -58,6 +58,7 @@
             <input type="password" name="password" required placeholder="Your password" autocomplete="current-password">
             <button class="password-toggle" type="button" data-toggle-password>Show</button>
           </label>
+          <p class="plug-auth-forgot"><button class="plug-link-btn" type="button" id="show-forgot-btn">Forgot password?</button></p>
           <p class="error" id="login-error" hidden></p>
           <button class="btn btn-primary btn-full plug-submit" type="submit">Sign in</button>
         </form>
@@ -71,8 +72,18 @@
             <input type="password" name="password" required minlength="6" placeholder="At least 6 characters" autocomplete="new-password">
             <button class="password-toggle" type="button" data-toggle-password>Show</button>
           </label>
+          <p class="plug-auth-forgot"><button class="plug-link-btn" type="button" id="show-forgot-from-signup">Forgot password?</button></p>
           <p class="error" id="signup-error" hidden></p>
           <button class="btn btn-primary btn-full plug-submit" type="submit">Create vendor account</button>
+        </form>
+
+        <form class="plug-form form" id="forgot-form" data-auth-form="forgot" hidden>
+          <p class="plug-signup-lede">Enter your account email and we will send a link to reset your password.</p>
+          <label>Email<input type="email" name="email" required placeholder="you@email.com" id="forgot-email"></label>
+          <p class="error" id="forgot-error" hidden></p>
+          <p class="hint" id="forgot-success" hidden></p>
+          <button class="btn btn-primary btn-full plug-submit" type="submit">Send reset link</button>
+          <p class="plug-auth-forgot"><button class="plug-link-btn" type="button" id="back-to-login-btn">&larr; Back to sign in</button></p>
         </form>
 
         <div class="plug-trust">
@@ -90,7 +101,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="../js/config.js"></script>
   <script src="../js/data.js"></script>
-  <script src="../js/api.js?v=10"></script>
+  <script src="../js/api.js?v=11"></script>
   <script src="../js/whatsapp-fab.js"></script>
   <script>
     (async function () {
@@ -127,15 +138,41 @@
 
       const tabs = document.querySelectorAll("[data-auth-tab]");
       const forms = document.querySelectorAll("[data-auth-form]");
+      const forgotForm = document.getElementById("forgot-form");
+
+      function showAuthView(view) {
+        const tabBar = document.querySelector(".plug-tabs");
+        if (tabBar) tabBar.hidden = view === "forgot";
+        tabs.forEach((t) => t.classList.toggle("active", t.dataset.authTab === view));
+        forms.forEach((f) => {
+          const isForgot = f.dataset.authForm === "forgot";
+          if (view === "forgot") {
+            f.classList.toggle("active", isForgot);
+            f.hidden = !isForgot;
+          } else {
+            f.hidden = isForgot;
+            f.classList.toggle("active", f.dataset.authForm === view);
+          }
+        });
+      }
 
       tabs.forEach((tab) => {
-        tab.addEventListener("click", () => {
-          tabs.forEach((t) => t.classList.remove("active"));
-          forms.forEach((f) => f.classList.remove("active"));
-          tab.classList.add("active");
-          document.querySelector(`[data-auth-form="${tab.dataset.authTab}"]`).classList.add("active");
-        });
+        tab.addEventListener("click", () => showAuthView(tab.dataset.authTab));
       });
+
+      document.getElementById("show-forgot-btn")?.addEventListener("click", () => {
+        const loginEmail = document.querySelector('#login-form input[name="email"]')?.value?.trim();
+        if (loginEmail) document.getElementById("forgot-email").value = loginEmail;
+        showAuthView("forgot");
+      });
+
+      document.getElementById("show-forgot-from-signup")?.addEventListener("click", () => {
+        const signupEmail = document.querySelector('#signup-form input[name="email"]')?.value?.trim();
+        if (signupEmail) document.getElementById("forgot-email").value = signupEmail;
+        showAuthView("forgot");
+      });
+
+      document.getElementById("back-to-login-btn")?.addEventListener("click", () => showAuthView("login"));
 
       document.querySelectorAll("[data-toggle-password]").forEach((btn) => {
         btn.addEventListener("click", () => {
@@ -182,6 +219,23 @@
           }
         }
         await routeAfterAuth();
+      });
+
+      document.getElementById("forgot-form").addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const data = Object.fromEntries(new FormData(event.target).entries());
+        const error = document.getElementById("forgot-error");
+        const success = document.getElementById("forgot-success");
+        error.hidden = true;
+        success.hidden = true;
+        const result = await DataLogsAPI.requestPasswordReset(data.email);
+        if (!result.ok) {
+          error.hidden = false;
+          error.textContent = result.message;
+          return;
+        }
+        success.hidden = false;
+        success.textContent = "Reset link sent. Check your email, then open the link to choose a new password.";
       });
     })();
   </script>

@@ -784,20 +784,59 @@ window.DataLogsFlyer = (() => {
     area.remove();
   }
 
-  async function share(canvas, data, filename) {
-    const text = buildShareMessage(data);
+  async function shareWithMessage(canvas, message, filename, { openWhatsApp = false } = {}) {
+    const text = String(message || "").trim();
+    if (!text) throw new Error("Share message is empty.");
     const blob = await canvasToBlob(canvas);
     const file = new File([blob], filename || "store-flyer.jpg", { type: "image/jpeg" });
+
     if (navigator.share) {
-      const payload = { title: data?.name || "Store flyer", text };
-      if (navigator.canShare?.({ files: [file] })) payload.files = [file];
-      else payload.url = data?.url || undefined;
-      await navigator.share(payload);
-      return "share";
+      const payload = { title: "Store flyer", text };
+      const shareData = { files: [file], text };
+      if (navigator.canShare?.(shareData)) payload.files = [file];
+      else if (navigator.canShare?.({ files: [file] })) payload.files = [file];
+      try {
+        await navigator.share(payload);
+        return "shared";
+      } catch (err) {
+        if (err?.name === "AbortError") throw err;
+      }
     }
+
+    if (navigator.clipboard?.write && typeof ClipboardItem !== "undefined") {
+      try {
+        await navigator.clipboard.write([
+          new ClipboardItem({
+            "text/plain": new Blob([text], { type: "text/plain" }),
+            "image/jpeg": blob,
+          }),
+        ]);
+        if (openWhatsApp) {
+          window.open(whatsappShareUrl(text), "_blank", "noopener,noreferrer");
+          return "clipboard-whatsapp";
+        }
+        return "clipboard";
+      } catch {
+        /* fall through */
+      }
+    }
+
     await copyShareMessage(text);
     await download(canvas, filename);
+    if (openWhatsApp) {
+      window.open(whatsappShareUrl(text), "_blank", "noopener,noreferrer");
+      return "copy-download-whatsapp";
+    }
     return "copy-download";
+  }
+
+  async function share(canvas, data, filename, message) {
+    const text = message ?? buildShareMessage(data);
+    return shareWithMessage(canvas, text, filename, { openWhatsApp: false });
+  }
+
+  async function shareWhatsApp(canvas, message, filename) {
+    return shareWithMessage(canvas, message, filename, { openWhatsApp: true });
   }
 
   async function render(canvas, style, data) {
@@ -838,6 +877,8 @@ window.DataLogsFlyer = (() => {
     whatsappShareUrl,
     copyShareMessage,
     share,
+    shareWhatsApp,
+    shareWithMessage,
     templates: ["shop", "hub", "plug", "package"],
   };
 })();

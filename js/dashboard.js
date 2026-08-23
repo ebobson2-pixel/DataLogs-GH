@@ -1632,6 +1632,19 @@
     renderFlyerPreview();
   });
 
+  function flyerShareFeedback(errorEl, mode) {
+    if (!errorEl || !mode || mode === "shared") return;
+    errorEl.hidden = false;
+    errorEl.style.color = mode.startsWith("clipboard") ? "var(--accent, #22c55e)" : "";
+    if (mode === "clipboard" || mode === "clipboard-whatsapp") {
+      errorEl.textContent =
+        "Flyer image and message copied. In WhatsApp, paste into the chat to send both together.";
+    } else if (mode === "copy-download" || mode === "copy-download-whatsapp") {
+      errorEl.textContent =
+        "Message copied and flyer downloaded. Attach the JPG in WhatsApp — the text is already filled in.";
+    }
+  }
+
   document.getElementById("flyer-share-btn")?.addEventListener("click", async () => {
     const canvas = document.getElementById("flyer-canvas");
     const error = document.getElementById("flyer-error");
@@ -1646,12 +1659,13 @@
       shareBtn.disabled = true;
       await renderFlyerPreview();
       const slug = storeCache.slug || "store";
-      const mode = await DataLogsFlyer.share(canvas, flyerPayload(), `${slug}-${flyerStyle}-flyer.jpg`);
-      if (mode === "copy-download") {
-        error.hidden = false;
-        error.style.color = "";
-        error.textContent = "Share not supported here — message copied and flyer downloaded. Attach the JPG in WhatsApp or SMS.";
-      }
+      const mode = await DataLogsFlyer.share(
+        canvas,
+        flyerPayload(),
+        `${slug}-${flyerStyle}-flyer.jpg`,
+        flyerShareText()
+      );
+      flyerShareFeedback(error, mode);
     } catch (err) {
       if (err?.name !== "AbortError") {
         error.hidden = false;
@@ -1673,14 +1687,13 @@
     }
     try {
       await renderFlyerPreview();
-      const text = flyerShareText();
-      if (window.DataLogsFlyer?.whatsappShareUrl) {
-        window.open(DataLogsFlyer.whatsappShareUrl(text), "_blank", "noopener,noreferrer");
-      }
-      if (canvas && window.DataLogsFlyer?.download) {
-        const slug = storeCache.slug || "store";
-        await DataLogsFlyer.download(canvas, `${slug}-${flyerStyle}-flyer.jpg`);
-      }
+      const slug = storeCache.slug || "store";
+      const mode = await DataLogsFlyer.shareWhatsApp(
+        canvas,
+        flyerShareText(),
+        `${slug}-${flyerStyle}-flyer.jpg`
+      );
+      flyerShareFeedback(error, mode);
     } catch (err) {
       error.hidden = false;
       error.textContent = err.message || "Could not open WhatsApp share.";

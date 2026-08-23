@@ -106,6 +106,24 @@ const DataLogsAPI = (() => {
     await client.auth.signOut();
   }
 
+  function passwordResetRedirect() {
+    return new URL("reset-password.html", window.location.href).href;
+  }
+
+  async function requestPasswordReset(email) {
+    const { error } = await client.auth.resetPasswordForEmail(String(email || "").trim(), {
+      redirectTo: passwordResetRedirect(),
+    });
+    if (error) return { ok: false, message: error.message };
+    return { ok: true };
+  }
+
+  async function updatePassword(password) {
+    const { error } = await client.auth.updateUser({ password: String(password || "") });
+    if (error) return { ok: false, message: error.message };
+    return { ok: true };
+  }
+
   async function fetchPackages({ includeInactive = false, applyCustomPrices } = {}) {
     let query = client.from("packages").select("*").order("sort_order", { ascending: true });
     if (!includeInactive) query = query.eq("active", true);
@@ -679,6 +697,9 @@ const DataLogsAPI = (() => {
     signUp,
     signIn,
     signOut,
+    requestPasswordReset,
+    updatePassword,
+    passwordResetRedirect,
     fetchPackages,
     upsertPackage,
     upsertPackages,
