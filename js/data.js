@@ -154,11 +154,17 @@ function formatOrderDateTime(iso) {
 }
 
 function publicDeliveryStatus(status) {
-  return status === "delivered" || status === "completed" ? "completed" : "processing";
+  const s = String(status || "").toLowerCase();
+  if (s === "delivered" || s === "completed") return "completed";
+  if (s === "failed") return "failed";
+  return "processing";
 }
 
 function publicDeliveryLabel(status) {
-  return publicDeliveryStatus(status) === "completed" ? "Completed" : "Processing";
+  const s = publicDeliveryStatus(status);
+  if (s === "completed") return "Delivered";
+  if (s === "failed") return "Failed";
+  return "Processing";
 }
 
 window.publicDeliveryStatus = publicDeliveryStatus;

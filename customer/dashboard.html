@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>My account &mdash; DataLogs GH</title>
+  <link rel="stylesheet" href="../css/styles.css?v=16">
+  <link rel="stylesheet" href="../css/agent.css?v=13">
+</head>
+<body class="dash-body customer-dash">
+  <div class="wrap" style="max-width:920px;margin:0 auto;padding:24px 16px 80px">
+    <header class="customer-dash-head">
+      <div>
+        <a class="logo" href="../index.html">DataLogs <span>GH</span></a>
+        <h1 style="margin:12px 0 4px">My account</h1>
+        <p class="hint" id="cust-email"></p>
+      </div>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="../packages.html">Buy data</a>
+        <button class="btn btn-ghost" type="button" id="cust-signout">Sign out</button>
+      </div>
+    </header>
+
+    <section class="panel-card" style="margin-top:20px">
+      <h3>Buy again</h3>
+      <div class="package-grid" id="cust-recent"></div>
+      <p class="hint" id="cust-recent-empty" hidden>No recent purchases on this device yet.</p>
+    </section>
+
+    <section class="panel-card" style="margin-top:16px">
+      <h3>Saved beneficiaries</h3>
+      <div id="cust-ben-list"></div>
+      <form class="form" id="cust-ben-form" style="margin-top:12px">
+        <div class="split" style="grid-template-columns:1fr 1fr;gap:10px">
+          <label>Label<input name="label" required placeholder="Mum"></label>
+          <label>Phone<input name="phone" inputmode="tel" required placeholder="024 000 0000"></label>
+        </div>
+        <label>Network
+          <select name="network">
+            <option value="mtn">MTN</option>
+            <option value="airteltigo">AirtelTigo</option>
+            <option value="telecel">Telecel</option>
+          </select>
+        </label>
+        <button class="btn btn-primary" type="submit">Add beneficiary</button>
+      </form>
+    </section>
+
+    <section class="panel-card" style="margin-top:16px">
+      <h3>Track orders</h3>
+      <p class="hint">Look up any order by code or recipient number.</p>
+      <a class="btn btn-ghost" href="../track.html">Open tracker</a>
+    </section>
+  </div>
+  <div id="checkout-root"></div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../js/config.js"></script>
+  <script src="../js/data.js"></script>
+  <script src="../js/customer-local.js?v=1"></script>
+  <script src="../js/receipt.js?v=1"></script>
+  <script src="../js/api.js?v=14"></script>
+  <script src="../js/order-tracker.js?v=5"></script>
+  <script src="../js/paystack.js?v=1"></script>
+  <script src="../js/checkout.js?v=6"></script>
+  <script>
+    (async function () {
+      const profile = await DataLogsAPI.requireProfile(["customer"], "auth.html");
+      if (!profile) return;
+      document.getElementById("cust-email").textContent = profile.email || profile.authEmail || "";
+      document.getElementById("cust-signout").addEventListener("click", () => DataLogsAPI.signOut().then(() => (window.location.href = "auth.html")));
+
+      function paintRecent() {
+        const grid = document.getElementById("cust-recent");
+        const empty = document.getElementById("cust-recent-empty");
+        const recent = DataLogsCustomer.getRecentOrders();
+        if (!recent.length) {
+          empty.hidden = false;
+          return;
+        }
+        empty.hidden = true;
+        grid.innerHTML = recent
+          .map(
+            (item) => `
+          <button class="card package-card" type="button" data-ba="${item.packageId}" data-r="${escapeHtml(item.recipient || "")}">
+            <div class="pill">${NETWORKS[item.network]?.name || item.network}</div>
+            <div class="gb">${item.gb}<span> GB</span></div>
+            <div class="price">${formatCedi(item.price)}</div>
+            <div class="tap-hint">Buy again</div>
+          </button>`
+          )
+          .join("");
+        grid.querySelectorAll("[data-ba]").forEach((btn) => {
+          btn.addEventListener("click", () =>
+            DataLogsCustomer.buyAgain({ packageId: btn.dataset.ba, recipient: btn.dataset.r })
+          );
+        });
+      }
+
+      function paintBen() {
+        const list = document.getElementById("cust-ben-list");
+        const bens = DataLogsCustomer.getBeneficiaries();
+        list.innerHTML = bens.length
+          ? bens
+              .map(
+                (b) => `
+            <div class="cust-ben-row">
+              <div><strong>${escapeHtml(b.label)}</strong><br><span class="hint">${escapeHtml(b.phone)} · ${NETWORKS[b.network]?.name || b.network || "Any"}</span></div>
+              <button class="btn btn-ghost btn-sm" type="button" data-del-ben="${b.id}">Remove</button>
+            </div>`
+              )
+              .join("")
+          : `<p class="hint">No saved numbers yet.</p>`;
+        list.querySelectorAll("[data-del-ben]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            DataLogsCustomer.deleteBeneficiary(btn.dataset.delBen);
+            paintBen();
+          });
+        });
+      }
+
+      document.getElementById("cust-ben-form").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const fd = new FormData(e.target);
+        DataLogsCustomer.saveBeneficiary({
+          label: fd.get("label"),
+          phone: fd.get("phone"),
+          network: fd.get("network"),
+        });
+        e.target.reset();
+        paintBen();
+      });
+
+      try {
+        window.__PACKAGES = await DataLogsAPI.fetchPackages();
+      } catch {
+        window.__PACKAGES = [];
+      }
+      paintRecent();
+      paintBen();
+    })();
+  </script>
+</body>
+</html>

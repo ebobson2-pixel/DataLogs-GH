@@ -9,8 +9,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/styles.css?v=15">
-  <link rel="stylesheet" href="css/home.css?v=9">
+  <link rel="stylesheet" href="css/styles.css?v=16">
+  <link rel="stylesheet" href="css/home.css?v=10">
   <link rel="icon" href="assets/logo-mark.svg" type="image/svg+xml">
 </head>
 <body data-page="home" class="home-page">
@@ -38,7 +38,9 @@
         <p class="home-lede reveal delay-2">MTN &middot; AirtelTigo &middot; Telecel</p>
         <div class="hero-actions reveal delay-3">
           <a class="btn btn-primary" href="packages.html">Buy data</a>
+          <button class="btn btn-ghost" type="button" id="home-track-btn">Track transaction</button>
           <a class="btn btn-ghost" href="agent/auth.html">Become an agent</a>
+          <a class="btn btn-ghost" href="customer/auth.html">Sign in</a>
         </div>
       </div>
     </section>
@@ -82,6 +84,51 @@
       </div>
     </section>
 
+    <section class="section home-trending">
+      <div class="wrap">
+        <div class="section-head reveal">
+          <div>
+            <p class="kicker">🔥 Popular today</p>
+            <h2>Trending bundles</h2>
+            <p class="intro">Based on real purchases in the last 7 days.</p>
+          </div>
+        </div>
+        <div class="package-grid" id="home-trending" data-trending-packages></div>
+      </div>
+    </section>
+
+    <section class="section home-why">
+      <div class="wrap">
+        <div class="section-head reveal">
+          <div>
+            <p class="kicker">Why DataLogs?</p>
+            <h2>Built for Ghana</h2>
+          </div>
+        </div>
+        <div class="why-grid reveal">
+          <article class="why-card"><strong>Fast delivery</strong><p>Pay with MoMo or card and get bundles sent within minutes.</p></article>
+          <article class="why-card"><strong>Secure payments</strong><p>Paystack confirms every payment before we send data.</p></article>
+          <article class="why-card"><strong>All major networks</strong><p>MTN, AirtelTigo and Telecel in one place.</p></article>
+          <article class="why-card"><strong>Track every order</strong><p>Look up status by order code or recipient number anytime.</p></article>
+          <article class="why-card"><strong>Affordable data</strong><p>Clear retail prices with no hidden steps at checkout.</p></article>
+          <article class="why-card"><strong>Agent opportunities</strong><p>Open your own mini store and earn on every sale.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section home-buy-again" id="home-buy-again" hidden>
+      <div class="wrap">
+        <div class="section-head reveal">
+          <div>
+            <p class="kicker">Buy again</p>
+            <h2>Your recent purchases</h2>
+          </div>
+          <a class="btn btn-ghost" href="customer/dashboard.html">My account</a>
+        </div>
+        <div class="package-grid" id="home-recent-orders"></div>
+      </div>
+    </section>
+
     <section class="section home-cta-section">
       <div class="wrap">
         <div class="home-cta reveal">
@@ -99,13 +146,15 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/config.js"></script>
   <script src="js/data.js"></script>
-  <script src="js/api.js?v=6"></script>
+  <script src="js/customer-local.js?v=1"></script>
+  <script src="js/receipt.js?v=1"></script>
+  <script src="js/api.js?v=14"></script>
   <script src="js/whatsapp-fab.js"></script>
-  <script src="js/order-tracker.js?v=3"></script>
+  <script src="js/order-tracker.js?v=5"></script>
   <script src="js/theme.js"></script>
-  <script src="js/app.js?v=4"></script>
+  <script src="js/app.js?v=5"></script>
   <script src="js/paystack.js?v=1"></script>
-  <script src="js/checkout.js?v=5"></script>
-  <script src="js/home.js"></script>
+  <script src="js/checkout.js?v=6"></script>
+  <script src="js/home.js?v=2"></script>
 </body>
 </html>

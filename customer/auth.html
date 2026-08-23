@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Customer sign in &mdash; DataLogs GH</title>
+  <link rel="stylesheet" href="../css/styles.css?v=16">
+  <link rel="stylesheet" href="../css/agent.css?v=13">
+</head>
+<body class="auth-body">
+  <section class="auth-brand">
+    <div>
+      <a class="logo" href="../index.html">DataLogs <span>GH</span></a>
+      <p class="kicker" style="margin-top:36px">Customer account</p>
+      <h1>Buy faster.<br><em>Track orders.</em></h1>
+      <p class="lede">Save beneficiaries, buy again in one tap, and view your order history.</p>
+    </div>
+  </section>
+  <section class="auth-panel">
+    <div class="auth-card">
+      <div class="auth-tabs" role="tablist">
+        <button class="auth-tab active" type="button" data-auth-tab="login">Sign in</button>
+        <button class="auth-tab" type="button" data-auth-tab="signup">Create account</button>
+      </div>
+      <form class="auth-form active form" id="login-form" data-auth-form="login">
+        <h2>Welcome back</h2>
+        <label>Email<input type="email" name="email" required></label>
+        <label>Password<input type="password" name="password" required autocomplete="current-password"></label>
+        <p class="error" id="login-error" hidden></p>
+        <button class="btn btn-primary btn-full" type="submit">Sign in</button>
+      </form>
+      <form class="auth-form form" id="signup-form" data-auth-form="signup">
+        <h2>Create account</h2>
+        <label>Full name<input type="text" name="name" required></label>
+        <label>Email<input type="email" name="email" required></label>
+        <label>Phone<input type="tel" name="phone" required placeholder="024 000 0000"></label>
+        <label>Password<input type="password" name="password" required minlength="6"></label>
+        <p class="error" id="signup-error" hidden></p>
+        <button class="btn btn-primary btn-full" type="submit">Create account</button>
+      </form>
+      <p class="auth-foot"><a href="../index.html">&larr; Back to shop</a> · <a href="../agent/auth.html">Agent login</a></p>
+    </div>
+  </section>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../js/config.js"></script>
+  <script src="../js/data.js"></script>
+  <script src="../js/api.js?v=14"></script>
+  <script>
+    (async function () {
+      const profile = await DataLogsAPI.getProfile().catch(() => null);
+      if (profile?.role === "customer") {
+        window.location.href = "dashboard.html";
+        return;
+      }
+      if (profile?.role === "agent") window.location.href = "../agent/dashboard.html";
+      if (profile?.role === "admin") window.location.href = "../admin/dashboard.html";
+
+      document.querySelectorAll("[data-auth-tab]").forEach((tab) => {
+        tab.addEventListener("click", () => {
+          document.querySelectorAll("[data-auth-tab]").forEach((t) => t.classList.toggle("active", t === tab));
+          document.querySelectorAll("[data-auth-form]").forEach((f) => f.classList.toggle("active", f.dataset.authForm === tab.dataset.authTab));
+        });
+      });
+
+      document.getElementById("login-form").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const fd = new FormData(e.target);
+        const err = document.getElementById("login-error");
+        err.hidden = true;
+        const res = await DataLogsAPI.signIn({ email: fd.get("email"), password: fd.get("password") });
+        if (!res.ok) {
+          err.hidden = false;
+          err.textContent = res.message;
+          return;
+        }
+        window.location.href = await DataLogsAPI.routeCustomerAfterAuth();
+      });
+
+      document.getElementById("signup-form").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const fd = new FormData(e.target);
+        const err = document.getElementById("signup-error");
+        err.hidden = true;
+        const res = await DataLogsAPI.signUp({
+          name: fd.get("name"),
+          email: fd.get("email"),
+          phone: fd.get("phone"),
+          password: fd.get("password"),
+          role: "customer",
+        });
+        if (!res.ok) {
+          err.hidden = false;
+          err.textContent = res.message;
+          return;
+        }
+        window.location.href = "dashboard.html";
+      });
+    })();
+  </script>
+</body>
+</html>

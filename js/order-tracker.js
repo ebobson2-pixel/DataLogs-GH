@@ -9,12 +9,20 @@
     <div class="track-panel" id="track-panel" hidden>
       <div class="track-panel-head">
         <div>
-          <strong>Track your order</strong>
-          <p>Enter the Ghana number that received the data bundle for live status and full order details.</p>
+          <strong>Track transaction</strong>
+          <p>Look up by order code or the recipient phone number used at checkout.</p>
         </div>
         <button class="track-close" type="button" id="track-close" aria-label="Close">×</button>
       </div>
-      <form class="track-form" id="track-form">
+      <div class="track-tabs" role="tablist">
+        <button class="track-tab active" type="button" data-track-tab="code">Order ID</button>
+        <button class="track-tab" type="button" data-track-tab="phone">Phone number</button>
+      </div>
+      <form class="track-form" id="track-form-code" data-track-form="code">
+        <input id="track-code" placeholder="DL-ABC12345" autocomplete="off" required>
+        <button class="btn btn-primary" type="submit">Track order</button>
+      </form>
+      <form class="track-form" id="track-form-phone" data-track-form="phone" hidden>
         <input id="track-phone" inputmode="tel" placeholder="024 123 4567" autocomplete="tel" required>
         <button class="btn btn-primary" type="submit">Check status</button>
       </form>
@@ -26,18 +34,21 @@
 
   const fab = root.querySelector("#track-fab");
   const panel = root.querySelector("#track-panel");
-  if (document.body.classList.contains("store-body")) fab.hidden = true;
-  const form = root.querySelector("#track-form");
+  const formCode = root.querySelector("#track-form-code");
+  const formPhone = root.querySelector("#track-form-phone");
+  const codeInput = root.querySelector("#track-code");
   const phoneInput = root.querySelector("#track-phone");
   const errorEl = root.querySelector("#track-error");
   const results = root.querySelector("#track-results");
   let pollTimer = null;
-  let lastPhone = "";
+  let pollMode = null;
+  let pollValue = "";
+  let activeTab = "code";
 
   function openPanel() {
     panel.hidden = false;
     fab.classList.add("open");
-    phoneInput.focus();
+    (activeTab === "code" ? codeInput : phoneInput).focus();
   }
 
   function closePanel() {
@@ -53,8 +64,28 @@
     }
   }
 
+  function setTab(tab) {
+    activeTab = tab;
+    root.querySelectorAll("[data-track-tab]").forEach((btn) => {
+      btn.classList.toggle("active", btn.dataset.trackTab === tab);
+    });
+    formCode.hidden = tab !== "code";
+    formPhone.hidden = tab !== "phone";
+  }
+
   function statusClass(status) {
-    return publicDeliveryStatus(status) === "completed" ? "is-delivered" : "is-processing";
+    const s = String(status || "").toLowerCase();
+    if (s === "completed") return "is-delivered";
+    if (s === "failed") return "is-failed";
+    return "is-processing";
+  }
+
+  function statusEmoji(status) {
+    const s = String(status || "").toLowerCase();
+    if (s === "completed") return "🟢";
+    if (s === "failed") return "🔴";
+    if (s === "pending") return "🟡";
+    return "🔵";
   }
 
   function methodLabel(method) {
@@ -71,32 +102,23 @@
     return order.source || "DataLogs GH";
   }
 
-  function statusHint(status, paymentStatus) {
-    const done = publicDeliveryStatus(status) === "completed";
-    if (done) {
-      return "Data has been sent to the network for this number. It usually appears on the phone shortly.";
-    }
-    if (String(paymentStatus).toLowerCase() === "paid") {
-      return "Payment is confirmed. We are sending the bundle to the network now.";
-    }
-    return "We are confirming payment and preparing this bundle for delivery.";
-  }
-
   function timelineHtml(order) {
+    const status = String(order.delivery_status || "").toLowerCase();
     const paid = String(order.payment_status).toLowerCase() === "paid";
-    const done = publicDeliveryStatus(order.delivery_status) === "completed";
+    const done = status === "completed";
+    const failed = status === "failed";
     const steps = [
-      { id: "placed", label: "Order placed", done: true, active: false },
-      { id: "paid", label: "Payment confirmed", done: paid || done, active: !paid && !done },
-      { id: "send", label: "Sending to network", done: done, active: paid && !done },
-      { id: "done", label: "Completed", done: done, active: false },
+      { label: "Processing", done: true, active: !paid && !done && !failed },
+      { label: "Payment confirmed", done: paid || done, active: paid && !done && !failed },
+      { label: "Provider processing", done: done, active: paid && !done && !failed },
+      { label: failed ? "Failed" : "Data delivered", done: done || failed, active: failed },
     ];
     return `
       <ol class="track-timeline" aria-label="Order progress">
         ${steps
           .map(
             (step) => `
-          <li class="${step.done ? "done" : ""} ${step.active ? "active" : ""}">
+          <li class="${step.done ? "done" : ""} ${step.active ? "active" : ""} ${failed && step.label === "Failed" ? "failed" : ""}">
             <span class="track-timeline-dot" aria-hidden="true"></span>
             <span>${step.label}</span>
           </li>`
@@ -107,31 +129,27 @@
   }
 
   function detailRow(label, value) {
-    return `
-      <div class="track-detail-row">
-        <span>${label}</span>
-        <strong>${value}</strong>
-      </div>
-    `;
+    return `<div class="track-detail-row"><span>${label}</span><strong>${value}</strong></div>`;
   }
 
   function renderOrders(orders) {
     if (!orders.length) {
       results.innerHTML = `
-        <p class="track-empty">No orders found for that number.</p>
-        <p class="track-empty">Use the exact recipient number entered at checkout. If you just paid, wait a moment and check again.</p>
+        <p class="track-empty">No orders found.</p>
+        <p class="track-empty">Double-check the order code or recipient number from checkout.</p>
       `;
       return;
     }
     results.innerHTML = `
-      <p class="track-summary">${orders.length} recent order${orders.length === 1 ? "" : "s"} found · live updates every few seconds</p>
+      <p class="track-summary">${orders.length} order${orders.length === 1 ? "" : "s"} · live updates</p>
       ${orders
         .map((o) => {
           const when = formatOrderDateTime(o.created_at);
-          const updated = formatOrderDateTime(o.updated_at || o.created_at);
           const network = NETWORKS[o.network]?.name || o.network;
-          const status = publicDeliveryLabel(o.delivery_status);
+          const status = String(o.delivery_status || "processing");
+          const label = `${statusEmoji(status)} ${status === "completed" ? "Delivered" : status === "failed" ? "Failed" : "Processing"}`;
           const paidLabel = String(o.payment_status).toLowerCase() === "paid" ? "Paid" : "Confirming payment";
+          const canBuyAgain = !!o.package_id;
           return `
           <article class="track-card ${statusClass(o.delivery_status)}">
             <div class="track-card-top">
@@ -139,31 +157,66 @@
                 <strong>${o.order_code || "Order"}</strong>
                 <p class="track-meta" style="margin:4px 0 0">${escapeHtml(sourceLabel(o))}</p>
               </div>
-              <span class="track-status">${status}</span>
+              <span class="track-status">${label}</span>
             </div>
             <p class="track-bundle">${network} · ${o.gb} GB</p>
-            <p class="track-hint">${statusHint(o.delivery_status, o.payment_status)}</p>
+            <p class="track-hint">${escapeHtml(o.status_message || "")}</p>
             ${timelineHtml(o)}
             <div class="track-details">
               ${detailRow("Recipient", escapeHtml(o.recipient_number || "—"))}
               ${detailRow("Amount paid", formatCedi(o.amount_paid))}
               ${detailRow("Payment", `${paidLabel} · ${methodLabel(o.payment_method)}`)}
-              ${detailRow("Validity", escapeHtml(o.validity || "Non expiry"))}
               ${detailRow("Ordered", `${when.date} · ${when.time}`)}
-              ${detailRow("Last update", `${updated.date} · ${updated.time}`)}
+            </div>
+            <div class="track-actions">
+              ${canBuyAgain ? `<button class="btn btn-primary btn-sm" type="button" data-buy-again="${o.package_id}" data-recipient="${escapeHtml(o.recipient_number || "")}" data-tier="${escapeHtml(o.pricing_tier || "retail")}" data-store="${o.agent_store_id || ""}">Buy again</button>` : ""}
+              ${status === "failed" ? `<button class="btn btn-ghost btn-sm" type="button" data-support>Contact support</button>` : ""}
             </div>
           </article>`;
         })
         .join("")}
     `;
+    results.querySelectorAll("[data-buy-again]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        closePanel();
+        window.DataLogsCustomer?.buyAgain?.({
+          packageId: btn.dataset.buyAgain,
+          recipient: btn.dataset.recipient,
+          tier: btn.dataset.tier,
+          storeId: btn.dataset.store || null,
+        });
+      });
+    });
+    results.querySelectorAll("[data-support]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        window.location.href = "contact.html";
+      });
+    });
   }
 
-  async function lookup(phone, { silent } = {}) {
+  async function lookupCode(code, { silent } = {}) {
+    errorEl.hidden = true;
+    try {
+      const rows = await trackByCode(code);
+      renderOrders(rows || []);
+      pollMode = "code";
+      pollValue = code;
+    } catch (err) {
+      if (!silent) {
+        errorEl.hidden = false;
+        errorEl.textContent = err.message || "Could not find that order.";
+        results.innerHTML = "";
+      }
+    }
+  }
+
+  async function lookupPhone(phone, { silent } = {}) {
     errorEl.hidden = true;
     try {
       const orders = await trackByPhone(phone);
       renderOrders(orders || []);
-      lastPhone = phone;
+      pollMode = "phone";
+      pollValue = phone;
     } catch (err) {
       if (!silent) {
         errorEl.hidden = false;
@@ -178,8 +231,19 @@
       return window.DataLogsAPI.trackOrdersByPhone(phone);
     }
     const client = window.DataLogsAPI?.client || trackingClient();
-    if (!client) throw new Error("Tracking is unavailable right now. Refresh the page and try again.");
+    if (!client) throw new Error("Tracking is unavailable right now.");
     const { data, error } = await client.rpc("track_orders_by_phone", { p_phone: phone });
+    if (error) throw error;
+    return data || [];
+  }
+
+  async function trackByCode(code) {
+    if (typeof window.DataLogsAPI?.trackOrderByCode === "function") {
+      return window.DataLogsAPI.trackOrderByCode(code);
+    }
+    const client = window.DataLogsAPI?.client || trackingClient();
+    if (!client) throw new Error("Tracking is unavailable right now.");
+    const { data, error } = await client.rpc("track_order_by_code", { p_code: code });
     if (error) throw error;
     return data || [];
   }
@@ -196,16 +260,42 @@
   });
   root.querySelector("#track-close").addEventListener("click", closePanel);
 
-  form.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    const phone = phoneInput.value.trim();
-    results.innerHTML = `<p class="track-empty">Checking live status and order details…</p>`;
-    await lookup(phone);
-    stopPoll();
-    if (lastPhone) {
-      pollTimer = setInterval(() => lookup(lastPhone, { silent: true }), 8000);
-    }
+  root.querySelectorAll("[data-track-tab]").forEach((btn) => {
+    btn.addEventListener("click", () => setTab(btn.dataset.trackTab));
   });
 
-  window.DataLogsTrack = { open: openPanel, close: closePanel };
+  formCode.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    results.innerHTML = `<p class="track-empty">Looking up order…</p>`;
+    await lookupCode(codeInput.value.trim());
+    stopPoll();
+    if (pollValue) pollTimer = setInterval(() => lookupCode(pollValue, { silent: true }), 8000);
+  });
+
+  formPhone.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    results.innerHTML = `<p class="track-empty">Checking live status…</p>`;
+    await lookupPhone(phoneInput.value.trim());
+    stopPoll();
+    if (pollValue) pollTimer = setInterval(() => lookupPhone(pollValue, { silent: true }), 8000);
+  });
+
+  const params = new URLSearchParams(window.location.search);
+  const preCode = params.get("code") || params.get("order");
+  if (preCode && document.body.dataset.page === "track") {
+    codeInput.value = preCode;
+    openPanel();
+    lookupCode(preCode);
+  }
+
+  window.DataLogsTrack = {
+    open: openPanel,
+    close: closePanel,
+    openWithCode(code) {
+      setTab("code");
+      codeInput.value = code;
+      openPanel();
+      lookupCode(code);
+    },
+  };
 })();

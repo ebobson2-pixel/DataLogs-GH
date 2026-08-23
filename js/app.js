@@ -24,10 +24,12 @@
             <nav class="nav-links" id="primary-nav" aria-label="Primary">
               <a href="${assetPrefix}index.html" data-nav="home">Home</a>
               <a href="${assetPrefix}packages.html" data-nav="packages">Packages</a>
+              <a href="${assetPrefix}track.html" data-nav="track">Track order</a>
               <a href="${assetPrefix}how-it-works.html" data-nav="how">How it works</a>
               <a href="${assetPrefix}docs.html" data-nav="docs">API docs</a>
               <a href="${assetPrefix}about.html" data-nav="about">About</a>
               <a href="${assetPrefix}contact.html" data-nav="contact">Contact</a>
+              <a href="${assetPrefix}customer/auth.html" data-nav="account">Sign in</a>
               <a href="${assetPrefix}agent/auth.html" data-nav="agent">Agents</a>
               <a class="btn btn-primary" href="${assetPrefix}packages.html">Buy data</a>
             </nav>
@@ -126,6 +128,30 @@
   document.querySelectorAll("[data-packages]").forEach((grid) => {
     renderPackages(grid, grid.dataset.packages, Number(grid.dataset.limit || 0));
   });
+
+  const searchInput = document.getElementById("package-search");
+  if (searchInput) {
+    searchInput.addEventListener("input", () => {
+      const q = searchInput.value.trim().toLowerCase();
+      document.querySelectorAll("[data-packages]").forEach((grid) => {
+        if (!q) {
+          renderPackages(grid, grid.dataset.packages, Number(grid.dataset.limit || 0));
+          return;
+        }
+        const list = sortPackages(
+          packagesFor(grid.dataset.packages === "all" ? "all" : grid.dataset.packages).filter((p) => {
+            const hay = `${NETWORKS[p.network]?.name || p.network} ${p.gb}gb ${p.validity} ${p.price}`.toLowerCase();
+            return hay.includes(q);
+          })
+        );
+        grid.classList.remove("package-groups");
+        grid.classList.add("package-grid");
+        grid.innerHTML = list.length
+          ? list.map(packageCardHTML).join("")
+          : `<p class="hint">No packages match “${escapeHtml(q)}”.</p>`;
+      });
+    });
+  }
 
   document.querySelectorAll("[data-filter-group]").forEach((group) => {
     group.querySelectorAll("[data-filter]").forEach((btn) => {

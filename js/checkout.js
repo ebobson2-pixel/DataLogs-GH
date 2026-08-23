@@ -5,12 +5,36 @@
   const state = {
     pkg: null,
     number: "",
+    recipientMode: "other",
     method: "momo",
     tier: "retail",
     storeId: null,
     order: null,
     fulfill: null,
+    saveBeneficiary: false,
+    beneficiaryLabel: "",
   };
+
+  document.addEventListener("datalogs:buy-again", (event) => {
+    const detail = event.detail || {};
+    const pkg = getPackage(detail.packageId);
+    if (!pkg) return;
+    state.pkg = { ...pkg };
+    state.tier = detail.tier === "agent" ? "agent" : "retail";
+    if (state.tier === "agent") state.pkg.price = pkg.agentPrice;
+    state.storeId = detail.storeId || window.__STORE_ID || null;
+    state.number = detail.recipient || "";
+    state.recipientMode = state.number ? "other" : "self";
+    state.method = "momo";
+    state.email = "";
+    state.momoPhone = "";
+    state.momoProvider = pkg.network === "airteltigo" ? "airteltigo" : pkg.network === "telecel" ? "telecel" : "mtn";
+    state.card = { number: "", month: "", year: "", cvv: "" };
+    state.reference = null;
+    state.order = null;
+    state.fulfill = null;
+    openStep("number");
+  });
 
   root.innerHTML = `
     <div class="modal-backdrop" id="checkout-modal" role="dialog" aria-modal="true" aria-labelledby="checkout-title">
@@ -32,6 +56,9 @@
     if (state.tier === "agent") state.pkg.price = pkg.agentPrice;
     state.storeId = trigger.dataset.storeId || window.__STORE_ID || null;
     state.number = "";
+    state.recipientMode = window.DataLogsCustomer?.getMyPhone?.() ? "self" : "other";
+    state.saveBeneficiary = false;
+    state.beneficiaryLabel = "";
     state.method = "momo";
     state.email = "";
     state.momoPhone = "";
@@ -105,6 +132,14 @@
 
   function renderNumber() {
     const prefixes = NETWORKS[state.pkg.network].prefixes.join(", ");
+    const beneficiaries = window.DataLogsCustomer?.getBeneficiaries?.(state.pkg.network) || [];
+    const myPhone = window.DataLogsCustomer?.getMyPhone?.() || "";
+    const benOptions = beneficiaries
+      .map(
+        (b) =>
+          `<button class="ben-chip" type="button" data-ben="${b.id}">${escapeHtml(b.label)} · ${escapeHtml(b.phone)}</button>`
+      )
+      .join("");
     modal.innerHTML = `
       <div class="modal-top">
         <div>
@@ -115,19 +150,70 @@
         <button class="close-btn" type="button" data-close aria-label="Close">×</button>
       </div>
       <form class="form pay-fields-in" id="number-form">
+        <div class="recipient-mode" role="group" aria-label="Recipient type">
+          <button class="recipient-mode-btn ${state.recipientMode === "self" ? "active" : ""}" type="button" data-recipient-mode="self">Myself</button>
+          <button class="recipient-mode-btn ${state.recipientMode === "other" ? "active" : ""}" type="button" data-recipient-mode="other">Someone else</button>
+        </div>
+        ${beneficiaries.length ? `<div class="ben-list"><p class="hint">Saved numbers</p><div class="ben-chips">${benOptions}</div></div>` : ""}
         <label>
           Recipient number
-          <input id="recipient" inputmode="tel" autocomplete="tel" placeholder="024 123 4567" value="${state.number}" required>
+          <input id="recipient" inputmode="tel" autocomplete="tel" placeholder="${state.recipientMode === "self" ? "Your " + networkName() + " number" : "024 123 4567"}" value="${escapeHtml(state.number || (state.recipientMode === "self" ? myPhone : ""))}" required>
         </label>
         <p class="hint">Use a Ghana ${networkName()} number. Prefixes: ${prefixes}</p>
+        <div class="recipient-confirm" id="recipient-confirm" hidden>
+          <span>Confirm recipient</span>
+          <strong id="recipient-confirm-value"></strong>
+        </div>
+        ${state.recipientMode === "other" ? `<label class="save-ben-check"><input type="checkbox" id="save-ben"> Save this number for next time</label>` : ""}
+        ${state.recipientMode === "other" ? `<label id="ben-label-wrap" hidden>Label <input id="ben-label" type="text" placeholder="Mum, Shop line…"></label>` : ""}
         <p class="error" id="number-error" hidden></p>
         <button class="btn btn-primary btn-full" type="submit">Continue to payment</button>
       </form>
     `;
     wireClose();
+    const recipientInput = modal.querySelector("#recipient");
+    const confirmBox = modal.querySelector("#recipient-confirm");
+    const confirmValue = modal.querySelector("#recipient-confirm-value");
+    const saveBen = modal.querySelector("#save-ben");
+    const benLabelWrap = modal.querySelector("#ben-label-wrap");
+
+    function paintConfirm() {
+      const val = recipientInput.value.trim();
+      if (!val) {
+        confirmBox.hidden = true;
+        return;
+      }
+      confirmBox.hidden = false;
+      confirmValue.textContent = val;
+    }
+    recipientInput.addEventListener("input", paintConfirm);
+    paintConfirm();
+
+    modal.querySelectorAll("[data-recipient-mode]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        state.recipientMode = btn.dataset.recipientMode;
+        if (state.recipientMode === "self" && myPhone) recipientInput.value = myPhone;
+        openStep("number");
+      });
+    });
+
+    modal.querySelectorAll("[data-ben]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const ben = beneficiaries.find((b) => b.id === btn.dataset.ben);
+        if (!ben) return;
+        recipientInput.value = ben.phone;
+        state.recipientMode = "other";
+        paintConfirm();
+      });
+    });
+
+    saveBen?.addEventListener("change", () => {
+      if (benLabelWrap) benLabelWrap.hidden = !saveBen.checked;
+    });
+
     modal.querySelector("#number-form").addEventListener("submit", (event) => {
       event.preventDefault();
-      const raw = modal.querySelector("#recipient").value;
+      const raw = recipientInput.value;
       const result = validateGhanaNumber(raw, state.pkg.network);
       const error = modal.querySelector("#number-error");
       if (!result.ok) {
@@ -136,6 +222,9 @@
         return;
       }
       state.number = result.pretty;
+      if (state.recipientMode === "self") window.DataLogsCustomer?.setMyPhone?.(state.number);
+      state.saveBeneficiary = !!saveBen?.checked;
+      state.beneficiaryLabel = modal.querySelector("#ben-label")?.value?.trim() || "";
       openStep("method");
     });
   }
@@ -480,6 +569,19 @@
     await wait(400);
     modal.querySelector('[data-step="send"]')?.classList.add("done");
     state.fulfill = fulfill;
+    window.DataLogsCustomer?.saveRecentOrder?.(state.order, state.pkg, {
+      recipient: state.number,
+      tier: state.tier,
+      storeId: state.storeId,
+      method: state.method,
+    });
+    if (state.saveBeneficiary && state.recipientMode === "other") {
+      window.DataLogsCustomer?.saveBeneficiary?.({
+        label: state.beneficiaryLabel || `${networkName()} line`,
+        phone: state.number,
+        network: state.pkg.network,
+      });
+    }
     window.dispatchEvent(new CustomEvent("datalogs:order-placed", { detail: state.order }));
     openStep("done");
   }
@@ -504,28 +606,67 @@
   function renderDone() {
     const order = state.order;
     const status = publicDeliveryStatus(order?.delivery_status);
+    const failed = status === "failed" || String(order?.delivery_status).toLowerCase() === "failed";
     const completed = status === "completed";
-    const title = completed ? "Data sent" : "Order placed";
-    const hint = completed
-      ? `${state.pkg.gb} GB is on its way to ${state.number} on ${networkName()}.`
-      : `${state.pkg.gb} GB for ${state.number} on ${networkName()} is processing.`;
+    const title = failed ? "Delivery issue" : completed ? "Data sent successfully!" : "Order placed";
+    const hint = failed
+      ? `We could not deliver ${state.pkg.gb} GB to ${state.number} yet. Track the order or contact support.`
+      : completed
+        ? `${state.pkg.gb} GB is on its way to ${state.number} on ${networkName()}.`
+        : `${state.pkg.gb} GB for ${state.number} on ${networkName()} is processing.`;
+    const receiptData = {
+      orderCode: order.order_code,
+      network: state.pkg.network,
+      networkName: networkName(),
+      gb: state.pkg.gb,
+      recipient: state.number,
+      amount: order.amount_paid,
+      method: state.method === "wallet" ? "Wallet" : state.method === "momo" ? "Mobile Money" : "Card",
+      status: order.delivery_status,
+      createdAt: order.created_at,
+    };
     modal.innerHTML = `
-      <div class="success-mark" aria-hidden="true">${completed ? "✓" : "•"}</div>
+      <div class="success-mark ${failed ? "is-warn" : ""}" aria-hidden="true">${failed ? "!" : completed ? "✓" : "•"}</div>
       <h3 id="checkout-title">${title}</h3>
       <p class="hint">${hint}</p>
       <div class="receipt">
-        <div><span>Order</span><strong>${order.order_code}</strong></div>
+        <div><span>Transaction ID</span><strong>${order.order_code}</strong></div>
         <div><span>Network</span><strong>${networkName()}</strong></div>
-        <div><span>Package</span><strong>${state.pkg.gb} GB</strong></div>
-        <div><span>Paid</span><strong>${formatCedi(order.amount_paid)}</strong></div>
+        <div><span>Bundle</span><strong>${state.pkg.gb} GB</strong></div>
+        <div><span>Recipient</span><strong>${state.number}</strong></div>
+        <div><span>Amount</span><strong>${formatCedi(order.amount_paid)}</strong></div>
         <div><span>Status</span><strong>${publicDeliveryLabel(order.delivery_status)}</strong></div>
-        <div><span>Method</span><strong>${
-          state.method === "wallet" ? "Wallet" : state.method === "momo" ? "Mobile Money" : "Card"
-        }</strong></div>
+        <div><span>Method</span><strong>${receiptData.method}</strong></div>
       </div>
-      <button class="btn btn-primary btn-full" type="button" data-close>Done</button>
+      <div class="hero-actions" style="margin-top:12px;flex-wrap:wrap">
+        <button class="btn btn-primary" type="button" data-buy-again>Buy again</button>
+        <button class="btn btn-ghost" type="button" data-track-order>Track</button>
+        <button class="btn btn-ghost" type="button" data-receipt-dl>Receipt</button>
+        <button class="btn btn-ghost" type="button" data-receipt-share>Share</button>
+      </div>
+      <button class="btn btn-ghost btn-full" type="button" data-close style="margin-top:8px">Done</button>
     `;
     wireClose();
+    modal.querySelector("[data-buy-again]")?.addEventListener("click", () => {
+      closeModal();
+      window.DataLogsCustomer?.buyAgain?.({
+        packageId: state.pkg.id,
+        recipient: state.number,
+        tier: state.tier,
+        storeId: state.storeId,
+      });
+    });
+    modal.querySelector("[data-track-order]")?.addEventListener("click", () => {
+      closeModal();
+      if (window.DataLogsTrack?.openWithCode) window.DataLogsTrack.openWithCode(order.order_code);
+      else window.DataLogsTrack?.open?.();
+    });
+    modal.querySelector("[data-receipt-dl]")?.addEventListener("click", () => {
+      window.DataLogsReceipt?.downloadReceipt?.(receiptData);
+    });
+    modal.querySelector("[data-receipt-share]")?.addEventListener("click", () => {
+      window.DataLogsReceipt?.shareReceipt?.(receiptData);
+    });
   }
 
   function wireClose() {

@@ -425,6 +425,26 @@ const DataLogsAPI = (() => {
     return data || [];
   }
 
+  async function trackOrderByCode(code) {
+    const { data, error } = await client.rpc("track_order_by_code", { p_code: code });
+    if (error) throw error;
+    return data || [];
+  }
+
+  async function trendingPackages(limit = 6) {
+    const { data, error } = await client.rpc("trending_packages", { p_limit: limit });
+    if (error) throw error;
+    return data || [];
+  }
+
+  async function routeCustomerAfterAuth() {
+    const profile = await getProfile();
+    if (!profile) return "../customer/auth.html";
+    if (profile.role === "admin") return "../admin/dashboard.html";
+    if (profile.role === "agent") return "../agent/dashboard.html";
+    return "dashboard.html";
+  }
+
   async function getSiteSettings() {
     const { data, error } = await client.from("site_settings").select("*").eq("id", 1).maybeSingle();
     if (error) throw error;
@@ -563,6 +583,7 @@ const DataLogsAPI = (() => {
     requireProfile,
     syncAgentActivation,
     routeAgentAfterAuth,
+    routeCustomerAfterAuth,
     signUp,
     signIn,
     signOut,
@@ -593,6 +614,8 @@ const DataLogsAPI = (() => {
     setAgentPackageProfit,
     setAgentPackageProfits,
     trackOrdersByPhone,
+    trackOrderByCode,
+    trendingPackages,
     getSiteSettings,
     updateSiteSettings,
     adminCreditWallet,
