@@ -114,6 +114,10 @@
     btn.addEventListener("click", () => showPanel(btn.dataset.panel));
   });
 
+  document.querySelectorAll(".plug-mobile-nav-btn").forEach((btn) => {
+    btn.addEventListener("click", () => showPanel(btn.dataset.panel));
+  });
+
   document.querySelectorAll("[data-goto]").forEach((btn) => {
     btn.addEventListener("click", () => showPanel(btn.dataset.goto));
   });
@@ -166,6 +170,9 @@
 
   function showPanel(id) {
     document.querySelectorAll("[data-panel]").forEach((btn) => {
+      btn.classList.toggle("active", btn.dataset.panel === id);
+    });
+    document.querySelectorAll(".plug-mobile-nav-btn").forEach((btn) => {
       btn.classList.toggle("active", btn.dataset.panel === id);
     });
     document.querySelectorAll("[data-panel-view]").forEach((panel) => {

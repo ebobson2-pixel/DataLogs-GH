@@ -3,115 +3,95 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <script>try{var d=document.documentElement,t=localStorage.getItem("datalogs_theme"),a=localStorage.getItem("datalogs_accent");if(t==="light")d.setAttribute("data-theme","light");if(a)d.setAttribute("data-accent",a);}catch(e){}</script>
   <title>Agent login &mdash; DataLogs GH</title>
-  <meta name="description" content="Create or sign in to your DataLogs GH agent account.">
+  <meta name="description" content="Sign in or create your DataLogs GH vendor account.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../css/styles.css?v=17">
-  <link rel="stylesheet" href="../css/agent.css?v=16">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;500;600;700&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/styles.css?v=18">
+  <link rel="stylesheet" href="../css/agent.css?v=17">
 </head>
-<body class="auth-body agent-auth-page">
-  <div class="auth-tools" data-theme-tools></div>
-  <a class="auth-back" href="../index.html">&larr; Back to home</a>
-
-  <section class="auth-brand">
-    <div class="auth-brand-inner">
-      <a class="logo auth-logo" href="../index.html"><span class="logo-mark" aria-hidden="true"><img src="../assets/logo-mark.svg" alt="" width="40" height="40"></span> DataLogs <span>GH</span></a>
-      <p class="kicker">Agent desk</p>
-      <h1>Run your data shop.<br><em>Earn on every sale.</em></h1>
-      <p class="lede">Like DataPlug-style reselling — set up a store, share your link on WhatsApp, buy wholesale, and track every order from one dashboard.</p>
-
-      <div class="auth-steps">
-        <article class="auth-step">
-          <span class="auth-step-num">1</span>
-          <div>
-            <strong>Create account</strong>
-            <p>Sign up free with email and phone.</p>
-          </div>
-        </article>
-        <article class="auth-step">
-          <span class="auth-step-num">2</span>
-          <div>
-            <strong>Set up your store</strong>
-            <p>Name, link, prices — you control margins.</p>
-          </div>
-        </article>
-        <article class="auth-step">
-          <span class="auth-step-num">3</span>
-          <div>
-            <strong>Share your link</strong>
-            <p>WhatsApp, Instagram, SMS — customers pay you.</p>
-          </div>
-        </article>
-        <article class="auth-step">
-          <span class="auth-step-num">4</span>
-          <div>
-            <strong>Earn &amp; withdraw</strong>
-            <p>Profit lands in your wallet. Cash out to MoMo.</p>
-          </div>
-        </article>
-      </div>
-    </div>
-  </section>
-
-  <section class="auth-panel">
-    <div class="auth-card auth-card-glass">
-      <div class="auth-card-head">
-        <img class="auth-card-logo" src="../assets/logo-mark.svg" alt="" width="36" height="36">
-        <div>
-          <h2 class="auth-card-title">Welcome to DataLogs</h2>
-          <p class="auth-card-sub">Sign in or create your vendor account</p>
+<body class="agent-site plug-auth-page">
+  <div class="plug-auth-shell">
+    <aside class="plug-auth-showcase" aria-hidden="true">
+      <div class="plug-auth-showcase-inner">
+        <a class="plug-logo" href="../index.html">
+          <img src="../assets/logo-mark.svg" alt="" width="36" height="36">
+          <span>DataLogs <em>GH</em></span>
+        </a>
+        <p class="plug-kicker">Vendor platform</p>
+        <h1>Sell data bundles.<br>Build your shop.</h1>
+        <p class="plug-lede">Run your MTN, AirtelTigo &amp; Telecel business from one wallet — just like DataPlug-style reselling in Ghana.</p>
+        <ul class="plug-perks">
+          <li>Personal store link for WhatsApp</li>
+          <li>Wholesale rates &amp; your own prices</li>
+          <li>Instant delivery &amp; MoMo withdrawals</li>
+        </ul>
+        <div class="plug-network-row">
+          <span class="plug-net mtn">MTN</span>
+          <span class="plug-net at">AT</span>
+          <span class="plug-net telecel">Telecel</span>
         </div>
       </div>
+    </aside>
 
-      <div class="auth-tabs" role="tablist">
-        <button class="auth-tab active" type="button" data-auth-tab="login">Sign in</button>
-        <button class="auth-tab" type="button" data-auth-tab="signup">Sign up</button>
+    <main class="plug-auth-main">
+      <header class="plug-auth-top">
+        <a class="plug-back" href="../index.html">&larr; Back to home</a>
+      </header>
+
+      <div class="plug-auth-card">
+        <div class="plug-auth-brand">
+          <img src="../assets/logo-mark.svg" alt="" width="44" height="44">
+          <h2>Welcome to DataLogs</h2>
+          <p>Sign in or create your vendor account to get started</p>
+        </div>
+
+        <div class="plug-tabs" role="tablist">
+          <button class="plug-tab active" type="button" data-auth-tab="login">Sign in</button>
+          <button class="plug-tab" type="button" data-auth-tab="signup">Sign up</button>
+        </div>
+
+        <form class="plug-form active form" id="login-form" data-auth-form="login">
+          <label>Email<input type="email" name="email" required placeholder="you@email.com"></label>
+          <label class="password-field">Password
+            <input type="password" name="password" required placeholder="Your password" autocomplete="current-password">
+            <button class="password-toggle" type="button" data-toggle-password>Show</button>
+          </label>
+          <p class="error" id="login-error" hidden></p>
+          <button class="btn btn-primary btn-full plug-submit" type="submit">Sign in</button>
+        </form>
+
+        <form class="plug-form form" id="signup-form" data-auth-form="signup">
+          <p class="plug-signup-lede signup-lede">Create your vendor account in under a minute.</p>
+          <label>Full name<input type="text" name="name" required placeholder="Kwame Asante"></label>
+          <label>Email<input type="email" name="email" required placeholder="you@email.com"></label>
+          <label>Phone<input type="tel" name="phone" required placeholder="024 000 0000"></label>
+          <label class="password-field">Password
+            <input type="password" name="password" required minlength="6" placeholder="At least 6 characters" autocomplete="new-password">
+            <button class="password-toggle" type="button" data-toggle-password>Show</button>
+          </label>
+          <p class="error" id="signup-error" hidden></p>
+          <button class="btn btn-primary btn-full plug-submit" type="submit">Create vendor account</button>
+        </form>
+
+        <div class="plug-trust">
+          <span>Free to start</span>
+          <span>Instant setup</span>
+          <span>Earn profit</span>
+          <span>Mobile Money</span>
+        </div>
+
+        <p class="plug-foot">By signing up, you agree to DataLogs GH terms of service.</p>
       </div>
-
-      <form class="auth-form active form" id="login-form" data-auth-form="login">
-        <label>Email<input type="email" name="email" required placeholder="you@email.com"></label>
-        <label class="password-field">Password
-          <input type="password" name="password" required placeholder="Your password" autocomplete="current-password">
-          <button class="password-toggle" type="button" data-toggle-password>Show</button>
-        </label>
-        <p class="error" id="login-error" hidden></p>
-        <button class="btn btn-primary btn-full" type="submit">Sign in</button>
-      </form>
-
-      <form class="auth-form form" id="signup-form" data-auth-form="signup">
-        <p class="lede signup-lede">Create your agent account in under a minute.</p>
-        <label>Full name<input type="text" name="name" required placeholder="Kwame Asante"></label>
-        <label>Email<input type="email" name="email" required placeholder="you@email.com"></label>
-        <label>Phone<input type="tel" name="phone" required placeholder="024 000 0000"></label>
-        <label class="password-field">Password
-          <input type="password" name="password" required minlength="6" placeholder="At least 6 characters" autocomplete="new-password">
-          <button class="password-toggle" type="button" data-toggle-password>Show</button>
-        </label>
-        <p class="error" id="signup-error" hidden></p>
-        <button class="btn btn-primary btn-full" type="submit">Create vendor account</button>
-      </form>
-
-      <div class="auth-trust">
-        <span>Free to start</span>
-        <span>Instant setup</span>
-        <span>Earn commissions</span>
-        <span>Mobile Money</span>
-      </div>
-
-      <p class="auth-foot">By signing up, you agree to DataLogs GH terms of service.</p>
-    </div>
-  </section>
+    </main>
+  </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="../js/config.js"></script>
   <script src="../js/data.js"></script>
   <script src="../js/api.js?v=10"></script>
   <script src="../js/whatsapp-fab.js"></script>
-  <script src="../js/order-tracker.js?v=6"></script>
-  <script src="../js/theme.js"></script>
   <script>
     (async function () {
       const profile = await DataLogsAPI.getProfile().catch(() => null);
@@ -130,7 +110,7 @@
           if (enabled && fee > 0) {
             lede.textContent = `Create your account, then pay ${formatCedi(fee)} once to unlock the agent dashboard.`;
           } else {
-            lede.textContent = "Create your agent account in under a minute. Signup is free.";
+            lede.textContent = "Create your vendor account in under a minute. Signup is free.";
           }
         } catch {
           /* keep default copy */

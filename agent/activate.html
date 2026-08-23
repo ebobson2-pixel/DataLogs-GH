@@ -3,72 +3,72 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <script>try{var d=document.documentElement,t=localStorage.getItem("datalogs_theme"),a=localStorage.getItem("datalogs_accent");if(t==="light")d.setAttribute("data-theme","light");if(a)d.setAttribute("data-accent",a);}catch(e){}</script>
   <title>Activate agent account &mdash; DataLogs GH</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../css/styles.css?v=17">
-  <link rel="stylesheet" href="../css/agent.css?v=16">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;500;600;700&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/styles.css?v=18">
+  <link rel="stylesheet" href="../css/agent.css?v=17">
 </head>
-<body class="auth-body agent-auth-page">
-  <div class="auth-tools" data-theme-tools></div>
-  <a class="auth-back" href="auth.html">&larr; Back to sign in</a>
-  <section class="auth-brand">
-    <div class="auth-brand-inner">
-      <a class="logo auth-logo" href="../index.html"><span class="logo-mark" aria-hidden="true"><img src="../assets/logo-mark.svg" alt="" width="40" height="40"></span> DataLogs <span>GH</span></a>
-      <p class="kicker" style="margin-top:28px">Agent activation</p>
-      <h1>One payment.<br><em>Full access.</em></h1>
-      <p class="lede">Unlock your dashboard, mini store, wholesale rates, wallet, and withdrawals — just like a full vendor account on DataPlug.</p>
-      <div class="auth-trust" style="margin-top:24px;padding-top:0;border-top:0">
-        <span>Instant unlock</span>
-        <span>Full dashboard</span>
-        <span>Store + wallet</span>
-        <span>MoMo &amp; card</span>
-      </div>
-    </div>
-  </section>
+<body class="agent-site plug-auth-page plug-activate-page">
+  <div class="plug-auth-shell plug-auth-shell--single">
+    <main class="plug-auth-main">
+      <header class="plug-auth-top">
+        <a class="plug-back" href="auth.html">&larr; Back to sign in</a>
+      </header>
 
-  <section class="auth-panel">
-    <div class="auth-card auth-card-glass">
-      <div class="pill">Activation required</div>
-      <h2 id="activate-title">Activate your agent account</h2>
-      <p class="lede" id="activate-lede">Loading fee&hellip;</p>
-      <div id="activate-form-wrap" hidden>
-        <form class="form" id="activate-form">
-          <label>Email for receipt
-            <input type="email" id="activate-email" required placeholder="you@email.com">
-          </label>
-          <div class="pay-methods" id="activate-methods">
-            <button class="pay-method selected" type="button" data-activate-method="momo"><span class="pay-ico" aria-hidden="true">Mo</span><strong>MoMo</strong><span class="hint">MTN, Telecel, AT</span></button>
-            <button class="pay-method" type="button" data-activate-method="card"><span class="pay-ico" aria-hidden="true">Cd</span><strong>Card</strong><span class="hint">Visa or Mastercard</span></button>
-          </div>
-          <div id="activate-momo-fields">
-            <p class="hint" style="margin:8px 0 6px">Pay with</p>
-            <div class="pay-nets" id="activate-nets">
-              <button class="pay-net mtn selected" type="button" data-activate-provider="mtn"><span class="pay-net-mark">MTN</span><strong>MTN MoMo</strong></button>
-              <button class="pay-net telecel" type="button" data-activate-provider="telecel"><span class="pay-net-mark">TEL</span><strong>Telecel</strong></button>
-              <button class="pay-net airteltigo" type="button" data-activate-provider="airteltigo"><span class="pay-net-mark">AT</span><strong>AT Money</strong></button>
+      <div class="plug-auth-card">
+        <div class="plug-auth-brand">
+          <img src="../assets/logo-mark.svg" alt="" width="44" height="44">
+          <span class="plug-pill">Activation required</span>
+          <h2 id="activate-title">Activate your vendor account</h2>
+          <p id="activate-lede">Loading fee&hellip;</p>
+        </div>
+
+        <div id="activate-form-wrap" hidden>
+          <form class="plug-form active form" id="activate-form">
+            <label>Email for receipt
+              <input type="email" id="activate-email" required placeholder="you@email.com">
+            </label>
+            <div class="pay-methods" id="activate-methods">
+              <button class="pay-method selected" type="button" data-activate-method="momo"><span class="pay-ico" aria-hidden="true">Mo</span><strong>MoMo</strong><span class="hint">MTN, Telecel, AT</span></button>
+              <button class="pay-method" type="button" data-activate-method="card"><span class="pay-ico" aria-hidden="true">Cd</span><strong>Card</strong><span class="hint">Visa or Mastercard</span></button>
             </div>
-            <label>MoMo number<input type="tel" id="activate-momo-phone" required placeholder="024 123 4567"></label>
-          </div>
-          <div id="activate-card-fields" hidden>
-            <label>Card number<input id="activate-card-number" inputmode="numeric" placeholder="ACCT-000015"></label>
-            <div class="split card-expiry">
-              <label>Month<input id="activate-card-month" maxlength="2" placeholder="MM"></label>
-              <label>Year<input id="activate-card-year" maxlength="2" placeholder="YY"></label>
-              <label>CVV<input id="activate-card-cvv" maxlength="4" placeholder="123"></label>
+            <div id="activate-momo-fields">
+              <p class="hint" style="margin:8px 0 6px">Pay with</p>
+              <div class="pay-nets" id="activate-nets">
+                <button class="pay-net mtn selected" type="button" data-activate-provider="mtn"><span class="pay-net-mark">MTN</span><strong>MTN MoMo</strong></button>
+                <button class="pay-net telecel" type="button" data-activate-provider="telecel"><span class="pay-net-mark">TEL</span><strong>Telecel</strong></button>
+                <button class="pay-net airteltigo" type="button" data-activate-provider="airteltigo"><span class="pay-net-mark">AT</span><strong>AT Money</strong></button>
+              </div>
+              <label>MoMo number<input type="tel" id="activate-momo-phone" required placeholder="024 123 4567"></label>
             </div>
-          </div>
-          <p class="error" id="activate-error" hidden></p>
-          <button class="btn btn-primary btn-full" type="submit" id="activate-submit">Pay to activate</button>
-        </form>
+            <div id="activate-card-fields" hidden>
+              <label>Card number<input id="activate-card-number" inputmode="numeric" placeholder="ACCT-000015"></label>
+              <div class="split card-expiry">
+                <label>Month<input id="activate-card-month" maxlength="2" placeholder="MM"></label>
+                <label>Year<input id="activate-card-year" maxlength="2" placeholder="YY"></label>
+                <label>CVV<input id="activate-card-cvv" maxlength="4" placeholder="123"></label>
+              </div>
+            </div>
+            <p class="error" id="activate-error" hidden></p>
+            <button class="btn btn-primary btn-full plug-submit" type="submit" id="activate-submit">Pay to activate</button>
+          </form>
+        </div>
+
+        <div class="plug-trust">
+          <span>Instant unlock</span>
+          <span>Full dashboard</span>
+          <span>Store + wallet</span>
+          <span>MoMo &amp; card</span>
+        </div>
+
+        <p class="plug-foot">
+          <button class="btn btn-ghost" type="button" id="activate-signout">Sign out</button>
+        </p>
       </div>
-      <p class="auth-foot">
-        <button class="btn btn-ghost" type="button" id="activate-signout">Sign out</button>
-      </p>
-    </div>
-  </section>
+    </main>
+  </div>
 
   <div class="modal-backdrop" id="activate-modal" role="dialog" aria-modal="true">
     <div class="modal pay-popup" id="activate-popup"></div>
@@ -79,7 +79,6 @@
   <script src="../js/data.js"></script>
   <script src="../js/api.js?v=9"></script>
   <script src="../js/paystack.js?v=2"></script>
-  <script src="../js/theme.js"></script>
   <script src="../js/activate.js?v=2"></script>
 </body>
 </html>

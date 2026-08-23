@@ -8,10 +8,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&family=Montserrat:wght@600;700;800;900&family=Outfit:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../css/styles.css?v=17">
-  <link rel="stylesheet" href="../css/agent.css?v=16">
+  <link rel="stylesheet" href="../css/styles.css?v=18">
+  <link rel="stylesheet" href="../css/agent.css?v=17">
 </head>
-<body class="dash-body">
+<body class="agent-site dash-body plug-dash">
   <div class="dash-shell" id="dash-shell">
     <aside class="dash-sidebar" aria-label="Agent navigation">
       <div class="side-top">
@@ -541,6 +541,14 @@
     </div>
   </div>
 
+  <nav class="plug-mobile-nav" aria-label="Agent quick nav">
+    <button class="plug-mobile-nav-btn active" type="button" data-panel="overview"><span class="side-ico" data-icon="overview" aria-hidden="true"></span><span>Home</span></button>
+    <button class="plug-mobile-nav-btn" type="button" data-panel="store"><span class="side-ico" data-icon="store" aria-hidden="true"></span><span>Store</span></button>
+    <button class="plug-mobile-nav-btn" type="button" data-panel="wholesale"><span class="side-ico" data-icon="wholesale" aria-hidden="true"></span><span>Buy</span></button>
+    <button class="plug-mobile-nav-btn" type="button" data-panel="orders"><span class="side-ico" data-icon="orders" aria-hidden="true"></span><span>Orders</span></button>
+    <button class="plug-mobile-nav-btn" type="button" data-panel="wallet"><span class="side-ico" data-icon="wallet" aria-hidden="true"></span><span>Wallet</span></button>
+  </nav>
+
   <div id="checkout-root"></div>
   <div class="modal-backdrop" id="topup-modal" role="dialog" aria-modal="true" aria-labelledby="topup-title">
     <div class="modal pay-popup" id="topup-popup"></div>
@@ -556,6 +564,6 @@
   <script src="../js/checkout.js?v=5"></script>
   <script src="../js/flyer.js?v=4"></script>
   <script src="../js/dash-icons.js?v=1"></script>
-  <script src="../js/dashboard.js?v=23"></script>
+  <script src="../js/dashboard.js?v=24"></script>
 </body>
 </html>
