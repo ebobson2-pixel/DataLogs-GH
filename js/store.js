@@ -51,17 +51,20 @@
   }
 
   function applyStoreAccent(accentId) {
+    const yellowAccents = { gold: "#fbbf24", sea: "#fbbf24", lime: "#fbbf24", orange: "#f59e0b" };
     const accent =
       window.DataLogsTheme?.accentById?.(accentId) ||
       STORE_ACCENTS.find((a) => a.id === accentId) ||
       STORE_ACCENTS[0];
-    const hex = accent.hex;
+    const hex = yellowAccents[accentId] || accent.hex || "#fbbf24";
     const rgb = hexToRgb(hex);
     document.documentElement.removeAttribute("data-theme");
-    document.documentElement.setAttribute("data-store-accent", accent.id || accentId || "sea");
+    document.documentElement.setAttribute("data-store-accent", accent.id || accentId || "gold");
     document.documentElement.style.setProperty("--store-accent", hex);
+    document.documentElement.style.setProperty("--store-accent-deep", accentId === "orange" ? "#d97706" : "#f59e0b");
     document.documentElement.style.setProperty("--store-accent-rgb", `${rgb.r}, ${rgb.g}, ${rgb.b}`);
-    document.documentElement.style.setProperty("--store-accent-soft", `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.14)`);
+    document.documentElement.style.setProperty("--store-accent-soft", `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.18)`);
+    document.documentElement.style.setProperty("--store-mtn", hex);
   }
 
   function applyTheme(theme) {
@@ -109,9 +112,8 @@
 
   function paintCover(store) {
     const bg = document.getElementById("store-cover-bg");
-    if (!bg) return;
-    if (store.banner_url) {
-      bg.style.backgroundImage = `linear-gradient(180deg, rgba(5,7,11,0.55), rgba(5,7,11,0.92)), url('${String(store.banner_url).replace(/'/g, "%27")}')`;
+    if (bg && store.banner_url) {
+      bg.style.backgroundImage = `linear-gradient(180deg, rgba(251,251,248,0.72), rgba(251,251,248,0.96)), url('${String(store.banner_url).replace(/'/g, "%27")}')`;
     }
   }
 
@@ -177,17 +179,16 @@
   function bundleCard(item) {
     const net = NET_UI[item.network]?.tab || NETWORKS[item.network]?.name || item.network;
     const badge = packageBadge(item);
-    const delivery = state.store?.delivery_notes?.[item.network] || "";
+    const delivery = state.store?.delivery_notes?.[item.network] || "1–5 min";
     return `
       <article class="store-product-card store-product-card--${item.network}">
         ${badge ? `<span class="store-product-badge">${escapeHtml(badge)}</span>` : ""}
         <div class="store-product-net">${escapeHtml(net)}</div>
         <div class="store-product-gb">${item.gb}<span>GB</span></div>
-        <div class="store-product-meta">${escapeHtml(item.validity || "Non expiry")}</div>
-        ${delivery ? `<div class="store-product-delivery">${escapeHtml(delivery)}</div>` : ""}
+        <div class="store-product-meta">${escapeHtml(net)} Bundle</div>
         <div class="store-product-price">${formatCedi(item.price)}</div>
+        <div class="store-product-eta">${escapeHtml(delivery)}</div>
         <button class="store-product-buy" type="button" data-buy="${item.id}" data-tier="retail" data-store-id="${state.storeId}">Buy now</button>
-        <button class="store-product-share" type="button" data-share-product="${item.id}">Share</button>
       </article>`;
   }
 
@@ -214,10 +215,10 @@
           const ui = NET_UI[netId];
           return `
             <section class="store-network-block store-network-block--${netId}">
-              <div class="store-network-head">
+              <div class="store-network-head store-hub-network-head">
                 <div>
-                  <h3>${ui?.emoji || ""} ${ui?.title || netId}</h3>
-                  <p class="hint">${ui?.chip || ""}</p>
+                  <p class="store-hub-net-label">${escapeHtml(ui?.tab || netId)}</p>
+                  <h3>${escapeHtml(ui?.tab || netId)} · ${netList.length} bundle${netList.length === 1 ? "" : "s"}</h3>
                 </div>
               </div>
               <div class="store-product-grid">${netList.map(bundleCard).join("")}</div>
@@ -270,7 +271,7 @@
 
     setText("store-name", store.name);
     setText("store-top-name", store.name);
-    setText("store-tagline", store.tagline || store.description || "Affordable data bundles for everyone.");
+    setText("store-tagline", store.tagline || store.description || "Pick a bundle below. Pay by Mobile Money. Delivered in 1–5 min.");
     setText("store-brand-sub", store.tagline || "Data bundles shop");
     setText("store-foot-name", store.name);
 
@@ -317,8 +318,9 @@
     const el = document.getElementById("store-hero-actions");
     if (!el) return;
     el.innerHTML = `
+      <a class="store-btn store-btn--yellow" href="#store-data">Buy data now</a>
       ${contactWa ? `<a class="store-btn store-btn--wa" href="${contactWa}" target="_blank" rel="noopener">WhatsApp</a>` : ""}
-      ${contactTel ? `<a class="store-btn store-btn--call" href="${contactTel}">Call</a>` : ""}
+      ${contactTel ? `<a class="store-btn store-btn--ghost" href="${contactTel}">Call store</a>` : ""}
       <button class="store-btn store-btn--ghost" type="button" id="store-hero-share">Share store</button>`;
     el.querySelector("#store-hero-share")?.addEventListener("click", shareStore);
   }
@@ -539,6 +541,19 @@
     }
 
     document.getElementById("store-retry-btn")?.addEventListener("click", () => window.location.reload());
+    document.getElementById("store-open-tracker")?.addEventListener("click", () => {
+      window.DataLogsTrack?.open?.();
+    });
+
+    document.querySelectorAll(".store-hub-nav a, .store-hub-mobile-nav a, .store-hub-footer-links a").forEach((link) => {
+      link.addEventListener("click", (e) => {
+        const href = link.getAttribute("href");
+        if (href?.startsWith("#") && href.length > 1) {
+          e.preventDefault();
+          document.querySelector(href)?.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      });
+    });
   }
 
   function normalizePackages(raw) {
@@ -633,7 +648,7 @@
 
     DataLogsAPI.recordStoreView(state.slug).catch(() => {});
 
-    applyStoreAccent(store.accent_color || "sea");
+    applyStoreAccent(store.accent_color || "gold");
     applyTheme(store.theme || "classic");
 
     const contactTel = store.contact_tel;
@@ -650,7 +665,6 @@
     paintDelivery(store);
     paintReviews(store, catalog.reviews);
     paintContact(store, contactWa, contactTel);
-    paintTrackSection();
     bindEvents(contactWa, contactTel);
     showApp();
 

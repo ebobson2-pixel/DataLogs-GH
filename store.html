@@ -10,12 +10,12 @@
   <meta id="meta-desc" property="og:description" content="Affordable data bundles powered by DataLogs.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css?v=18">
-  <link rel="stylesheet" href="css/store.css?v=17">
+  <link rel="stylesheet" href="css/store.css?v=18">
   <link rel="icon" href="assets/logo-mark.svg" type="image/svg+xml">
 </head>
-<body class="store-body store-theme-classic" data-store-loading="1">
+<body class="store-body store-hub-light store-theme-classic" data-store-loading="1">
   <div class="store-accent-bar" aria-hidden="true"></div>
 
   <div id="store-skeleton" class="store-skeleton" aria-hidden="false">
@@ -25,72 +25,76 @@
   </div>
 
   <div id="store-app" hidden>
-    <header class="store-header store-header-v2">
+    <header class="store-header store-header-v2 store-hub-header">
       <div class="store-header-inner">
-        <a class="store-brand" href="#" id="store-brand-link">
-          <div class="store-logo-wrap" id="store-logo-wrap">
-            <img class="store-logo" id="store-logo-img" src="" alt="" width="40" height="40" hidden>
-            <span class="store-logo-fallback" id="store-logo-fallback" aria-hidden="true"></span>
+        <a class="store-brand store-hub-brand" href="#" id="store-brand-link">
+          <div class="store-hub-logo" aria-hidden="true">
+            <svg width="36" height="36" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect width="40" height="40" rx="10" fill="#0F0E0B"/>
+              <rect x="7" y="14" width="19" height="19" rx="4" fill="none" stroke="#FBBF24" stroke-width="2.4"/>
+              <rect x="14" y="7" width="19" height="19" rx="4" fill="#FBBF24"/>
+            </svg>
           </div>
-          <div class="store-brand-text">
+          <div class="store-brand-text store-hub-brand-text">
             <strong id="store-top-name">Store</strong>
             <span id="store-brand-sub">Data bundles</span>
           </div>
         </a>
-        <nav class="store-desktop-nav" aria-label="Store sections">
-          <a href="#store-home" data-nav="home">Home</a>
-          <a href="#store-data" data-nav="data">Data</a>
-          <a href="#store-track" data-nav="track">Track</a>
-          <a href="#store-about" data-nav="about">About</a>
-          <a href="#store-contact" data-nav="contact">Contact</a>
+        <nav class="store-desktop-nav store-hub-nav" aria-label="Store sections">
+          <a href="#store-home">Home</a>
+          <a href="#store-data">Data</a>
+          <a href="#store-about">Why us</a>
+          <a href="#store-contact">Contact</a>
         </nav>
         <div class="store-header-actions">
+          <a class="store-hub-cta" href="#store-data">Buy data</a>
           <button class="store-share-btn" type="button" id="store-share-btn" title="Share store">Share</button>
-          <button class="store-menu-toggle" type="button" id="store-menu-toggle" aria-expanded="false" aria-controls="store-mobile-nav">
+          <button class="store-menu-toggle store-hub-menu" type="button" id="store-menu-toggle" aria-expanded="false" aria-controls="store-mobile-nav" aria-label="Open menu">
             <span class="store-menu-toggle-icon" aria-hidden="true"></span>
           </button>
         </div>
       </div>
-      <nav class="store-mobile-nav" id="store-mobile-nav" hidden aria-label="Mobile menu">
+      <nav class="store-mobile-nav store-hub-mobile-nav" id="store-mobile-nav" hidden aria-label="Mobile menu">
         <a href="#store-home">Home</a>
-        <a href="#store-data">Data</a>
-        <a href="#store-track">Track order</a>
-        <a href="#store-about">About</a>
+        <a href="#store-data">Buy data</a>
+        <a href="#store-about">Why buy from us</a>
         <a href="#store-contact">Contact</a>
         <a id="store-mobile-wa" href="#" target="_blank" rel="noopener">WhatsApp</a>
-        <a id="store-mobile-call" href="#">Call</a>
+        <a id="store-mobile-call" href="#">Call store</a>
       </nav>
     </header>
 
-    <section class="store-cover" id="store-home">
-      <div class="store-cover-bg" id="store-cover-bg"></div>
-      <div class="store-cover-inner">
-        <div class="store-cover-content">
-          <div class="store-badges" id="store-badges"></div>
-          <h1 id="store-name">Store</h1>
-          <p class="store-hero-lede" id="store-tagline"></p>
-          <p class="store-location" id="store-location" hidden></p>
-          <div class="store-hero-actions" id="store-hero-actions"></div>
-          <p class="store-powered">Powered by <strong>DataLogs</strong></p>
+    <section class="store-hub-hero" id="store-home">
+      <div class="store-hub-hero-glow store-hub-hero-glow--1" aria-hidden="true"></div>
+      <div class="store-hub-hero-glow store-hub-hero-glow--2" aria-hidden="true"></div>
+      <div class="store-hub-hero-inner">
+        <div class="store-badges" id="store-badges"></div>
+        <h1 id="store-name">Store</h1>
+        <p class="store-hub-lede" id="store-tagline">Pick a bundle below. Pay by Mobile Money. Delivered in 1&ndash;5 min.</p>
+        <p class="store-location" id="store-location" hidden></p>
+        <div class="store-hub-trust-row" id="store-hero-trust">
+          <span>MoMo &amp; Card</span>
+          <span>1&ndash;5 min delivery</span>
+          <span>MTN &middot; AT &middot; Telecel</span>
         </div>
+        <div class="store-hero-actions store-hub-hero-actions" id="store-hero-actions"></div>
       </div>
     </section>
 
-    <div class="store-promo" id="store-promo-bar" hidden>
+    <div class="store-promo store-hub-promo" id="store-promo-bar" hidden>
       <p id="store-promo-text"></p>
     </div>
 
-    <main class="store-main-v2">
-      <section class="store-stats-strip" id="store-stats-strip" aria-label="Store highlights"></section>
-
-      <section id="store-data" class="store-section">
-        <div class="store-section-head">
+    <main class="store-main-v2 store-hub-main">
+      <section id="store-data" class="store-section store-hub-section">
+        <div class="store-section-head store-hub-section-head">
           <div>
+            <p class="store-hub-kicker">Buy data</p>
             <h2>Choose your network</h2>
-            <p class="hint">Tap a network, then pick a bundle. Prices are set by this store.</p>
+            <p class="hint">Tap a bundle to checkout. Prices are set by this store.</p>
           </div>
-          <div class="store-toolbar">
-            <input type="search" class="store-search" id="store-search" placeholder="Search e.g. 10GB, weekly…" autocomplete="off">
+          <div class="store-toolbar store-hub-toolbar">
+            <input type="search" class="store-search" id="store-search" placeholder="Search e.g. 10GB…" autocomplete="off" aria-label="Search bundles">
             <select class="store-sort" id="store-sort" aria-label="Sort packages">
               <option value="recommended">Recommended</option>
               <option value="price-asc">Lowest price</option>
@@ -102,33 +106,36 @@
         </div>
 
         <div id="store-status" class="store-status" hidden></div>
-        <div class="store-tabs store-network-tabs" id="store-filters"></div>
+        <div class="store-tabs store-network-tabs store-hub-tabs" id="store-filters"></div>
         <div id="store-deals" class="store-deals" hidden></div>
         <div id="store-packages" class="store-catalog"></div>
       </section>
 
-      <section id="store-track" class="store-section store-track-section">
-        <div class="store-section-head">
-          <h2>Track your order</h2>
-          <p class="hint">Enter your transaction ID from your receipt or MoMo message.</p>
+      <section id="store-about" class="store-section store-hub-section store-hub-why">
+        <div class="store-section-head store-hub-section-head">
+          <p class="store-hub-kicker">Why us</p>
+          <h2>Why buy from this store?</h2>
+          <p class="hint">Trusted bundles, secure checkout, and fast delivery across Ghana.</p>
         </div>
-        <div class="store-track-box" id="store-track-box"></div>
+        <div class="store-trust-grid store-hub-trust-grid" id="store-trust-grid"></div>
+        <div class="store-delivery-card store-hub-delivery" id="store-delivery-card"></div>
+        <div class="store-reviews store-hub-reviews" id="store-reviews" hidden></div>
       </section>
 
-      <section id="store-about" class="store-section">
-        <div class="store-section-head"><h2>Why buy from this store?</h2></div>
-        <div class="store-trust-grid" id="store-trust-grid"></div>
-        <div class="store-delivery-card panel-card" id="store-delivery-card"></div>
-        <div class="store-reviews" id="store-reviews" hidden></div>
-      </section>
-
-      <section id="store-contact" class="store-section">
-        <div class="store-section-head"><h2>Contact this store</h2></div>
-        <div class="store-contact-grid" id="store-contact-grid"></div>
+      <section id="store-contact" class="store-section store-hub-section store-hub-contact">
+        <div class="store-section-head store-hub-section-head">
+          <p class="store-hub-kicker">Contact</p>
+          <h2>Get in touch</h2>
+          <p class="hint">WhatsApp, call, or email — we are here to help.</p>
+        </div>
+        <div class="store-contact-grid store-hub-contact-grid" id="store-contact-grid"></div>
+        <div class="store-hub-track-note">
+          <p>Already paid? <button class="store-hub-track-link" type="button" id="store-open-tracker">Track your order</button></p>
+        </div>
       </section>
     </main>
 
-    <footer class="store-footer store-footer-v2">
+    <footer class="store-footer store-footer-v2 store-hub-footer">
       <div class="store-footer-inner">
         <div class="store-footer-brand">
           <div class="store-logo-wrap store-logo-wrap--sm" id="store-foot-logo"></div>
@@ -137,11 +144,12 @@
             <p id="store-foot-tag">Powered by DataLogs GH</p>
           </div>
         </div>
-        <nav class="store-footer-links">
+        <nav class="store-footer-links store-hub-footer-links">
+          <a href="#store-home">Home</a>
           <a href="#store-data">Data bundles</a>
-          <a href="#store-track">Track order</a>
+          <a href="#store-about">Why us</a>
+          <a href="#store-contact">Contact</a>
           <a href="customer/refunds.html">Refund help</a>
-          <a href="contact.html">Support</a>
         </nav>
         <div class="store-footer-meta">
           <span>&copy; <span id="store-year"></span> DataLogs GH</span>
@@ -150,7 +158,7 @@
       </div>
     </footer>
 
-    <a class="store-wa-fab" id="store-wa-fab" href="#" target="_blank" rel="noopener noreferrer" hidden aria-label="Chat on WhatsApp">
+    <a class="store-wa-fab store-hub-wa" id="store-wa-fab" href="#" target="_blank" rel="noopener noreferrer" hidden aria-label="Chat on WhatsApp">
       <span aria-hidden="true">💬</span>
     </a>
   </div>
@@ -179,7 +187,7 @@
   <script src="js/order-tracker.js?v=6"></script>
   <script src="js/paystack.js?v=2"></script>
   <script src="js/checkout.js?v=7"></script>
-  <script src="js/store.js?v=10"></script>
+  <script src="js/store.js?v=11"></script>
   <script>document.getElementById("store-year").textContent = new Date().getFullYear();</script>
 </body>
 </html>
