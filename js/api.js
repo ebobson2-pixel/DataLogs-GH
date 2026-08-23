@@ -107,7 +107,76 @@ const DataLogsAPI = (() => {
   }
 
   function passwordResetRedirect() {
-    return new URL("reset-password.html", window.location.href).href;
+    const host = window.location.hostname;
+    const isLocal = host === "localhost" || host === "127.0.0.1";
+    if (isLocal) {
+      return `${window.location.origin}/agent/reset-password.html`;
+    }
+    const base = (window.DATALOGS_CONFIG?.siteUrl || window.location.origin).replace(/\/$/, "");
+    return `${base}/agent/reset-password.html`;
+  }
+
+  function parseAuthHash() {
+    const raw = String(window.location.hash || "").replace(/^#/, "");
+    if (!raw) return {};
+    return Object.fromEntries(new URLSearchParams(raw));
+  }
+
+  function authHashErrorMessage(hash) {
+    const params = hash || parseAuthHash();
+    if (!params.error) return "";
+    if (params.error_code === "otp_expired") {
+      return "This reset link has expired. Go to sign in, tap Forgot password, and request a new link.";
+    }
+    if (params.error_description) {
+      return decodeURIComponent(String(params.error_description).replace(/\+/g, " "));
+    }
+    return "This reset link is invalid. Request a new one from the sign-in page.";
+  }
+
+  async function waitForRecoverySession() {
+    const hash = parseAuthHash();
+    const hashError = authHashErrorMessage(hash);
+    if (hashError) return { ok: false, message: hashError };
+
+    const query = new URLSearchParams(window.location.search);
+    if (query.has("code")) {
+      const { error } = await client.auth.exchangeCodeForSession(window.location.search.slice(1));
+      if (error) return { ok: false, message: error.message };
+      window.history.replaceState({}, document.title, window.location.pathname);
+      return { ok: true };
+    }
+
+    for (let i = 0; i < 16; i += 1) {
+      const { data: { session } } = await client.auth.getSession();
+      if (session) return { ok: true };
+      await new Promise((resolve) => setTimeout(resolve, 200));
+    }
+
+    return new Promise((resolve) => {
+      let settled = false;
+      const { data: { subscription } } = client.auth.onAuthStateChange((event, session) => {
+        if (settled) return;
+        if ((event === "PASSWORD_RECOVERY" || event === "SIGNED_IN") && session) {
+          settled = true;
+          subscription.unsubscribe();
+          resolve({ ok: true });
+        }
+      });
+      setTimeout(() => {
+        if (settled) return;
+        settled = true;
+        subscription.unsubscribe();
+        if (hash.access_token || hash.type === "recovery") {
+          resolve({ ok: false, message: "Could not verify this reset link. Request a new one." });
+        } else {
+          resolve({
+            ok: false,
+            message: "This reset link is missing or has expired. Request a new one from sign in.",
+          });
+        }
+      }, 4000);
+    });
   }
 
   async function requestPasswordReset(email) {
@@ -700,6 +769,9 @@ const DataLogsAPI = (() => {
     requestPasswordReset,
     updatePassword,
     passwordResetRedirect,
+    parseAuthHash,
+    authHashErrorMessage,
+    waitForRecoverySession,
     fetchPackages,
     upsertPackage,
     upsertPackages,
