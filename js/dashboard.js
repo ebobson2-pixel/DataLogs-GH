@@ -19,7 +19,7 @@
   const titles = {
     overview: ["Overview", "Live sales, profit, and traffic"],
     store: ["Mini store", "Your unique storefront"],
-    flyer: ["Flyers", "Download a price poster for your store"],
+    flyer: ["Flyers", "Share a price poster with ready-made message"],
     pricing: ["Store pricing", "Markup all bundles for one network"],
     wholesale: ["Buy wholesale", "Subsidized agent rates"],
     orders: ["Orders", "Store sales & wholesale"],
@@ -1496,8 +1496,11 @@
   });
 
   let flyerStyle = "shop";
+  let flyerPackageSearch = "";
   const flyerPhone = document.getElementById("flyer-phone");
   const flyerHours = document.getElementById("flyer-hours");
+  const flyerSearch = document.getElementById("flyer-search");
+  const flyerShareMessage = document.getElementById("flyer-share-message");
   if (flyerPhone) flyerPhone.value = profile.phone || "";
 
   function prettyPhone(raw) {
@@ -1526,6 +1529,7 @@
 
   function flyerPackages() {
     const networks = storeCache?.networks || ["mtn", "airteltigo", "telecel"];
+    const q = flyerPackageSearch.trim().toLowerCase();
     return packages
       .filter((p) => networks.includes(p.network) && p.active !== false)
       .map((p) => {
@@ -1535,7 +1539,33 @@
           gb: p.gb,
           price: priced.price,
         };
+      })
+      .filter((p) => {
+        if (!q) return true;
+        const net =
+          p.network === "mtn"
+            ? "mtn"
+            : p.network === "airteltigo"
+              ? "airteltigo airtel tigo at"
+              : "telecel vodafone";
+        const hay = `${net} ${p.gb}gb ${p.price}`.toLowerCase();
+        return hay.includes(q);
       });
+  }
+
+  function flyerShareText() {
+    const custom = flyerShareMessage?.value?.trim();
+    if (custom) return custom;
+    return window.DataLogsFlyer?.buildShareMessage?.(flyerPayload()) || "";
+  }
+
+  function updateFlyerShareMessage() {
+    if (!flyerShareMessage || !window.DataLogsFlyer?.buildShareMessage) return;
+    if (!storeCache) {
+      flyerShareMessage.value = "";
+      return;
+    }
+    flyerShareMessage.value = DataLogsFlyer.buildShareMessage(flyerPayload());
   }
 
   function websiteAccent() {
@@ -1574,9 +1604,10 @@
       error.textContent = "No packages available for this store yet.";
     }
     const data = flyerPayload();
-    if (hint) hint.textContent = `Caption: ${data.url}`;
+    if (hint) hint.textContent = `Caption: ${data.url.replace(/^https?:\/\//, "")} · MoMo · 1–5 min delivery`;
     try {
       await DataLogsFlyer.render(canvas, flyerStyle, data);
+      updateFlyerShareMessage();
     } catch (err) {
       error.hidden = false;
       error.textContent = err.message || "Could not draw the flyer.";
@@ -1596,6 +1627,90 @@
   document.getElementById("flyer-preview-btn")?.addEventListener("click", () => renderFlyerPreview());
   document.getElementById("flyer-phone")?.addEventListener("change", () => renderFlyerPreview());
   document.getElementById("flyer-hours")?.addEventListener("change", () => renderFlyerPreview());
+  flyerSearch?.addEventListener("input", () => {
+    flyerPackageSearch = flyerSearch.value || "";
+    renderFlyerPreview();
+  });
+
+  document.getElementById("flyer-share-btn")?.addEventListener("click", async () => {
+    const canvas = document.getElementById("flyer-canvas");
+    const error = document.getElementById("flyer-error");
+    const shareBtn = document.getElementById("flyer-share-btn");
+    error.hidden = true;
+    if (!storeCache || !canvas || !window.DataLogsFlyer?.share) {
+      error.hidden = false;
+      error.textContent = "Save your mini store first, then share a flyer.";
+      return;
+    }
+    try {
+      shareBtn.disabled = true;
+      await renderFlyerPreview();
+      const slug = storeCache.slug || "store";
+      const mode = await DataLogsFlyer.share(canvas, flyerPayload(), `${slug}-${flyerStyle}-flyer.jpg`);
+      if (mode === "copy-download") {
+        error.hidden = false;
+        error.style.color = "";
+        error.textContent = "Share not supported here — message copied and flyer downloaded. Attach the JPG in WhatsApp or SMS.";
+      }
+    } catch (err) {
+      if (err?.name !== "AbortError") {
+        error.hidden = false;
+        error.textContent = err.message || "Could not share the flyer.";
+      }
+    } finally {
+      shareBtn.disabled = false;
+    }
+  });
+
+  document.getElementById("flyer-whatsapp-btn")?.addEventListener("click", async () => {
+    const canvas = document.getElementById("flyer-canvas");
+    const error = document.getElementById("flyer-error");
+    error.hidden = true;
+    if (!storeCache) {
+      error.hidden = false;
+      error.textContent = "Save your mini store first, then share a flyer.";
+      return;
+    }
+    try {
+      await renderFlyerPreview();
+      const text = flyerShareText();
+      if (window.DataLogsFlyer?.whatsappShareUrl) {
+        window.open(DataLogsFlyer.whatsappShareUrl(text), "_blank", "noopener,noreferrer");
+      }
+      if (canvas && window.DataLogsFlyer?.download) {
+        const slug = storeCache.slug || "store";
+        await DataLogsFlyer.download(canvas, `${slug}-${flyerStyle}-flyer.jpg`);
+      }
+    } catch (err) {
+      error.hidden = false;
+      error.textContent = err.message || "Could not open WhatsApp share.";
+    }
+  });
+
+  document.getElementById("flyer-copy-message-btn")?.addEventListener("click", async () => {
+    const error = document.getElementById("flyer-error");
+    const copyBtn = document.getElementById("flyer-copy-message-btn");
+    error.hidden = true;
+    if (!storeCache) {
+      error.hidden = false;
+      error.textContent = "Save your mini store first.";
+      return;
+    }
+    try {
+      copyBtn.disabled = true;
+      updateFlyerShareMessage();
+      await DataLogsFlyer.copyShareMessage(flyerShareText());
+      error.hidden = false;
+      error.style.color = "var(--accent, #22c55e)";
+      error.textContent = "Share message copied. Paste it with your flyer image.";
+    } catch (err) {
+      error.hidden = false;
+      error.style.color = "";
+      error.textContent = err.message || "Could not copy message.";
+    } finally {
+      copyBtn.disabled = false;
+    }
+  });
 
   document.getElementById("flyer-download-btn")?.addEventListener("click", async () => {
     const canvas = document.getElementById("flyer-canvas");

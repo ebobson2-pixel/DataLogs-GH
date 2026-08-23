@@ -173,13 +173,40 @@ window.DataLogsFlyer = (() => {
     ctx.restore();
   }
 
-  function drawCaption(ctx, url) {
-    fillRound(ctx, 36, H - 78, W - 72, 48, 16, "#111");
+  function networkLabel(key) {
+    if (key === "mtn") return "MTN";
+    if (key === "airteltigo") return "AirtelTigo";
+    if (key === "telecel") return "Telecel";
+    return String(key || "");
+  }
+
+  function siteInfoLine(data) {
+    const tag = String(data?.tagline || "Affordable. Instant. Reliable.").slice(0, 38);
+    return `${tag} · MoMo · MTN · AirtelTigo · Telecel · 1–5 min`;
+  }
+
+  function drawSiteInfoBar(ctx, y, data, bg) {
+    const pad = 36;
+    fillRound(ctx, pad, y, W - pad * 2, 40, 12, bg || "#1a1a1a");
+    ctx.fillStyle = "rgba(255,255,255,0.82)";
+    ctx.font = "600 17px Outfit, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    const line = siteInfoLine(data);
+    fitText(ctx, line, W - pad * 2 - 24, (s) => `600 ${s}px Outfit, sans-serif`);
+    ctx.fillText(line, W / 2, y + 20);
+  }
+
+  function drawCaption(ctx, dataOrUrl) {
+    const data = typeof dataOrUrl === "object" && dataOrUrl !== null ? dataOrUrl : { url: dataOrUrl };
+    const pad = 36;
+    drawSiteInfoBar(ctx, H - 130, data, "#1a1a1a");
+    fillRound(ctx, pad, H - 78, W - pad * 2, 48, 16, "#111");
     ctx.fillStyle = "#fff";
     ctx.font = "700 22px Outfit, sans-serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    const label = String(url || "").replace(/^https?:\/\//, "");
+    const label = String(data.url || "").replace(/^https?:\/\//, "");
     fitText(ctx, label, W - 120, (s) => `700 ${s}px Outfit, sans-serif`);
     ctx.fillText(label, W / 2, H - 54);
   }
@@ -262,7 +289,7 @@ window.DataLogsFlyer = (() => {
     ctx.textAlign = "center";
     wrapLines(ctx, "BUY YOUR DATA HERE", 790, 870, 230, 32);
 
-    drawCaption(ctx, data.url);
+    drawCaption(ctx, data);
   }
 
   function wrapLines(ctx, text, x, y, width, lineHeight) {
@@ -390,7 +417,7 @@ window.DataLogsFlyer = (() => {
     ctx.font = "900 58px Montserrat, Outfit, sans-serif";
     ctx.fillText(data.phone || "Add your number", 48, 1218);
 
-    drawCaption(ctx, data.url);
+    drawCaption(ctx, data);
   }
 
   async function drawPackage(ctx, data) {
@@ -466,7 +493,7 @@ window.DataLogsFlyer = (() => {
     ctx.textAlign = "left";
     ctx.fillText(`☎  ${data.phoneIntl || data.phone || "Add your number"}`, 70, 1306);
 
-    drawCaption(ctx, data.url);
+    drawCaption(ctx, data);
   }
 
   function hexToRgb(hex) {
@@ -551,7 +578,7 @@ window.DataLogsFlyer = (() => {
       const rows = Math.ceil(list.length / cols);
       h += 86 + rows * (cardH + gap) + 24;
     });
-    return Math.max(1440, h + 140);
+    return Math.max(1440, h + 200);
   }
 
   async function drawShop(ctx, data, canvas) {
@@ -687,6 +714,7 @@ window.DataLogsFlyer = (() => {
       ctx.fillText("Set store prices to fill this flyer.", W / 2, 620);
     }
 
+    drawSiteInfoBar(ctx, height - 148, data, "#0d1118");
     fillRound(ctx, pad, height - 92, W - pad * 2, 52, 16, accent);
     ctx.fillStyle = onAccent;
     ctx.font = "700 20px Outfit, sans-serif";
@@ -695,6 +723,81 @@ window.DataLogsFlyer = (() => {
     const label = String(data.url || "").replace(/^https?:\/\//, "");
     fitText(ctx, label, W - pad * 2 - 40, (s) => `700 ${s}px Outfit, sans-serif`);
     ctx.fillText(label, W / 2, height - 66);
+  }
+
+  function buildShareMessage(data) {
+    const name = data?.name || "Data Store";
+    const tagline = data?.tagline || "Affordable. Instant. Reliable.";
+    const url = data?.url || "";
+    const phone = data?.phone || "";
+    const hours = data?.hours || "8am - 9pm Each day";
+    const groups = byNetwork(data?.packages || []);
+    const sampleLines = [];
+    ["mtn", "airteltigo", "telecel"].forEach((net) => {
+      (groups[net] || []).slice(0, 3).forEach((pkg) => {
+        sampleLines.push(`${networkLabel(net)} ${gbLabel(pkg.gb)} — ${priceLabel(pkg.price, "ghc")}`);
+      });
+    });
+    const lines = [
+      `📱 ${name}`,
+      tagline,
+      "",
+      "Buy affordable data bundles for MTN, AirtelTigo & Telecel in Ghana.",
+      "💳 Pay with Mobile Money · ⚡ Delivered in 1–5 minutes",
+      "",
+      `🛒 Order online: ${url}`,
+    ];
+    if (phone) lines.push(`📞 WhatsApp / Call: ${phone}`);
+    lines.push(`🕐 Working hours: ${hours}`);
+    if (sampleLines.length) {
+      lines.push("", "Sample prices:", ...sampleLines.slice(0, 9));
+    }
+    lines.push("", "Full price list is on the flyer image. Tap the link to buy instantly!");
+    return lines.join("\n");
+  }
+
+  function canvasToBlob(canvas) {
+    return new Promise((resolve, reject) => {
+      canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error("Could not prepare flyer image."))), "image/jpeg", 0.92);
+    });
+  }
+
+  function whatsappShareUrl(text) {
+    return `https://wa.me/?text=${encodeURIComponent(text)}`;
+  }
+
+  async function copyShareMessage(text) {
+    const value = String(text || "").trim();
+    if (!value) throw new Error("Nothing to copy.");
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(value);
+      return;
+    }
+    const area = document.createElement("textarea");
+    area.value = value;
+    area.setAttribute("readonly", "");
+    area.style.position = "fixed";
+    area.style.opacity = "0";
+    document.body.appendChild(area);
+    area.select();
+    document.execCommand("copy");
+    area.remove();
+  }
+
+  async function share(canvas, data, filename) {
+    const text = buildShareMessage(data);
+    const blob = await canvasToBlob(canvas);
+    const file = new File([blob], filename || "store-flyer.jpg", { type: "image/jpeg" });
+    if (navigator.share) {
+      const payload = { title: data?.name || "Store flyer", text };
+      if (navigator.canShare?.({ files: [file] })) payload.files = [file];
+      else payload.url = data?.url || undefined;
+      await navigator.share(payload);
+      return "share";
+    }
+    await copyShareMessage(text);
+    await download(canvas, filename);
+    return "copy-download";
   }
 
   async function render(canvas, style, data) {
@@ -728,5 +831,13 @@ window.DataLogsFlyer = (() => {
     });
   }
 
-  return { render, download, templates: ["shop", "hub", "plug", "package"] };
+  return {
+    render,
+    download,
+    buildShareMessage,
+    whatsappShareUrl,
+    copyShareMessage,
+    share,
+    templates: ["shop", "hub", "plug", "package"],
+  };
 })();

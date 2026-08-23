@@ -242,6 +242,9 @@
                   <input id="flyer-tagline" type="text" value="Data for Ghana. In one tap.">
                 </label>
               </div>
+              <label class="api-search-label" style="margin-top:12px">Search packages on flyer
+                <input id="flyer-search" type="search" placeholder="e.g. MTN, 1GB, 5, telecel" autocomplete="off">
+              </label>
               <div class="split" style="grid-template-columns:1fr 1fr;gap:12px;margin-top:12px">
                 <label>WhatsApp / call number
                   <input id="flyer-phone" type="tel" placeholder="024 000 0000">
@@ -249,6 +252,16 @@
                 <label>Working hours
                   <input id="flyer-hours" type="text" value="8am - 9pm Each day">
                 </label>
+              </div>
+              <div class="flyer-share-block">
+                <h4>Share with customers</h4>
+                <p class="hint">Ready-made message with site link, phone, hours, and sample prices.</p>
+                <textarea id="flyer-share-message" rows="9" spellcheck="false"></textarea>
+                <div class="hero-actions flyer-share-actions">
+                  <button class="btn btn-primary" type="button" id="flyer-share-btn">Share flyer</button>
+                  <button class="btn btn-ghost" type="button" id="flyer-whatsapp-btn">WhatsApp</button>
+                  <button class="btn btn-ghost" type="button" id="flyer-copy-message-btn">Copy message</button>
+                </div>
               </div>
               <p class="error" id="flyer-error" hidden></p>
               <div class="hero-actions" style="margin-top:12px">
@@ -259,7 +272,7 @@
           </div>
           <div class="panel-card">
             <h3>Preview</h3>
-            <p class="hint" id="flyer-url-hint">Preview uses datalogs.shop/packages.html</p>
+            <p class="hint" id="flyer-url-hint">Site link and store info are printed at the bottom of the flyer.</p>
             <div class="flyer-preview-wrap">
               <canvas id="flyer-canvas" width="1080" height="1440"></canvas>
             </div>
@@ -461,7 +474,7 @@
   <script src="../js/refunds.js?v=2"></script>
   <script src="../js/theme.js"></script>
   <script src="../js/dash-icons.js?v=1"></script>
-  <script src="../js/flyer.js?v=4"></script>
-  <script src="dashboard.js?v=16"></script>
+  <script src="../js/flyer.js?v=5"></script>
+  <script src="dashboard.js?v=17"></script>
 </body>
 </html>

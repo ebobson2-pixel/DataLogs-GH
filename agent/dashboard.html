@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&family=Montserrat:wght@600;700;800;900&family=Outfit:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../css/styles.css?v=18">
-  <link rel="stylesheet" href="../css/agent.css?v=17">
+  <link rel="stylesheet" href="../css/agent.css?v=18">
 </head>
 <body class="agent-site dash-body plug-dash">
   <div class="dash-shell" id="dash-shell">
@@ -111,6 +111,11 @@
               <span class="agent-quick-ico">&#128200;</span>
               <strong>Set prices</strong>
               <span>Markup &amp; profit per bundle</span>
+            </button>
+            <button class="agent-quick-card" type="button" data-goto="flyer">
+              <span class="agent-quick-ico">&#128228;</span>
+              <strong>Share flyer</strong>
+              <span>Poster + ready message for customers</span>
             </button>
             <button class="agent-quick-card" type="button" id="hero-copy-store">
               <span class="agent-quick-ico">&#128279;</span>
@@ -295,13 +300,27 @@
               </button>
             </div>
             <form class="form" id="flyer-form" style="margin-top:16px">
-              <div class="split" style="grid-template-columns:1fr 1fr;gap:12px">
+              <label class="api-search-label">Search packages on flyer
+                <input id="flyer-search" type="search" placeholder="e.g. MTN, 1GB, 5, telecel" autocomplete="off">
+              </label>
+              <p class="hint" style="margin-top:6px">Filter which bundles appear on the poster. Leave empty to show all.</p>
+              <div class="split" style="grid-template-columns:1fr 1fr;gap:12px;margin-top:12px">
                 <label>WhatsApp / call number
                   <input id="flyer-phone" type="tel" placeholder="024 000 0000">
                 </label>
                 <label>Working hours
                   <input id="flyer-hours" type="text" value="8am - 9pm Each day">
                 </label>
+              </div>
+              <div class="flyer-share-block">
+                <h4>Share with customers</h4>
+                <p class="hint">Ready-made message with your store link, phone, hours, and sample prices — edit if you like, then share the flyer image with anyone.</p>
+                <textarea id="flyer-share-message" rows="9" spellcheck="false"></textarea>
+                <div class="hero-actions flyer-share-actions">
+                  <button class="btn btn-primary" type="button" id="flyer-share-btn">Share flyer</button>
+                  <button class="btn btn-ghost" type="button" id="flyer-whatsapp-btn">WhatsApp</button>
+                  <button class="btn btn-ghost" type="button" id="flyer-copy-message-btn">Copy message</button>
+                </div>
               </div>
               <p class="error" id="flyer-error" hidden></p>
               <div class="hero-actions" style="margin-top:12px">
@@ -312,7 +331,7 @@
           </div>
           <div class="panel-card">
             <h3>Preview</h3>
-            <p class="hint" id="flyer-url-hint">Your store link is printed as the caption at the bottom.</p>
+            <p class="hint" id="flyer-url-hint">Your store link and site info are printed at the bottom of the flyer.</p>
             <div class="flyer-preview-wrap">
               <canvas id="flyer-canvas" width="1080" height="1440"></canvas>
             </div>
@@ -562,8 +581,8 @@
   <script src="../js/theme.js"></script>
   <script src="../js/paystack.js?v=1"></script>
   <script src="../js/checkout.js?v=5"></script>
-  <script src="../js/flyer.js?v=4"></script>
+  <script src="../js/flyer.js?v=5"></script>
   <script src="../js/dash-icons.js?v=1"></script>
-  <script src="../js/dashboard.js?v=24"></script>
+  <script src="../js/dashboard.js?v=26"></script>
 </body>
 </html>

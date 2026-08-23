@@ -1294,6 +1294,9 @@
 
   let adminFlyerStyle = "shop";
   let adminFlyerPackages = [];
+  let adminFlyerPackageSearch = "";
+  const adminFlyerShareMessage = document.getElementById("flyer-share-message");
+  const adminFlyerSearch = document.getElementById("flyer-search");
 
   function mainSiteLink() {
     const base = (window.DATALOGS_CONFIG?.siteUrl || "https://datalogs.shop").replace(/\/$/, "");
@@ -1322,13 +1325,36 @@
   }
 
   function adminFlyerPackagesList() {
+    const q = adminFlyerPackageSearch.trim().toLowerCase();
     return adminFlyerPackages
       .filter((p) => p.active !== false)
       .map((p) => {
         const retail = roundCedi(Number(p.retail ?? p.price));
         return { network: p.network, gb: p.gb, price: Number.isFinite(retail) ? retail : 0 };
       })
-      .filter((p) => p.price > 0);
+      .filter((p) => p.price > 0)
+      .filter((p) => {
+        if (!q) return true;
+        const net =
+          p.network === "mtn"
+            ? "mtn"
+            : p.network === "airteltigo"
+              ? "airteltigo airtel tigo at"
+              : "telecel vodafone";
+        const hay = `${net} ${p.gb}gb ${p.price}`.toLowerCase();
+        return hay.includes(q);
+      });
+  }
+
+  function adminFlyerShareText() {
+    const custom = adminFlyerShareMessage?.value?.trim();
+    if (custom) return custom;
+    return window.DataLogsFlyer?.buildShareMessage?.(adminFlyerPayload()) || "";
+  }
+
+  function updateAdminFlyerShareMessage() {
+    if (!adminFlyerShareMessage || !window.DataLogsFlyer?.buildShareMessage) return;
+    adminFlyerShareMessage.value = DataLogsFlyer.buildShareMessage(adminFlyerPayload());
   }
 
   function adminFlyerPayload() {
@@ -1379,9 +1405,10 @@
       return;
     }
     const data = adminFlyerPayload();
-    if (hint) hint.textContent = `Caption: ${data.url}`;
+    if (hint) hint.textContent = `Caption: ${data.url.replace(/^https?:\/\//, "")} · MoMo · 1–5 min delivery`;
     try {
       await DataLogsFlyer.render(canvas, adminFlyerStyle, data);
+      updateAdminFlyerShareMessage();
     } catch (err) {
       error.hidden = false;
       error.textContent = err.message || "Could not draw the flyer.";
@@ -1391,6 +1418,75 @@
   document.getElementById("flyer-preview-btn")?.addEventListener("click", () => renderAdminFlyerPreview());
   ["flyer-phone", "flyer-hours", "flyer-name", "flyer-tagline"].forEach((id) => {
     document.getElementById(id)?.addEventListener("input", () => renderAdminFlyerPreview());
+  });
+  adminFlyerSearch?.addEventListener("input", () => {
+    adminFlyerPackageSearch = adminFlyerSearch.value || "";
+    renderAdminFlyerPreview();
+  });
+
+  document.getElementById("flyer-share-btn")?.addEventListener("click", async () => {
+    const canvas = document.getElementById("flyer-canvas");
+    const error = document.getElementById("flyer-error");
+    const shareBtn = document.getElementById("flyer-share-btn");
+    error.hidden = true;
+    if (!adminFlyerPackagesList().length || !canvas || !window.DataLogsFlyer?.share) {
+      error.hidden = false;
+      error.textContent = "Add active packages with retail prices first.";
+      return;
+    }
+    try {
+      shareBtn.disabled = true;
+      await renderAdminFlyerPreview();
+      const mode = await DataLogsFlyer.share(canvas, adminFlyerPayload(), `datalogs-${adminFlyerStyle}-flyer.jpg`);
+      if (mode === "copy-download") {
+        error.hidden = false;
+        error.textContent = "Share not supported here — message copied and flyer downloaded.";
+      }
+    } catch (err) {
+      if (err?.name !== "AbortError") {
+        error.hidden = false;
+        error.textContent = err.message || "Could not share the flyer.";
+      }
+    } finally {
+      shareBtn.disabled = false;
+    }
+  });
+
+  document.getElementById("flyer-whatsapp-btn")?.addEventListener("click", async () => {
+    const canvas = document.getElementById("flyer-canvas");
+    const error = document.getElementById("flyer-error");
+    error.hidden = true;
+    if (!adminFlyerPackagesList().length) {
+      error.hidden = false;
+      error.textContent = "Add active packages with retail prices first.";
+      return;
+    }
+    try {
+      await renderAdminFlyerPreview();
+      window.open(DataLogsFlyer.whatsappShareUrl(adminFlyerShareText()), "_blank", "noopener,noreferrer");
+      if (canvas) await DataLogsFlyer.download(canvas, `datalogs-${adminFlyerStyle}-flyer.jpg`);
+    } catch (err) {
+      error.hidden = false;
+      error.textContent = err.message || "Could not open WhatsApp share.";
+    }
+  });
+
+  document.getElementById("flyer-copy-message-btn")?.addEventListener("click", async () => {
+    const error = document.getElementById("flyer-error");
+    const copyBtn = document.getElementById("flyer-copy-message-btn");
+    error.hidden = true;
+    try {
+      copyBtn.disabled = true;
+      updateAdminFlyerShareMessage();
+      await DataLogsFlyer.copyShareMessage(adminFlyerShareText());
+      error.hidden = false;
+      error.textContent = "Share message copied.";
+    } catch (err) {
+      error.hidden = false;
+      error.textContent = err.message || "Could not copy message.";
+    } finally {
+      copyBtn.disabled = false;
+    }
   });
 
   document.getElementById("flyer-styles")?.addEventListener("click", (event) => {

@@ -1311,6 +1311,39 @@
   border-radius: 12px;
 }
 
+.flyer-share-block {
+  margin-top: 16px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--bg-soft, #f8f8f5);
+}
+
+.flyer-share-block h4 {
+  margin: 0 0 6px;
+  font-size: 0.98rem;
+}
+
+.flyer-share-block textarea {
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+  min-height: 160px;
+  resize: vertical;
+  font-family: inherit;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--bg-card, #fff);
+}
+
+.flyer-share-actions {
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
 @media (max-width: 720px) {
   .flyer-styles {
     grid-template-columns: 1fr;
@@ -1753,7 +1786,7 @@
 
 .agent-quick-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 12px;
   margin-bottom: 20px;
 }
