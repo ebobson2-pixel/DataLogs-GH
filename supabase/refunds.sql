@@ -8,7 +8,8 @@ alter table public.site_settings
     "max_requests_per_30_days": 5,
     "manual_review_amount": 150,
     "auto_failed_delivery": true,
-    "auto_duplicate": true
+    "auto_duplicate": true,
+    "require_admin_approval": true
   }'::jsonb;
 
 alter table public.orders
@@ -387,8 +388,8 @@ begin
     'order_code', ord.order_code,
     'amount', amount,
     'eligible', eligible,
-    'auto_process', auto_ok,
-    'requires_review', eligible = 'manual_review',
+    'auto_process', false,
+    'requires_review', true,
     'fraud_flag', recent_count >= max_req,
     'message', msg,
     'payment_status', ord.payment_status,
@@ -438,12 +439,8 @@ begin
     select * into store_rec from public.agent_stores where id = ord.agent_store_id;
   end if;
 
-  init_status := case
-    when coalesce((chk->>'fraud_flag')::boolean, false) or (chk->>'eligible') = 'manual_review' then 'under_review'
-    else 'requested'
-  end;
-
-  ticket := case when init_status = 'under_review' then public.new_support_ticket_code() else null end;
+  init_status := 'under_review';
+  ticket := public.new_support_ticket_code();
 
   insert into public.refunds (
     refund_code, order_id, order_code, buyer_id, agent_store_id, agent_id,
@@ -482,8 +479,8 @@ begin
     'amount', rf.amount,
     'eligibility', rf.eligibility,
     'support_ticket_code', rf.support_ticket_code,
-    'auto_process', rf.eligibility = 'auto_eligible' and rf.status = 'requested',
-    'message', chk->>'message'
+    'auto_process', false,
+    'message', coalesce(chk->>'message', 'Your refund request was submitted for admin review.')
   );
 end;
 $$;
@@ -496,6 +493,7 @@ set search_path = public
 as $$
 declare
   rf public.refunds%rowtype;
+  old_status text;
 begin
   select * into rf from public.refunds where id = p_refund_id for update;
   if not found then
@@ -506,23 +504,20 @@ begin
     return jsonb_build_object('ok', true, 'refund', to_jsonb(rf), 'already', true);
   end if;
 
-  if rf.status = 'under_review' then
-    perform public.log_refund_event(rf.id, auth.uid(), 'customer', 'customer_confirmed', rf.status, rf.status, 'Awaiting admin review');
-    return jsonb_build_object('ok', true, 'refund', to_jsonb(rf), 'message', 'Your refund is under review.');
-  end if;
-
-  if rf.status = 'requested' and rf.eligibility = 'auto_eligible' then
-    update public.refunds set status = 'approved' where id = rf.id returning * into rf;
-    perform public.log_refund_event(rf.id, auth.uid(), 'customer', 'customer_confirmed', 'requested', 'approved', null);
-  elsif rf.status = 'requested' then
+  old_status := rf.status;
+  if rf.status in ('requested', 'under_review') then
     update public.refunds set status = 'under_review' where id = rf.id returning * into rf;
-    perform public.log_refund_event(rf.id, auth.uid(), 'customer', 'customer_confirmed', 'requested', 'under_review', null);
+    perform public.log_refund_event(
+      rf.id, auth.uid(), 'customer', 'customer_confirmed',
+      old_status, 'under_review', 'Awaiting admin approval'
+    );
   end if;
 
   return jsonb_build_object(
     'ok', true,
     'refund', to_jsonb(rf),
-    'ready_to_process', rf.status = 'approved' and rf.eligibility = 'auto_eligible'
+    'ready_to_process', false,
+    'message', 'Your refund request was submitted. An administrator will review it before any money is returned.'
   );
 end;
 $$;

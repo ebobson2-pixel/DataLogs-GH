@@ -132,11 +132,18 @@
       }
       form.dataset.existing = "0";
       const eligible = chk.eligible;
-      const cls = eligible === "auto_eligible" ? "recipient-confirm" : eligible === "not_eligible" ? "error" : "";
+      const cls = eligible === "not_eligible" ? "error" : "recipient-confirm";
+      const title =
+        eligible === "not_eligible"
+          ? "Not eligible yet"
+          : eligible === "auto_eligible"
+            ? "Refund eligible — admin approval required"
+            : "Refund review required";
       resultEl.innerHTML = `
         <div class="${cls}" style="margin-top:12px;padding:14px;border-radius:12px">
-          <p><strong>${eligible === "auto_eligible" ? "Refund eligible" : eligible === "not_eligible" ? "Not eligible yet" : "Refund review required"}</strong></p>
+          <p><strong>${title}</strong></p>
           <p class="hint">${escapeHtml(chk.message || "")}</p>
+          <p class="hint">All refunds are reviewed by an administrator before any money is returned.</p>
           ${eligible !== "not_eligible" ? `<p>Amount: <strong>${formatCedi(chk.amount)}</strong></p>` : ""}
           ${chk.duplicate_detected ? `<p class="hint">Duplicate transaction detected.</p>` : ""}
         </div>`;
@@ -171,15 +178,10 @@
       }
       const confirmed = await DataLogsAPI.confirmRefundRequest(created.refund_id);
       const rf = confirmed.refund;
-      if (confirmed.ready_to_process && window.DataLogsPay?.refund) {
-        okEl.hidden = false;
-        okEl.textContent = "🔄 Refund initiated…";
-        await DataLogsPay.refund(created.refund_id);
-        okEl.textContent = `🟢 Refund ${rf.refund_code} is being processed.`;
-      } else {
-        okEl.hidden = false;
-        okEl.textContent = `Refund ${rf.refund_code} submitted · ${statusLabel(rf.status)}`;
-      }
+      okEl.hidden = false;
+      okEl.textContent =
+        confirmed.message ||
+        `Refund ${rf.refund_code} submitted · ${statusLabel(rf.status)} · awaiting admin approval`;
       const list = document.getElementById("refund-list");
       if (list) paintRefundList(list, phone);
     } catch (err) {
