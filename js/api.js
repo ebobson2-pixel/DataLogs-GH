@@ -437,6 +437,70 @@ const DataLogsAPI = (() => {
     return data || [];
   }
 
+  async function checkRefundEligibility(orderCode, reason, phone) {
+    const { data, error } = await client.rpc("check_refund_eligibility", {
+      p_order_code: orderCode,
+      p_reason: reason,
+      p_phone: phone || null,
+    });
+    if (error) throw error;
+    return data;
+  }
+
+  async function createRefundRequest(orderCode, reason, detail, phone) {
+    const { data, error } = await client.rpc("create_refund_request", {
+      p_order_code: orderCode,
+      p_reason: reason,
+      p_reason_detail: detail || null,
+      p_phone: phone || null,
+    });
+    if (error) throw error;
+    return data;
+  }
+
+  async function confirmRefundRequest(refundId) {
+    const { data, error } = await client.rpc("confirm_refund_request", { p_refund_id: refundId });
+    if (error) throw error;
+    return data;
+  }
+
+  async function getRefundDetail(refundCode, phone) {
+    const { data, error } = await client.rpc("get_refund_detail", {
+      p_refund_code: refundCode,
+      p_phone: phone || null,
+    });
+    if (error) throw error;
+    return data;
+  }
+
+  async function listMyRefunds(phone) {
+    const { data, error } = await client.rpc("list_my_refunds", { p_phone: phone || null });
+    if (error) throw error;
+    return data || [];
+  }
+
+  async function adminListRefunds(status = "all") {
+    const { data, error } = await client.rpc("admin_list_refunds", { p_status: status });
+    if (error) throw error;
+    return data || [];
+  }
+
+  async function adminReviewRefund(refundId, action, note) {
+    const { data, error } = await client.rpc("admin_review_refund", {
+      p_refund_id: refundId,
+      p_action: action,
+      p_note: note || null,
+    });
+    if (error) throw error;
+    return data;
+  }
+
+  async function adminRefundStats() {
+    const { data, error } = await client.rpc("admin_refund_stats");
+    if (error) throw error;
+    return data;
+  }
+
   async function routeCustomerAfterAuth() {
     const profile = await getProfile();
     if (!profile) return "../customer/auth.html";
@@ -616,6 +680,14 @@ const DataLogsAPI = (() => {
     trackOrdersByPhone,
     trackOrderByCode,
     trendingPackages,
+    checkRefundEligibility,
+    createRefundRequest,
+    confirmRefundRequest,
+    getRefundDetail,
+    listMyRefunds,
+    adminListRefunds,
+    adminReviewRefund,
+    adminRefundStats,
     getSiteSettings,
     updateSiteSettings,
     adminCreditWallet,

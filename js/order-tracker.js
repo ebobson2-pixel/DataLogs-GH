@@ -64,6 +64,11 @@
     }
   }
 
+  function refundHelpUrl(orderCode) {
+    const base = document.body.classList.contains("store-body") ? "../customer/refunds.html" : "customer/refunds.html";
+    return `${base}?order=${encodeURIComponent(orderCode || "")}`;
+  }
+
   function setTab(tab) {
     activeTab = tab;
     root.querySelectorAll("[data-track-tab]").forEach((btn) => {
@@ -170,6 +175,7 @@
             </div>
             <div class="track-actions">
               ${canBuyAgain ? `<button class="btn btn-primary btn-sm" type="button" data-buy-again="${o.package_id}" data-recipient="${escapeHtml(o.recipient_number || "")}" data-tier="${escapeHtml(o.pricing_tier || "retail")}" data-store="${o.agent_store_id || ""}">Buy again</button>` : ""}
+              <a class="btn btn-ghost btn-sm" href="${refundHelpUrl(o.order_code)}">Get help</a>
               ${status === "failed" ? `<button class="btn btn-ghost btn-sm" type="button" data-support>Contact support</button>` : ""}
             </div>
           </article>`;

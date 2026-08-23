@@ -33,5 +33,8 @@ window.DataLogsPay = (() => {
     status(reference) {
       return request({ action: "status", reference });
     },
+    refund(refundId) {
+      return request({ action: "refund", refund_id: refundId });
+    },
   };
 })();

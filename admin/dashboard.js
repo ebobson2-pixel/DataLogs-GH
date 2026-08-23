@@ -27,13 +27,16 @@
     flyer: ["Flyers", "Download a price poster for datalogs.shop"],
     api: ["API", "Keys, access, and live requests"],
     withdrawals: ["Withdrawals", "Approve or decline agent cash-outs"],
+    refunds: ["Refunds", "Review and process customer refunds"],
     settings: ["Settings", "WhatsApp, support, and withdrawal threshold"],
   };
 
   let orderFilter = "all";
   let packageFilter = "mtn";
   let withdrawFilter = "pending";
+  let refundFilter = "all";
   let withdrawalsCache = [];
+  let refundsCache = [];
   let ordersCache = [];
   let usersCache = [];
   let packagesCache = [];
@@ -88,6 +91,7 @@
     if (id === "settings") loadSettingsForm();
     if (id === "api") loadApiConsole();
     if (id === "withdrawals") loadWithdrawals();
+    if (id === "refunds") loadRefunds();
     if (id === "flyer") populateFlyerStoreSelect();
   }
 
@@ -251,6 +255,145 @@
       window.alert(err.message || "Could not update withdrawal.");
     }
   });
+
+  async function loadRefunds() {
+    const body = document.getElementById("admin-refunds-body");
+    if (!body) return;
+    body.innerHTML = `<tr><td colspan="8">Loading…</td></tr>`;
+    try {
+      const [rows, stats] = await Promise.all([
+        DataLogsAPI.adminListRefunds(refundFilter),
+        DataLogsAPI.adminRefundStats(),
+      ]);
+      refundsCache = rows || [];
+      paintRefundStats(stats);
+      renderAdminRefunds();
+    } catch (err) {
+      body.innerHTML = `<tr><td colspan="8">${escapeHtml(err.message || "Could not load refunds.")}</td></tr>`;
+    }
+  }
+
+  function paintRefundStats(stats) {
+    if (!stats) return;
+    document.getElementById("refund-stat-total").textContent = String(stats.total_requests ?? 0);
+    document.getElementById("refund-stat-pending").textContent = String(stats.pending ?? 0);
+    document.getElementById("refund-stat-completed").textContent = String(stats.completed ?? 0);
+    document.getElementById("refund-stat-amount").textContent = formatCedi(stats.total_refunded ?? 0);
+  }
+
+  function refundStatusLabel(s) {
+    return window.DataLogsRefunds?.statusLabel?.(s) || s;
+  }
+
+  function refundReasonLabel(id) {
+    return window.DataLogsRefunds?.reasonLabel?.(id) || id;
+  }
+
+  function renderAdminRefunds() {
+    const body = document.getElementById("admin-refunds-body");
+    if (!body) return;
+    const list =
+      refundFilter === "all" ? refundsCache : refundsCache.filter((r) => r.status === refundFilter);
+    if (!list.length) {
+      body.innerHTML = `<tr><td colspan="8">No ${refundFilter === "all" ? "" : refundFilter.replace(/_/g, " ") + " "}refunds.</td></tr>`;
+      return;
+    }
+    body.innerHTML = list
+      .map((r) => {
+        const reviewable = ["requested", "under_review", "approved"].includes(r.status);
+        const canProcess = r.status === "approved";
+        const actions = reviewable
+          ? `<div class="hero-actions" style="gap:6px;flex-wrap:wrap">
+              ${canProcess ? `<button class="btn btn-primary btn-sm" type="button" data-rf-process="${r.id}">Process</button>` : ""}
+              ${r.status !== "approved" ? `<button class="btn btn-ok btn-sm" type="button" data-rf-approve="${r.id}">Approve</button>` : ""}
+              <button class="btn btn-danger btn-sm" type="button" data-rf-reject="${r.id}">Reject</button>
+              <button class="btn btn-ghost btn-sm" type="button" data-rf-view="${escapeHtml(r.refund_code)}">Details</button>
+            </div>`
+          : `<button class="btn btn-ghost btn-sm" type="button" data-rf-view="${escapeHtml(r.refund_code)}">Details</button>`;
+        return `
+        <tr>
+          <td>${escapeHtml(r.refund_code)}${r.fraud_flag ? " 🚨" : ""}</td>
+          <td>${escapeHtml(r.order_code)}</td>
+          <td>${escapeHtml(r.customer_label || "—")}${r.agent_label && r.agent_label !== "—" ? `<br><span class="hint">${escapeHtml(r.agent_label)}</span>` : ""}</td>
+          <td>${formatCedi(r.amount)}</td>
+          <td>${escapeHtml(refundReasonLabel(r.reason))}</td>
+          <td>${refundStatusLabel(r.status)}</td>
+          <td>${new Date(r.created_at).toLocaleString()}</td>
+          <td>${actions}</td>
+        </tr>`;
+      })
+      .join("");
+  }
+
+  document.getElementById("refund-filters")?.addEventListener("click", (event) => {
+    const btn = event.target.closest("[data-rfilter]");
+    if (!btn) return;
+    refundFilter = btn.dataset.rfilter;
+    document.querySelectorAll("#refund-filters .filter-btn").forEach((el) => {
+      el.classList.toggle("active", el === btn);
+    });
+    loadRefunds();
+  });
+
+  document.getElementById("admin-refunds-body")?.addEventListener("click", async (event) => {
+    const approve = event.target.closest("[data-rf-approve]");
+    const reject = event.target.closest("[data-rf-reject]");
+    const processBtn = event.target.closest("[data-rf-process]");
+    const view = event.target.closest("[data-rf-view]");
+    if (view) {
+      showAdminRefundDetail(view.dataset.rfView);
+      return;
+    }
+    const id = approve?.dataset.rfApprove || reject?.dataset.rfReject || processBtn?.dataset.rfProcess;
+    if (!id) return;
+    if (processBtn) {
+      try {
+        await window.DataLogsPay?.refund?.(id);
+        window.alert("Refund processing started.");
+        await loadRefunds();
+      } catch (err) {
+        window.alert(err.message || "Could not process refund.");
+      }
+      return;
+    }
+    const action = approve ? "approve" : "reject";
+    const note =
+      action === "reject"
+        ? window.prompt("Optional note for rejecting this refund:") || ""
+        : window.prompt("Optional admin note:") || "";
+    try {
+      await DataLogsAPI.adminReviewRefund(id, action, note);
+      await loadRefunds();
+    } catch (err) {
+      window.alert(err.message || "Could not update refund.");
+    }
+  });
+
+  async function showAdminRefundDetail(code) {
+    try {
+      const detail = await DataLogsAPI.getRefundDetail(code, null);
+      const rf = detail.refund;
+      const ord = detail.order;
+      const events = detail.events || [];
+      const timeline =
+        window.DataLogsRefunds?.timelineHtml?.(events) ||
+        events.map((e) => `${e.action} · ${e.created_at}`).join("\n");
+      window.alert(
+        [
+          `${rf.refund_code} · ${rf.status}`,
+          `Order: ${rf.order_code} · ${formatCedi(rf.amount)}`,
+          `Reason: ${refundReasonLabel(rf.reason)}`,
+          `Payment: ${ord?.payment_status || "—"} · Delivery: ${ord?.delivery_status || "—"}`,
+          rf.support_ticket_code ? `Ticket: ${rf.support_ticket_code}` : "",
+          rf.admin_note ? `Admin note: ${rf.admin_note}` : "",
+        ]
+          .filter(Boolean)
+          .join("\n")
+      );
+    } catch (err) {
+      window.alert(err.message || "Could not load refund details.");
+    }
+  }
 
   function withTimeout(promise, ms = 12000) {
     return Promise.race([

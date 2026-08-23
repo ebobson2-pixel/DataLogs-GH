@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Refund center &mdash; DataLogs GH</title>
+  <link rel="stylesheet" href="../css/styles.css?v=17">
+  <link rel="stylesheet" href="../css/agent.css?v=13">
+</head>
+<body class="refunds-page dash-body">
+  <div class="wrap" style="max-width:920px;margin:0 auto;padding:24px 16px 80px">
+    <header class="customer-dash-head">
+      <div>
+        <a class="logo" href="../index.html">DataLogs <span>GH</span></a>
+        <h1 style="margin:12px 0 4px">Refund center</h1>
+        <p class="hint">Request help for a paid order. Refunds are verified server-side before any money is returned.</p>
+      </div>
+      <div class="hero-actions">
+        <a class="btn btn-ghost" href="dashboard.html">My account</a>
+        <a class="btn btn-ghost" href="../track.html">Track order</a>
+      </div>
+    </header>
+
+    <section class="panel-card" style="margin-top:20px">
+      <h3>Request a refund</h3>
+      <form class="form" id="refund-request-form">
+        <label>Order ID (transaction code)
+          <input name="order_code" required placeholder="DL-ABC12345">
+        </label>
+        <label>Verify recipient phone (for guest orders)
+          <input name="phone" inputmode="tel" placeholder="024 123 4567">
+        </label>
+        <label>What went wrong?
+          <select name="reason" required>
+            <option value="data_not_received">Data not received</option>
+            <option value="payment_deducted_failed">Money deducted but failed</option>
+            <option value="stuck_processing">Stuck processing</option>
+            <option value="duplicate_charge">Duplicate charge</option>
+            <option value="incorrect_amount">Incorrect amount</option>
+            <option value="wrong_number">Wrong phone number</option>
+            <option value="other">Other</option>
+          </select>
+        </label>
+        <label>Additional details (optional)
+          <textarea name="detail" rows="3" placeholder="Tell us what happened"></textarea>
+        </label>
+        <div id="refund-eligibility-result"></div>
+        <p class="error" id="refund-form-error" hidden></p>
+        <p class="success" id="refund-form-ok" hidden></p>
+        <div class="hero-actions">
+          <button class="btn btn-ghost" type="button" id="refund-check-btn">Check eligibility</button>
+          <button class="btn btn-primary" type="submit">Confirm refund request</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="panel-card" style="margin-top:16px">
+      <h3>My refunds</h3>
+      <div id="refund-list" class="track-results"></div>
+    </section>
+
+    <div id="refund-detail-panel" hidden style="margin-top:16px"></div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../js/config.js"></script>
+  <script src="../js/data.js"></script>
+  <script src="../js/customer-local.js?v=1"></script>
+  <script src="../js/api.js?v=15"></script>
+  <script src="../js/paystack.js?v=2"></script>
+  <script src="../js/refunds.js?v=1"></script>
+</body>
+</html>

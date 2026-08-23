@@ -32,6 +32,7 @@
         <button class="side-link" type="button" data-panel="flyer"><span class="side-ico" data-icon="flyer" aria-hidden="true"></span><span class="side-label">Flyers</span></button>
         <button class="side-link" type="button" data-panel="api"><span class="side-ico" data-icon="developer" aria-hidden="true"></span><span class="side-label">API</span></button>
         <button class="side-link" type="button" data-panel="withdrawals"><span class="side-ico" data-icon="withdrawal" aria-hidden="true"></span><span class="side-label">Withdrawals</span></button>
+        <button class="side-link" type="button" data-panel="refunds"><span class="side-ico" data-icon="orders" aria-hidden="true"></span><span class="side-label">Refunds</span></button>
         <button class="side-link" type="button" data-panel="settings"><span class="side-ico" data-icon="settings" aria-hidden="true"></span><span class="side-label">Settings</span></button>
       </nav>
       <div class="side-foot">
@@ -380,6 +381,42 @@
           </div>
         </section>
 
+        <section class="dash-panel" data-panel-view="refunds">
+          <div class="stat-grid" id="refund-stats">
+            <article class="stat-card"><span>Total requests</span><strong id="refund-stat-total">0</strong></article>
+            <article class="stat-card"><span>Pending</span><strong id="refund-stat-pending">0</strong></article>
+            <article class="stat-card"><span>Completed</span><strong id="refund-stat-completed">0</strong></article>
+            <article class="stat-card"><span>Refunded amount</span><strong id="refund-stat-amount">GH&#8373; 0</strong></article>
+          </div>
+          <div class="panel-card">
+            <div class="filters" id="refund-filters" style="margin-bottom:12px">
+              <button class="filter-btn active" type="button" data-rfilter="all">All</button>
+              <button class="filter-btn" type="button" data-rfilter="under_review">Under review</button>
+              <button class="filter-btn" type="button" data-rfilter="approved">Approved</button>
+              <button class="filter-btn" type="button" data-rfilter="processing">Processing</button>
+              <button class="filter-btn" type="button" data-rfilter="completed">Completed</button>
+              <button class="filter-btn" type="button" data-rfilter="failed">Failed</button>
+            </div>
+            <div class="table-wrap">
+              <table class="orders-table">
+                <thead>
+                  <tr>
+                    <th>Refund ID</th>
+                    <th>Order</th>
+                    <th>Customer</th>
+                    <th>Amount</th>
+                    <th>Reason</th>
+                    <th>Status</th>
+                    <th>When</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="admin-refunds-body"><tr><td colspan="8">Open this page to load refunds.</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
         <section class="dash-panel" data-panel-view="settings">
           <div class="panel-card">
             <h3>Site settings</h3>
@@ -419,10 +456,12 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="../js/config.js"></script>
   <script src="../js/data.js"></script>
-  <script src="../js/api.js?v=10"></script>
+  <script src="../js/api.js?v=15"></script>
+  <script src="../js/paystack.js?v=2"></script>
+  <script src="../js/refunds.js?v=1"></script>
   <script src="../js/theme.js"></script>
   <script src="../js/dash-icons.js?v=1"></script>
   <script src="../js/flyer.js?v=4"></script>
-  <script src="dashboard.js?v=15"></script>
+  <script src="dashboard.js?v=16"></script>
 </body>
 </html>

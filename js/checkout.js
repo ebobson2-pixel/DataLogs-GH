@@ -643,6 +643,7 @@
         <button class="btn btn-ghost" type="button" data-track-order>Track</button>
         <button class="btn btn-ghost" type="button" data-receipt-dl>Receipt</button>
         <button class="btn btn-ghost" type="button" data-receipt-share>Share</button>
+        ${failed || !completed ? `<a class="btn btn-ghost" href="${state.storeId ? "../customer/refunds.html" : "customer/refunds.html"}?order=${encodeURIComponent(order.order_code)}">Get help</a>` : ""}
       </div>
       <button class="btn btn-ghost btn-full" type="button" data-close style="margin-top:8px">Done</button>
     `;

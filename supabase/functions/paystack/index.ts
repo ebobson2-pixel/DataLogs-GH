@@ -24,6 +24,7 @@ Deno.serve(async (req) => {
       return json(await submit(admin, body, "/charge/submit_phone", { phone: digits(body.phone), reference: body.reference }));
     }
     if (action === "status" || action === "check") return json(await paymentStatus(admin, String(body.reference || "")));
+    if (action === "refund") return json(await processPaystackRefund(admin, body));
     return json({ ok: false, message: "Unknown action" }, 400);
   } catch (err) {
     return json({ ok: false, message: err instanceof Error ? err.message : "Payment failed" }, 400);
@@ -271,6 +272,35 @@ async function present(
     status,
     url: data.url || data.redirecturl || null,
   };
+}
+
+async function processPaystackRefund(admin: ReturnType<typeof createAdmin>, body: Record<string, unknown>) {
+  const refundId = String(body.refund_id || "");
+  if (!refundId) throw new Error("Missing refund_id");
+
+  const prep = await admin.rpc("process_refund", { p_refund_id: refundId });
+  if (prep.error) throw new Error(prep.error.message);
+  const payload = prep.data as Record<string, unknown>;
+  if (payload?.already) return { ok: true, ...(payload as object) };
+  if (payload?.channel === "wallet") return { ok: true, ...(payload as object) };
+
+  const paymentRef = String(payload?.payment_reference || "");
+  if (!paymentRef) throw new Error("Missing payment reference for refund");
+
+  const refundRes = await paystack("/refund", {
+    transaction: paymentRef,
+    merchant_note: `DataLogs refund ${refundId}`,
+  });
+
+  const paystackId = String(refundRes?.data?.id || refundRes?.data?.transaction?.id || "");
+  const complete = await admin.rpc("complete_refund", {
+    p_refund_id: refundId,
+    p_paystack_refund_id: paystackId || null,
+    p_success: true,
+    p_error: null,
+  });
+  if (complete.error) throw new Error(complete.error.message);
+  return { ok: true, ...(complete.data as object), paystack: refundRes?.data || null };
 }
 
 async function paystack(path: string, body: Record<string, unknown> | null, method = "POST") {
