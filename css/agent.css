@@ -1000,7 +1000,8 @@
 
   .dash-shell,
   .dash-shell.collapsed {
-    grid-template-columns: 1fr;
+    display: block;
+    grid-template-columns: unset;
   }
 
   .dash-scrim {
@@ -1008,7 +1009,7 @@
     position: fixed;
     inset: 0;
     background: rgba(0, 0, 0, 0.55);
-    z-index: 28;
+    z-index: 40;
   }
 
   .dash-shell.mobile-open .dash-scrim {
@@ -1027,16 +1028,37 @@
     position: fixed;
     left: 0;
     top: 0;
+    bottom: 0;
+    height: auto;
     width: min(280px, 86vw);
     transform: translateX(-105%);
     transition: transform 0.22s ease;
     box-shadow: var(--shadow);
-    z-index: 32;
+    z-index: 50;
     padding-top: max(10px, env(safe-area-inset-top));
   }
 
   .dash-shell.mobile-open .dash-sidebar {
     transform: none;
+  }
+
+  .dash-main {
+    width: 100%;
+    min-height: 100vh;
+    position: relative;
+    z-index: 1;
+  }
+
+  .dash-topbar {
+    z-index: 20;
+  }
+
+  .dash-shell.mobile-open .dash-topbar {
+    z-index: 10;
+  }
+
+  .dash-shell.mobile-open .plug-mobile-nav {
+    display: none;
   }
 
   .dash-shell.collapsed .brand-text,
