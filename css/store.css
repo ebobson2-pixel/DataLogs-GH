@@ -953,7 +953,48 @@
   }
 
   .store-bundle-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .store-bundle {
+    padding: 14px 12px 12px;
+    border-radius: 16px;
+  }
+
+  .store-bundle-gb {
+    margin-top: 6px;
+    font-size: 1.75rem;
+  }
+
+  .store-bundle-gb span {
+    font-size: 0.78rem;
+  }
+
+  .store-bundle-price {
+    margin-top: 8px;
+    font-size: 0.95rem;
+  }
+
+  .store-bundle-meta {
+    font-size: 0.75rem;
+  }
+
+  .store-bundle-net {
+    font-size: 0.65rem;
+  }
+
+  .store-bundle-btn {
+    margin-top: 10px;
+    padding: 10px 12px;
+    font-size: 0.82rem;
+  }
+
+  .store-bundle-tag {
+    top: 8px;
+    right: 8px;
+    font-size: 0.6rem;
+    padding: 3px 6px;
   }
 
   .store-feature-grid {

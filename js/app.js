@@ -23,7 +23,7 @@
           <div class="nav-end">
             <nav class="nav-links" id="primary-nav" aria-label="Primary">
               <a href="${assetPrefix}index.html" data-nav="home">Home</a>
-              <a href="${assetPrefix}packages.html" data-nav="packages">Packages</a>
+              <a href="${assetPrefix}packages.html" data-nav="packages">Buy data</a>
               <a href="${assetPrefix}track.html" data-nav="track">Track order</a>
               <a href="${assetPrefix}how-it-works.html" data-nav="how">How it works</a>
               <a href="${assetPrefix}docs.html" data-nav="docs">API docs</a>
@@ -163,6 +163,14 @@
       });
     });
   });
+
+  const params = new URLSearchParams(window.location.search);
+  const networkParam = params.get("network");
+  if (networkParam && page === "packages") {
+    const filterBtn = document.querySelector(`[data-filter-group] [data-filter="${networkParam}"]`);
+    filterBtn?.click();
+    document.getElementById("all-packages")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
 })();
 
 const NETWORK_ORDER = ["mtn", "airteltigo", "telecel"];

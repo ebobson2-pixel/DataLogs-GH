@@ -40,6 +40,7 @@
   document.getElementById("user-name").textContent = profile.full_name || "Agent";
   document.getElementById("user-email").textContent = profile.email || profile.authEmail || "";
   document.getElementById("user-avatar").textContent = (profile.full_name || "A").trim().charAt(0).toUpperCase();
+  document.getElementById("hero-agent-name").textContent = profile.full_name || "Agent";
   document.getElementById("account-name").value = profile.full_name || "";
   document.getElementById("account-email").value = profile.email || profile.authEmail || "";
   document.getElementById("account-phone").value = profile.phone || "";
@@ -116,6 +117,52 @@
   document.querySelectorAll("[data-goto]").forEach((btn) => {
     btn.addEventListener("click", () => showPanel(btn.dataset.goto));
   });
+
+  document.getElementById("hero-copy-store")?.addEventListener("click", async () => {
+    const url = document.getElementById("share-url")?.value?.trim();
+    if (!url) {
+      showPanel("store");
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      const hint = document.getElementById("hero-store-link-hint");
+      if (hint) {
+        const prev = hint.textContent;
+        hint.textContent = "Copied to clipboard!";
+        setTimeout(() => {
+          hint.textContent = prev;
+        }, 2000);
+      }
+    } catch {
+      showPanel("store");
+    }
+  });
+
+  function paintHeroWallet(balance) {
+    const formatted = formatCedi(balance || 0);
+    const hero = document.getElementById("hero-wallet");
+    const topbar = document.getElementById("topbar-wallet-balance");
+    const topbarBtn = document.getElementById("topbar-wallet");
+    if (hero) hero.textContent = formatted;
+    if (topbar) topbar.textContent = formatted;
+    if (topbarBtn) topbarBtn.hidden = false;
+  }
+
+  function paintHeroStore(store) {
+    const status = document.getElementById("hero-store-status");
+    const hint = document.getElementById("hero-store-link-hint");
+    if (!status || !hint) return;
+    if (!store) {
+      status.textContent = "Set up your mini store to start selling.";
+      hint.textContent = "Save store first";
+      return;
+    }
+    status.textContent = store.published
+      ? `Your store "${store.name}" is live — share the link and start earning.`
+      : `Store "${store.name}" is saved as draft — publish when ready.`;
+    hint.textContent = store.published ? "One tap to copy link" : "Publish to get link";
+  }
 
   function showPanel(id) {
     document.querySelectorAll("[data-panel]").forEach((btn) => {
@@ -648,6 +695,7 @@
       document.getElementById("share-url").value = "";
       openBtn.href = "#";
       paintStoreAccentSwatches("sea");
+      paintHeroStore(null);
       return;
     }
     storeForm.name.value = storeCache.name;
@@ -669,6 +717,7 @@
     document.getElementById("share-url").value = url;
     document.getElementById("preview-link").href = url;
     openBtn.href = url;
+    paintHeroStore(storeCache);
   }
 
   function isStoreSale(order) {
@@ -732,6 +781,8 @@
     runNumber(document.getElementById("stat-profit"), profitEarned, 2);
     runNumber(document.getElementById("stat-saved"), wallet?.balance || 0, 2);
     runNumber(document.getElementById("stat-customers"), customers, 0);
+    paintHeroWallet(wallet?.balance || 0);
+    paintHeroStore(store);
     runNumber(document.getElementById("donut-total"), orders.length, 0);
     drawSpark(document.getElementById("spark-orders"), orderSeries);
     drawSpark(document.getElementById("spark-profit"), profitSeries, "#7dff9a");
@@ -1308,6 +1359,10 @@
     if (success) success.hidden = true;
     topup.email = profile.email || profile.authEmail || topup.email;
     renderTopupAmount();
+  });
+
+  document.getElementById("hero-topup-btn")?.addEventListener("click", () => {
+    document.getElementById("open-topup")?.click();
   });
 
   topupBackdrop?.addEventListener("click", (event) => {

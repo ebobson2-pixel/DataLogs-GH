@@ -1713,6 +1713,11 @@ body.pay-open {
 
   .track-form {
     grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .track-form .track-submit {
+    width: 100%;
   }
 }
 
@@ -1739,7 +1744,7 @@ body.pay-open {
 .track-panel {
   position: absolute;
   right: 0;
-  bottom: 58px;
+  bottom: 64px;
   width: min(420px, calc(100vw - 28px));
   background: var(--modal-bg);
   border: 1px solid var(--line);
@@ -1753,7 +1758,7 @@ body.pay-open {
   display: flex;
   justify-content: space-between;
   gap: 10px;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 
 .track-panel-head p {
@@ -1771,10 +1776,19 @@ body.pay-open {
   line-height: 1;
 }
 
+.track-form-area {
+  display: block;
+}
+
+.track-form-area .track-form[hidden] {
+  display: none;
+}
+
 .track-form {
   display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 8px;
+  grid-template-columns: minmax(0, 1fr) 9.25rem;
+  gap: 10px;
+  align-items: stretch;
 }
 
 .track-form input {
@@ -1784,6 +1798,14 @@ body.pay-open {
   color: var(--text);
   border-radius: 12px;
   padding: 11px 12px;
+  min-height: 44px;
+}
+
+.track-form .track-submit {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 14px;
+  white-space: nowrap;
 }
 
 .track-error {
@@ -2109,7 +2131,62 @@ body.pay-open {
 
   .package-grid,
   .store-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .package-card {
+    padding: 14px 12px;
+  }
+
+  .package-card .gb {
+    font-size: 1.75rem;
+  }
+
+  .package-card .gb span {
+    font-size: 0.78rem;
+  }
+
+  .package-card .price {
+    margin-top: 10px;
+    font-size: 0.95rem;
+  }
+
+  .package-card .meta {
+    font-size: 0.75rem;
+  }
+
+  .package-card .pill {
+    font-size: 0.68rem;
+    padding: 3px 8px;
+  }
+
+  .package-card .tap-hint {
+    margin-top: 6px;
+    font-size: 0.72rem;
+  }
+
+  .package-card .tag {
+    top: 8px;
+    right: 8px;
+    font-size: 0.62rem;
+    padding: 3px 6px;
+  }
+
+  .network-packages-head {
+    margin-bottom: 12px;
+  }
+
+  .network-packages-head h3 {
+    font-size: 1.2rem;
+  }
+
+  .package-groups {
+    gap: 28px;
+  }
+
+  .network-packages-section + .network-packages-section {
+    padding-top: 24px;
   }
 
   .modal-backdrop {
@@ -2227,7 +2304,7 @@ body.pay-open {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 .track-tab {
   border: 1px solid var(--line);
@@ -2272,6 +2349,16 @@ body.pay-open {
 }
 .track-page-card {
   max-width: 520px;
+}
+
+.track-page-form {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+}
+
+.track-page-divider {
+  margin: 20px 0 12px;
 }
 .cust-ben-row {
   display: flex;

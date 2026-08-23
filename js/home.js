@@ -2,7 +2,7 @@
   if (!document.body.classList.contains("home-page")) return;
 
   const nodes = document.querySelectorAll(
-    ".home-networks .reveal, .home-packages .reveal, .home-trending .reveal, .home-why .reveal, .home-cta-section .reveal, .home-buy-again .reveal"
+    ".home-networks .reveal, .home-buy-data .reveal, .home-why .reveal, .home-cta-section .reveal, .home-buy-again .reveal"
   );
   if ("IntersectionObserver" in window) {
     const io = new IntersectionObserver(
@@ -55,37 +55,46 @@
     });
   }
 
-  async function paintTrending() {
-    const grid = document.getElementById("home-trending");
-    if (!grid || !window.DataLogsAPI?.trendingPackages) return;
-    try {
-      const rows = await DataLogsAPI.trendingPackages(6);
-      if (!rows.length) {
-        document.querySelector(".home-trending")?.remove();
-        return;
-      }
-      grid.innerHTML = rows
-        .map((row) => {
-          const pkg =
-            window.__PACKAGES?.find((p) => p.id === row.package_id) ||
-            mapPackage({
-              id: row.package_id,
-              network: row.network,
-              gb: row.gb,
-              retail_price: row.retail_price,
-              agent_price: row.retail_price,
-              validity: row.validity,
-              active: true,
-            });
-          return packageCardHTML(pkg);
-        })
-        .join("");
-    } catch {
-      document.querySelector(".home-trending")?.remove();
+  async function waitForPackages() {
+    for (let i = 0; i < 40; i++) {
+      if (window.__PACKAGES?.length) return window.__PACKAGES;
+      await new Promise((r) => setTimeout(r, 100));
+    }
+    return window.__PACKAGES || [];
+  }
+
+  async function paintPackageTeaser() {
+    const el = document.getElementById("home-package-teaser");
+    if (!el) return;
+    const pkgs = await waitForPackages();
+    if (!pkgs.length) {
+      el.innerHTML = `<p class="hint">Data packages are available on the Buy data page.</p>`;
+      return;
+    }
+    const nets = ["mtn", "airteltigo", "telecel"];
+    el.innerHTML = nets
+      .map((netId) => {
+        const list = pkgs.filter((p) => p.network === netId);
+        if (!list.length) return "";
+        const from = Math.min(...list.map((p) => Number(p.price)));
+        const maxGb = Math.max(...list.map((p) => Number(p.gb)));
+        const net = NETWORKS[netId]?.name || netId;
+        return `
+          <a class="home-teaser-card home-teaser-card--${netId}" href="packages.html?network=${netId}">
+            <span class="pill">${net}</span>
+            <strong>${list.length} package${list.length === 1 ? "" : "s"}</strong>
+            <span class="hint">From ${formatCedi(from)} · up to ${maxGb}GB</span>
+            <span class="tap-hint">View on Buy data &rarr;</span>
+          </a>`;
+      })
+      .filter(Boolean)
+      .join("");
+    if (!el.innerHTML.trim()) {
+      el.innerHTML = `<p class="hint">Packages are listed on the Buy data page.</p>`;
     }
   }
 
   paintRecent();
-  paintTrending();
+  paintPackageTeaser();
   window.addEventListener("datalogs:order-placed", paintRecent);
 })();

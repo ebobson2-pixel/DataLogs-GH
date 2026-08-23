@@ -8,8 +8,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&family=Montserrat:wght@600;700;800;900&family=Outfit:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../css/styles.css?v=13">
-  <link rel="stylesheet" href="../css/agent.css?v=14">
+  <link rel="stylesheet" href="../css/styles.css?v=17">
+  <link rel="stylesheet" href="../css/agent.css?v=16">
 </head>
 <body class="dash-body">
   <div class="dash-shell" id="dash-shell">
@@ -23,15 +23,24 @@
       </div>
 
       <nav class="side-nav">
+        <p class="side-group">Command center</p>
         <button class="side-link active" type="button" data-panel="overview"><span class="side-ico" data-icon="overview" aria-hidden="true"></span><span class="side-label">Overview</span></button>
+
+        <p class="side-group">Your shop</p>
         <button class="side-link" type="button" data-panel="store"><span class="side-ico" data-icon="store" aria-hidden="true"></span><span class="side-label">Mini store</span></button>
-        <button class="side-link" type="button" data-panel="flyer"><span class="side-ico" data-icon="flyer" aria-hidden="true"></span><span class="side-label">Flyers</span></button>
         <button class="side-link" type="button" data-panel="pricing"><span class="side-ico" data-icon="pricing" aria-hidden="true"></span><span class="side-label">Store pricing</span></button>
+        <button class="side-link" type="button" data-panel="flyer"><span class="side-ico" data-icon="flyer" aria-hidden="true"></span><span class="side-label">Flyers</span></button>
         <button class="side-link" type="button" data-panel="wholesale"><span class="side-ico" data-icon="wholesale" aria-hidden="true"></span><span class="side-label">Buy wholesale</span></button>
+
+        <p class="side-group">Records</p>
         <button class="side-link" type="button" data-panel="orders"><span class="side-ico" data-icon="orders" aria-hidden="true"></span><span class="side-label">Orders</span></button>
         <button class="side-link" type="button" data-panel="customers"><span class="side-ico" data-icon="customers" aria-hidden="true"></span><span class="side-label">Customers</span></button>
+
+        <p class="side-group">Wallet</p>
         <button class="side-link" type="button" data-panel="wallet"><span class="side-ico" data-icon="wallet" aria-hidden="true"></span><span class="side-label">My Wallet</span></button>
         <button class="side-link" type="button" data-panel="withdrawal"><span class="side-ico" data-icon="withdrawal" aria-hidden="true"></span><span class="side-label">Withdrawal</span></button>
+
+        <p class="side-group">Settings</p>
         <button class="side-link" type="button" data-panel="developer"><span class="side-ico" data-icon="developer" aria-hidden="true"></span><span class="side-label">API keys</span></button>
         <button class="side-link" type="button" data-panel="account"><span class="side-ico" data-icon="account" aria-hidden="true"></span><span class="side-label">Account</span></button>
       </nav>
@@ -59,6 +68,10 @@
           </div>
         </div>
         <div class="dash-topbar-end">
+          <button class="topbar-wallet" type="button" id="topbar-wallet" data-goto="wallet" hidden>
+            <span>Wallet</span>
+            <strong id="topbar-wallet-balance">GH&#8373; 0.00</strong>
+          </button>
           <div data-theme-tools></div>
           <a class="btn btn-ghost" id="open-store-btn" href="../store.html" target="_blank" rel="noopener">Open store</a>
           <a class="support-chip" id="topbar-support" hidden href="#" target="_blank" rel="noopener">Support</a>
@@ -67,6 +80,45 @@
 
       <main class="dash-content">
         <section class="dash-panel active" data-panel-view="overview">
+          <div class="agent-hero">
+            <div class="agent-hero-copy">
+              <p class="agent-greeting">Welcome back, <strong id="hero-agent-name">Agent</strong></p>
+              <h2 class="agent-hero-title">Your data command center</h2>
+              <p class="hint agent-hero-sub" id="hero-store-status">Set up your mini store to start selling.</p>
+            </div>
+            <div class="agent-hero-wallet">
+              <span class="agent-hero-wallet-label">Wallet balance</span>
+              <strong class="agent-hero-wallet-amt" id="hero-wallet">GH&#8373; 0.00</strong>
+              <div class="agent-hero-wallet-actions">
+                <button class="btn btn-primary btn-sm" type="button" id="hero-topup-btn">Top up</button>
+                <button class="btn btn-ghost btn-sm" type="button" data-goto="withdrawal">Withdraw</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="agent-quick-grid">
+            <button class="agent-quick-card" type="button" data-goto="wholesale">
+              <span class="agent-quick-ico">&#9889;</span>
+              <strong>Buy wholesale</strong>
+              <span>Agent rates on MTN, AT &amp; Telecel</span>
+            </button>
+            <button class="agent-quick-card" type="button" data-goto="store">
+              <span class="agent-quick-ico">&#127978;</span>
+              <strong>Customize store</strong>
+              <span>Name, theme &amp; share link</span>
+            </button>
+            <button class="agent-quick-card" type="button" data-goto="pricing">
+              <span class="agent-quick-ico">&#128200;</span>
+              <strong>Set prices</strong>
+              <span>Markup &amp; profit per bundle</span>
+            </button>
+            <button class="agent-quick-card" type="button" id="hero-copy-store">
+              <span class="agent-quick-ico">&#128279;</span>
+              <strong>Copy store link</strong>
+              <span id="hero-store-link-hint">Save store first</span>
+            </button>
+          </div>
+
           <div class="overview-livebar">
             <div class="live-badge"><span class="live-dot"></span> Live</div>
             <p class="overview-updated" id="overview-updated">Connecting&hellip;</p>
@@ -504,6 +556,6 @@
   <script src="../js/checkout.js?v=5"></script>
   <script src="../js/flyer.js?v=4"></script>
   <script src="../js/dash-icons.js?v=1"></script>
-  <script src="../js/dashboard.js?v=22"></script>
+  <script src="../js/dashboard.js?v=23"></script>
 </body>
 </html>

@@ -122,7 +122,8 @@ html[data-theme="light"] .home-hero::before {
 .home-hero .reveal.delay-3 { animation-delay: 0.36s; }
 
 .home-networks .reveal,
-.home-packages .reveal,
+.home-buy-data .reveal,
+.home-why .reveal,
 .home-cta-section .reveal {
   opacity: 0;
   transform: translateY(18px);
@@ -130,7 +131,8 @@ html[data-theme="light"] .home-hero::before {
 }
 
 .home-networks .reveal.in-view,
-.home-packages .reveal.in-view,
+.home-buy-data .reveal.in-view,
+.home-why .reveal.in-view,
 .home-cta-section .reveal.in-view {
   opacity: 1;
   transform: none;
@@ -231,6 +233,41 @@ html[data-theme="light"] .home-hero::before {
 .home-cta .btn {
   position: relative;
   z-index: 1;
+}
+
+.home-package-teaser {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.home-teaser-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 20px;
+  border-radius: 20px;
+  border: 1px solid var(--line);
+  background: var(--bg-elevated);
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.home-teaser-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(var(--accent-rgb), 0.35);
+}
+
+.home-teaser-card strong {
+  font-size: 1.1rem;
+}
+
+.home-teaser-card .tap-hint {
+  margin-top: 4px;
+  font-size: 0.82rem;
+  color: var(--accent);
+  font-weight: 600;
 }
 
 @media (max-width: 760px) {

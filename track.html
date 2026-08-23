@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <script>try{var d=document.documentElement,t=localStorage.getItem("datalogs_theme"),a=localStorage.getItem("datalogs_accent");if(t==="light")d.setAttribute("data-theme","light");if(a)d.setAttribute("data-accent",a);}catch(e){}</script>
   <title>Track transaction &mdash; DataLogs GH</title>
-  <link rel="stylesheet" href="css/styles.css?v=16">
+  <link rel="stylesheet" href="css/styles.css?v=17">
 </head>
 <body data-page="track">
   <div id="site-header"></div>
@@ -20,18 +20,18 @@
     <section class="section">
       <div class="wrap track-page-card">
         <p class="hint">Use the <strong>Track order</strong> button at the bottom-right, or enter details below.</p>
-        <form class="form" id="track-page-form">
+        <form class="form track-page-form" id="track-page-form">
           <label>Order ID
             <input id="track-page-code" placeholder="DL-ABC12345" autocomplete="off">
           </label>
-          <button class="btn btn-primary" type="submit">Track by order ID</button>
+          <button class="btn btn-primary" type="submit">Track order</button>
         </form>
-        <p class="hint" style="margin:16px 0 8px">Or track by phone</p>
-        <form class="form" id="track-page-phone-form">
+        <p class="hint track-page-divider">Or track by phone</p>
+        <form class="form track-page-form" id="track-page-phone-form">
           <label>Recipient phone
             <input id="track-page-phone" inputmode="tel" placeholder="024 123 4567">
           </label>
-          <button class="btn btn-ghost" type="submit">Track by phone</button>
+          <button class="btn btn-primary" type="submit">Check status</button>
         </form>
       </div>
     </section>
@@ -41,7 +41,7 @@
   <script src="js/config.js"></script>
   <script src="js/data.js"></script>
   <script src="js/api.js?v=14"></script>
-  <script src="js/order-tracker.js?v=5"></script>
+  <script src="js/order-tracker.js?v=6"></script>
   <script src="js/theme.js"></script>
   <script src="js/app.js?v=5"></script>
   <script>

@@ -18,14 +18,16 @@
         <button class="track-tab active" type="button" data-track-tab="code">Order ID</button>
         <button class="track-tab" type="button" data-track-tab="phone">Phone number</button>
       </div>
-      <form class="track-form" id="track-form-code" data-track-form="code">
-        <input id="track-code" placeholder="DL-ABC12345" autocomplete="off" required>
-        <button class="btn btn-primary" type="submit">Track order</button>
-      </form>
-      <form class="track-form" id="track-form-phone" data-track-form="phone" hidden>
-        <input id="track-phone" inputmode="tel" placeholder="024 123 4567" autocomplete="tel" required>
-        <button class="btn btn-primary" type="submit">Check status</button>
-      </form>
+      <div class="track-form-area">
+        <form class="track-form" id="track-form-code" data-track-form="code">
+          <input id="track-code" placeholder="DL-ABC12345" autocomplete="off" required>
+          <button class="btn btn-primary track-submit" type="submit">Track order</button>
+        </form>
+        <form class="track-form" id="track-form-phone" data-track-form="phone" hidden>
+          <input id="track-phone" inputmode="tel" placeholder="024 123 4567" autocomplete="tel" required>
+          <button class="btn btn-primary track-submit" type="submit">Check status</button>
+        </form>
+      </div>
       <p class="track-error" id="track-error" hidden></p>
       <div class="track-results" id="track-results"></div>
     </div>
