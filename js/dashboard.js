@@ -351,6 +351,13 @@
         name: form.get("name"),
         slug: form.get("slug"),
         tagline: form.get("tagline"),
+        description: form.get("description"),
+        promo_message: form.get("promo_message"),
+        logo_url: form.get("logo_url"),
+        banner_url: form.get("banner_url"),
+        location: form.get("location"),
+        contact_email: form.get("contact_email"),
+        theme: form.get("theme") || "classic",
         accent_color: document.getElementById("store-accent-input")?.value || "sea",
         networks,
         published: form.get("published") === "on",
@@ -646,6 +653,13 @@
     storeForm.name.value = storeCache.name;
     storeForm.slug.value = storeCache.slug;
     storeForm.tagline.value = storeCache.tagline || "";
+    if (storeForm.description) storeForm.description.value = storeCache.description || "";
+    if (storeForm.promo_message) storeForm.promo_message.value = storeCache.promo_message || "";
+    if (storeForm.logo_url) storeForm.logo_url.value = storeCache.logo_url || "";
+    if (storeForm.banner_url) storeForm.banner_url.value = storeCache.banner_url || "";
+    if (storeForm.location) storeForm.location.value = storeCache.location || "";
+    if (storeForm.contact_email) storeForm.contact_email.value = storeCache.contact_email || "";
+    if (storeForm.theme) storeForm.theme.value = storeCache.theme || "classic";
     storeForm.published.checked = storeCache.published;
     storeForm.querySelectorAll("[name=networks]").forEach((box) => {
       box.checked = (storeCache.networks || []).includes(box.value);
@@ -702,6 +716,16 @@
         ? "Your storefront is public"
         : "Saved, not published"
       : "Set up your mini store";
+
+    try {
+      const analytics = await DataLogsAPI.getAgentStoreAnalytics(profile.id);
+      if (analytics?.ok) {
+        runNumber(document.getElementById("stat-store-views"), analytics.views || 0, 0);
+        runNumber(document.getElementById("stat-store-sales"), analytics.sales || 0, 2);
+      }
+    } catch {
+      /* optional analytics */
+    }
 
     runNumber(document.getElementById("stat-orders"), orders.length, 0);
     runNumber(document.getElementById("stat-today"), todayOrders.length, 0);

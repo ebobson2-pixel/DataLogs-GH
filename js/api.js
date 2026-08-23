@@ -180,6 +180,25 @@ const DataLogsAPI = (() => {
     return { ...legacy, has_contact: false, contact_tel: null, contact_wa: null };
   }
 
+  async function getStoreCatalog(slug) {
+    const { data, error } = await client.rpc("get_store_catalog", { p_slug: slug });
+    if (error) throw error;
+    return data;
+  }
+
+  async function recordStoreView(slug) {
+    const { error } = await client.rpc("record_store_view", { p_slug: slug });
+    if (error) throw error;
+  }
+
+  async function getAgentStoreAnalytics(agentId) {
+    const { data, error } = await client.rpc("get_agent_store_analytics", {
+      p_agent_id: agentId || null,
+    });
+    if (error) throw error;
+    return data;
+  }
+
   async function saveStore(agentId, payload) {
     let slug = slugify(payload.slug || payload.name);
     if (!slug) throw new Error("Give your store a name first.");
@@ -190,9 +209,18 @@ const DataLogsAPI = (() => {
       name: payload.name.trim(),
       slug,
       tagline: (payload.tagline || "").trim(),
+      description: (payload.description || "").trim() || null,
+      logo_url: (payload.logo_url || "").trim() || null,
+      banner_url: (payload.banner_url || "").trim() || null,
+      promo_message: (payload.promo_message || "").trim() || null,
+      location: (payload.location || "").trim() || null,
+      contact_email: (payload.contact_email || "").trim() || null,
+      theme: String(payload.theme || "classic").trim() || "classic",
       accent_color: String(payload.accent_color || "sea").trim() || "sea",
       networks: payload.networks,
       published: payload.published !== false,
+      opening_hours: payload.opening_hours || undefined,
+      delivery_notes: payload.delivery_notes || undefined,
     };
 
     if (existing) {
@@ -657,6 +685,9 @@ const DataLogsAPI = (() => {
     deletePackage,
     getStoreByAgent,
     getStoreBySlug,
+    getStoreCatalog,
+    recordStoreView,
+    getAgentStoreAnalytics,
     saveStore,
     placeOrder,
     placeOrderWithWallet,

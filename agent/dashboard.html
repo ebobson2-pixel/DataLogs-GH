@@ -82,6 +82,16 @@
 
           <div class="stat-grid overview-stats">
             <article class="stat-card">
+              <span>Store views</span>
+              <strong id="stat-store-views">0</strong>
+              <small>public page visits</small>
+            </article>
+            <article class="stat-card">
+              <span>Store sales</span>
+              <strong id="stat-store-sales">GH&#8373; 0</strong>
+              <small>via your mini store</small>
+            </article>
+            <article class="stat-card">
               <span>Store status</span>
               <strong id="stat-store">Not set</strong>
               <small id="stat-store-meta">Set up your mini store</small>
@@ -155,6 +165,20 @@
               <label>Store name<input name="name" required placeholder="Kwame Data Hub"></label>
               <label>Store link slug<input name="slug" required placeholder="kwame-data" pattern="[a-z0-9\-]+" title="Lowercase letters, numbers and dashes"></label>
               <label>Tagline<input name="tagline" placeholder="Affordable data bundles — fast &amp; cheap"></label>
+              <label>Description<textarea name="description" rows="3" placeholder="Tell customers why they should buy from you"></textarea></label>
+              <label>Promo message<input name="promo_message" placeholder="Today's deal — MTN 10GB special"></label>
+              <label>Logo URL (optional)<input name="logo_url" type="url" placeholder="https://…"></label>
+              <label>Banner URL (optional)<input name="banner_url" type="url" placeholder="https://…"></label>
+              <label>Location<input name="location" placeholder="Kumasi, Ghana"></label>
+              <label>Contact email<input name="contact_email" type="email" placeholder="store@example.com"></label>
+              <label>Store theme
+                <select name="theme">
+                  <option value="classic">Classic</option>
+                  <option value="premium">Premium</option>
+                  <option value="bold">Bold</option>
+                  <option value="minimal">Minimal</option>
+                </select>
+              </label>
               <div class="store-color-field">
                 <div style="font-weight:600;margin-bottom:8px">Store colour</div>
                 <p class="hint">Header, buttons and highlights on your public store page.</p>
@@ -473,13 +497,13 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="../js/config.js"></script>
   <script src="../js/data.js"></script>
-  <script src="../js/api.js?v=10"></script>
+  <script src="../js/api.js?v=16"></script>
   <script src="../js/order-tracker.js?v=3"></script>
   <script src="../js/theme.js"></script>
   <script src="../js/paystack.js?v=1"></script>
   <script src="../js/checkout.js?v=5"></script>
   <script src="../js/flyer.js?v=4"></script>
   <script src="../js/dash-icons.js?v=1"></script>
-  <script src="../js/dashboard.js?v=21"></script>
+  <script src="../js/dashboard.js?v=22"></script>
 </body>
 </html>
