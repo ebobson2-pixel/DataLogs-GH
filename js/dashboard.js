@@ -448,7 +448,7 @@
 
   function currentSellPrice(pkg) {
     if (priceMap.has(pkg.id)) return roundCedi(pkg.agentPrice + Number(priceMap.get(pkg.id) || 0));
-    return roundCedi(pkg.agentPrice);
+    return roundCedi(pkg.retail);
   }
 
   function updateRowProfit(packageId) {
@@ -1441,12 +1441,15 @@
   function flyerPackages() {
     const networks = storeCache?.networks || ["mtn", "airteltigo", "telecel"];
     return packages
-      .filter((p) => networks.includes(p.network) && priceMap.has(p.id))
-      .map((p) => ({
-        network: p.network,
-        gb: p.gb,
-        price: Number(p.agentPrice) + Number(priceMap.get(p.id) || 0),
-      }));
+      .filter((p) => networks.includes(p.network) && p.active !== false)
+      .map((p) => {
+        const priced = resolveStorePackagePrice(p, priceMap);
+        return {
+          network: p.network,
+          gb: p.gb,
+          price: priced.price,
+        };
+      });
   }
 
   function websiteAccent() {
@@ -1482,7 +1485,7 @@
       error.textContent = "Save your mini store first, then generate a flyer.";
     } else if (!flyerPackages().length) {
       error.hidden = false;
-      error.textContent = "Set store prices first. Only priced packages appear on the flyer.";
+      error.textContent = "No packages available for this store yet.";
     }
     const data = flyerPayload();
     if (hint) hint.textContent = `Caption: ${data.url}`;

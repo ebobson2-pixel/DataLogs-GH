@@ -24,6 +24,7 @@
     orders: ["Orders", "Payments and delivery"],
     users: ["Users", "Tap a user for their full dashboard"],
     stores: ["Stores", "Agent mini storefronts"],
+    flyer: ["Flyers", "Generate posters for agent stores"],
     api: ["API", "Keys, access, and live requests"],
     withdrawals: ["Withdrawals", "Approve or decline agent cash-outs"],
     settings: ["Settings", "WhatsApp, support, and withdrawal threshold"],
@@ -36,6 +37,7 @@
   let ordersCache = [];
   let usersCache = [];
   let packagesCache = [];
+  let storesCache = [];
   let selectedUserId = null;
 
   document.getElementById("user-name").textContent = profile.full_name || "Admin";
@@ -86,6 +88,7 @@
     if (id === "settings") loadSettingsForm();
     if (id === "api") loadApiConsole();
     if (id === "withdrawals") loadWithdrawals();
+    if (id === "flyer") populateFlyerStoreSelect();
   }
 
   function showUsersList() {
@@ -335,7 +338,8 @@
     usersCache = users || [];
     packagesCache = packages || [];
     ordersCache = orders || [];
-    const storeRows = stores || [];
+    storesCache = stores || [];
+    const storeRows = storesCache;
 
     document.getElementById("stat-users").textContent = String(usersCache.length);
     document.getElementById("stat-packages").textContent = String(packagesCache.length);
@@ -394,6 +398,8 @@
           })
           .join("")
       : `<tr><td colspan="5">No stores yet.</td></tr>`;
+
+    populateFlyerStoreSelect();
   }
 
   async function refreshAll() {
@@ -1139,6 +1145,160 @@
   });
 
   loadSettingsForm();
+
+  let adminFlyerStyle = "shop";
+  let adminFlyerStore = null;
+  let adminFlyerPrices = new Map();
+  let adminFlyerPackages = [];
+
+  function populateFlyerStoreSelect() {
+    const select = document.getElementById("admin-flyer-store");
+    if (!select) return;
+    const current = select.value;
+    const published = storesCache.filter((s) => s.published);
+    select.innerHTML =
+      `<option value="">Select a store</option>` +
+      published
+        .map((s) => {
+          const agent = s.profiles?.full_name || s.profiles?.email || "Agent";
+          return `<option value="${s.id}">${escapeHtml(s.name)} (${escapeHtml(agent)})</option>`;
+        })
+        .join("");
+    if (current && published.some((s) => s.id === current)) select.value = current;
+  }
+
+  function prettyPhone(raw) {
+    const digits = String(raw || "").replace(/\D/g, "");
+    if (digits.length === 10 && digits.startsWith("0")) {
+      return `${digits.slice(0, 3)} ${digits.slice(3, 6)} ${digits.slice(6)}`;
+    }
+    return String(raw || "").trim();
+  }
+
+  function intlPhone(raw) {
+    const digits = String(raw || "").replace(/\D/g, "");
+    if (digits.length === 12 && digits.startsWith("233")) {
+      return `+233 (0) ${digits.slice(3, 5)} ${digits.slice(5, 8)} ${digits.slice(8)}`;
+    }
+    return prettyPhone(raw);
+  }
+
+  function storeLink(slug) {
+    const base = (window.DATALOGS_CONFIG?.siteUrl || window.location.origin).replace(/\/$/, "");
+    if (slug) return `${base}/store.html?s=${encodeURIComponent(slug)}`;
+    return base;
+  }
+
+  function adminFlyerPackagesList() {
+    if (!adminFlyerStore) return [];
+    const networks = adminFlyerStore.networks || ["mtn", "airteltigo", "telecel"];
+    return adminFlyerPackages
+      .filter((p) => p.active !== false && networks.includes(p.network))
+      .map((p) => {
+        const priced = resolveStorePackagePrice(p, adminFlyerPrices);
+        return { network: p.network, gb: p.gb, price: priced.price };
+      });
+  }
+
+  function adminFlyerPayload() {
+    const phoneInput = document.getElementById("flyer-phone");
+    const hoursInput = document.getElementById("flyer-hours");
+    const store = adminFlyerStore;
+    const accentHex =
+      window.DataLogsTheme?.accentHex?.(store?.accent_color) ||
+      window.DataLogsTheme?.ACCENTS?.find((a) => a.id === store?.accent_color)?.hex ||
+      "#2ec8e6";
+    return {
+      name: store?.name || "Agent store",
+      tagline: store?.tagline || "Affordable data bundles",
+      phone: prettyPhone(phoneInput?.value || store?.profiles?.phone || ""),
+      phoneIntl: intlPhone(phoneInput?.value || store?.profiles?.phone || ""),
+      hours: hoursInput?.value || "8am - 9pm Each day",
+      url: storeLink(store?.slug),
+      packages: adminFlyerPackagesList(),
+      accent: accentHex,
+    };
+  }
+
+  async function loadAdminFlyerStore(storeId) {
+    adminFlyerStore = storesCache.find((s) => s.id === storeId) || null;
+    adminFlyerPrices = new Map();
+    adminFlyerPackages = packagesCache.map(mapAdminPackage);
+    const phoneInput = document.getElementById("flyer-phone");
+    if (phoneInput) phoneInput.value = adminFlyerStore?.profiles?.phone || "";
+    if (!adminFlyerStore) return;
+    try {
+      const rows = await DataLogsAPI.getAgentStorePrices(adminFlyerStore.agent_id);
+      adminFlyerPrices = new Map(rows.map((row) => [row.package_id, Number(row.profit)]));
+    } catch {
+      adminFlyerPrices = new Map();
+    }
+  }
+
+  async function renderAdminFlyerPreview() {
+    const error = document.getElementById("flyer-error");
+    const hint = document.getElementById("flyer-url-hint");
+    const canvas = document.getElementById("flyer-canvas");
+    if (!canvas || !window.DataLogsFlyer) return;
+    error.hidden = true;
+    if (!adminFlyerStore) {
+      error.hidden = false;
+      error.textContent = "Select a published agent store first.";
+      return;
+    }
+    if (!adminFlyerPackagesList().length) {
+      error.hidden = false;
+      error.textContent = "No packages available for this store.";
+      return;
+    }
+    const data = adminFlyerPayload();
+    if (hint) hint.textContent = `Caption: ${data.url}`;
+    try {
+      await DataLogsFlyer.render(canvas, adminFlyerStyle, data);
+    } catch (err) {
+      error.hidden = false;
+      error.textContent = err.message || "Could not draw the flyer.";
+    }
+  }
+
+  document.getElementById("admin-flyer-store")?.addEventListener("change", async (event) => {
+    await loadAdminFlyerStore(event.target.value);
+    renderAdminFlyerPreview();
+  });
+
+  document.getElementById("flyer-styles")?.addEventListener("click", (event) => {
+    const btn = event.target.closest("[data-flyer-style]");
+    if (!btn) return;
+    adminFlyerStyle = btn.dataset.flyerStyle;
+    document.querySelectorAll("#flyer-styles .flyer-style").forEach((el) => {
+      el.classList.toggle("active", el === btn);
+    });
+    renderAdminFlyerPreview();
+  });
+
+  document.getElementById("flyer-preview-btn")?.addEventListener("click", () => renderAdminFlyerPreview());
+  document.getElementById("flyer-phone")?.addEventListener("change", () => renderAdminFlyerPreview());
+  document.getElementById("flyer-hours")?.addEventListener("change", () => renderAdminFlyerPreview());
+
+  document.getElementById("flyer-download-btn")?.addEventListener("click", async () => {
+    const canvas = document.getElementById("flyer-canvas");
+    const error = document.getElementById("flyer-error");
+    error.hidden = true;
+    if (!adminFlyerStore) {
+      error.hidden = false;
+      error.textContent = "Select a published agent store first.";
+      return;
+    }
+    try {
+      await renderAdminFlyerPreview();
+      const slug = adminFlyerStore.slug || "store";
+      await DataLogsFlyer.download(canvas, `${slug}-${adminFlyerStyle}-flyer.jpg`);
+    } catch (err) {
+      error.hidden = false;
+      error.textContent = err.message || "Could not download the flyer.";
+    }
+  });
+
   await refreshAll();
   } catch (err) {
     bootError(err.message || "Admin dashboard failed to start.");

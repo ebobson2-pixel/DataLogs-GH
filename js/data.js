@@ -79,6 +79,25 @@ function getPackage(id, list) {
   return source.find((item) => item.id === id);
 }
 
+function roundCedi(amount) {
+  return Math.round(Number(amount) * 100) / 100;
+}
+
+function defaultStoreProfit(pkg) {
+  return Math.max(0, roundCedi(Number(pkg.retail ?? pkg.price) - Number(pkg.agentPrice)));
+}
+
+function resolveStorePackagePrice(pkg, profitByPackage) {
+  const map = profitByPackage instanceof Map ? profitByPackage : new Map();
+  const custom = map.has(pkg.id);
+  const profit = custom ? Number(map.get(pkg.id)) : defaultStoreProfit(pkg);
+  return {
+    profit,
+    price: roundCedi(Number(pkg.agentPrice) + profit),
+    custom,
+  };
+}
+
 function validateGhanaNumber(value, network) {
   const digits = value.replace(/\D/g, "");
   let local = digits;

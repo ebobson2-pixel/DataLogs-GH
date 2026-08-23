@@ -204,18 +204,9 @@ begin
     if not found then
       raise exception 'Store not available';
     end if;
-    select * into price_row
-    from public.agent_store_prices
-    where agent_id = store_rec.agent_id and package_id = pkg.id;
-    if not found then
-      raise exception 'This package is not priced in the agent store yet';
-    end if;
-    select ucp.agent_price into custom_price
-    from public.user_custom_prices ucp
-    where ucp.user_id = store_rec.agent_id and ucp.package_id = pkg.id;
-    base_price := coalesce(custom_price, pkg.agent_price);
-    profit := coalesce(price_row.profit, 0);
-    amount := base_price + profit;
+    select r.base_price, r.profit, r.sell_price
+      into base_price, profit, amount
+    from public.resolve_agent_store_price(store_rec.agent_id, pkg.id) r;
     pricing_tier := 'retail';
   elsif pricing_tier = 'agent' then
     select ucp.agent_price into custom_price

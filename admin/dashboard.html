@@ -29,6 +29,7 @@
         <button class="side-link" type="button" data-panel="orders"><span class="side-ico" data-icon="orders" aria-hidden="true"></span><span class="side-label">Orders</span></button>
         <button class="side-link" type="button" data-panel="users"><span class="side-ico" data-icon="account" aria-hidden="true"></span><span class="side-label">Users</span></button>
         <button class="side-link" type="button" data-panel="stores"><span class="side-ico" data-icon="wholesale" aria-hidden="true"></span><span class="side-label">Stores</span></button>
+        <button class="side-link" type="button" data-panel="flyer"><span class="side-ico" data-icon="flyer" aria-hidden="true"></span><span class="side-label">Flyers</span></button>
         <button class="side-link" type="button" data-panel="api"><span class="side-ico" data-icon="developer" aria-hidden="true"></span><span class="side-label">API</span></button>
         <button class="side-link" type="button" data-panel="withdrawals"><span class="side-ico" data-icon="withdrawal" aria-hidden="true"></span><span class="side-label">Withdrawals</span></button>
         <button class="side-link" type="button" data-panel="settings"><span class="side-ico" data-icon="settings" aria-hidden="true"></span><span class="side-label">Settings</span></button>
@@ -205,6 +206,62 @@
           </div>
         </section>
 
+        <section class="dash-panel" data-panel-view="flyer">
+          <div class="panel-card">
+            <h3>Store flyer</h3>
+            <p class="hint">Generate a price poster for any published agent store. Uses admin retail prices until the agent saves their own store prices.</p>
+            <label>Agent store
+              <select id="admin-flyer-store">
+                <option value="">Select a store</option>
+              </select>
+            </label>
+            <div class="flyer-styles" id="flyer-styles" style="margin-top:16px">
+              <button class="flyer-style active" type="button" data-flyer-style="shop">
+                <span class="flyer-style-swatch flyer-swatch-shop"></span>
+                <strong>Store page</strong>
+                <span>Dark bundle cards</span>
+              </button>
+              <button class="flyer-style" type="button" data-flyer-style="hub">
+                <span class="flyer-style-swatch flyer-swatch-hub"></span>
+                <strong>Bundle Hub</strong>
+                <span>Network columns</span>
+              </button>
+              <button class="flyer-style" type="button" data-flyer-style="plug">
+                <span class="flyer-style-swatch flyer-swatch-plug"></span>
+                <strong>Data Plug</strong>
+                <span>Price grids</span>
+              </button>
+              <button class="flyer-style" type="button" data-flyer-style="package">
+                <span class="flyer-style-swatch flyer-swatch-package"></span>
+                <strong>Data Package</strong>
+                <span>Green glow cards</span>
+              </button>
+            </div>
+            <form class="form" id="flyer-form" style="margin-top:16px">
+              <div class="split" style="grid-template-columns:1fr 1fr;gap:12px">
+                <label>WhatsApp / call number
+                  <input id="flyer-phone" type="tel" placeholder="024 000 0000">
+                </label>
+                <label>Working hours
+                  <input id="flyer-hours" type="text" value="8am - 9pm Each day">
+                </label>
+              </div>
+              <p class="error" id="flyer-error" hidden></p>
+              <div class="hero-actions" style="margin-top:12px">
+                <button class="btn btn-ghost" type="button" id="flyer-preview-btn">Refresh preview</button>
+                <button class="btn btn-primary" type="button" id="flyer-download-btn">Download JPG</button>
+              </div>
+            </form>
+          </div>
+          <div class="panel-card">
+            <h3>Preview</h3>
+            <p class="hint" id="flyer-url-hint">Pick a store to preview its flyer.</p>
+            <div class="flyer-preview-wrap">
+              <canvas id="flyer-canvas" width="1080" height="1440"></canvas>
+            </div>
+          </div>
+        </section>
+
         <section class="dash-panel" data-panel-view="api">
           <div class="stat-grid">
             <article class="stat-card"><span>Active keys</span><strong id="api-stat-keys">0</strong></article>
@@ -362,6 +419,7 @@
   <script src="../js/api.js?v=10"></script>
   <script src="../js/theme.js"></script>
   <script src="../js/dash-icons.js?v=1"></script>
-  <script src="dashboard.js?v=12"></script>
+  <script src="../js/flyer.js?v=3"></script>
+  <script src="dashboard.js?v=13"></script>
 </body>
 </html>

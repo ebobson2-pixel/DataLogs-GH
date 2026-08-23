@@ -301,14 +301,15 @@
 
     const profitByPackage = new Map(priceRows.map((row) => [row.package_id, Number(row.profit)]));
     const storePackages = packages
-      .filter((p) => networks.includes(p.network) && profitByPackage.has(p.id))
+      .filter((p) => p.active !== false && networks.includes(p.network))
       .map((p) => {
-        const profit = profitByPackage.get(p.id) || 0;
+        const priced = resolveStorePackagePrice(p, profitByPackage);
         return {
           ...p,
-          price: Number(p.agentPrice) + profit,
-          profit,
+          price: priced.price,
+          profit: priced.profit,
           base: Number(p.agentPrice),
+          customPriced: priced.custom,
         };
       });
     window.__PACKAGES = storePackages;
