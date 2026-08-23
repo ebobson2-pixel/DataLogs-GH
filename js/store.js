@@ -120,7 +120,7 @@
     return `tel:${digits.startsWith("0") ? digits : `+${digits}`}`;
   }
 
-  function bindStoreMenu(wa, agentPhone) {
+  function bindStoreMenu(contactWa, contactTel) {
     const call = document.getElementById("store-nav-call");
     const waNav = document.getElementById("store-nav-wa");
     const quickLink = document.getElementById("store-quick-link");
@@ -128,17 +128,18 @@
     const menuToggle = document.getElementById("store-menu-toggle");
     const toggleLabel = menuToggle?.querySelector(".store-menu-toggle-label");
 
-    const tel = telHref(agentPhone);
-    if (tel && call) {
-      call.href = tel;
+    if (contactTel && call) {
+      call.href = contactTel;
       call.classList.remove("is-disabled");
     } else if (call) {
       call.href = "#";
       call.classList.add("is-disabled");
     }
-    if (wa && waNav) {
-      waNav.href = wa;
+    if (contactWa && waNav) {
+      waNav.href = contactWa;
       waNav.classList.remove("is-disabled");
+      waNav.setAttribute("target", "_blank");
+      waNav.setAttribute("rel", "noopener noreferrer");
     } else if (waNav) {
       waNav.href = "#";
       waNav.classList.add("is-disabled");
@@ -169,15 +170,16 @@
     });
 
     if (quickLink) {
-      if (wa) {
+      if (contactWa) {
         quickLink.classList.add("is-clickable");
-        quickLink.addEventListener("click", () => window.open(wa, "_blank", "noopener,noreferrer"));
+        quickLink.addEventListener("click", () => window.open(contactWa, "_blank", "noopener,noreferrer"));
       } else {
+        quickLink.classList.remove("is-clickable");
         const cta = document.getElementById("store-wa-chip-label");
         if (cta) cta.textContent = "MoMo & Card checkout";
       }
     }
-    if (agentPhone) setText("store-phone-chip", agentPhone);
+    setText("store-phone-chip", contactWa || contactTel ? "Contact support" : "Checkout available");
   }
 
   async function init() {
@@ -272,8 +274,8 @@
     window.__STORE_ID = store.id;
     applyStoreAccent(store.accent_color || "sea");
 
-    const agentName = store.profiles?.full_name || "";
-    const agentPhone = store.profiles?.phone || "";
+    const contactTel = store.contact_tel || telHref(store.profiles?.phone);
+    const contactWa = store.contact_wa || whatsAppHref(store.profiles?.phone);
 
     document.title = `${store.name} | DataLogs GH`;
     setText("store-name", store.name);
@@ -281,8 +283,7 @@
     setText("store-tagline", store.tagline || "Faster and cheaper.");
     setText("store-brand-sub", store.tagline || "Affordable data bundles");
 
-    const wa = whatsAppHref(agentPhone);
-    bindStoreMenu(wa, agentPhone);
+    bindStoreMenu(contactWa, contactTel);
 
     const networks = store.networks || NETWORK_ORDER;
     setText("store-net-count", String(networks.length));
@@ -343,7 +344,7 @@
     if (foot) {
       foot.hidden = false;
       setText("store-foot-name", store.name);
-      if (agentName) setText("store-foot-agent", `Run by ${agentName}`);
+      setText("store-foot-agent", "Powered by DataLogs GH");
     }
   }
 

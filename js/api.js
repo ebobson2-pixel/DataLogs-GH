@@ -167,13 +167,17 @@ const DataLogsAPI = (() => {
   }
 
   async function getStoreBySlug(slug) {
-    const { data, error } = await client
+    const { data, error } = await client.rpc("get_public_store_by_slug", { p_slug: slug });
+    if (!error && data) return data;
+
+    const { data: legacy, error: legacyError } = await client
       .from("agent_stores")
-      .select("*, profiles:agent_id(full_name, phone)")
+      .select("*")
       .eq("slug", slug)
       .maybeSingle();
-    if (error) throw error;
-    return data;
+    if (legacyError) throw legacyError;
+    if (!legacy) return null;
+    return { ...legacy, has_contact: false, contact_tel: null, contact_wa: null };
   }
 
   async function saveStore(agentId, payload) {
