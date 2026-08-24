@@ -3,21 +3,6 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <script>
-    (function () {
-      var hash = location.hash;
-      if (!hash || hash.length < 2) return;
-      var params = new URLSearchParams(hash.charAt(0) === "#" ? hash.slice(1) : hash);
-      var isAuth =
-        params.has("access_token") ||
-        params.has("error") ||
-        params.get("type") === "recovery" ||
-        params.has("refresh_token");
-      if (isAuth && !/\/agent\/reset-password\.html$/i.test(location.pathname)) {
-        location.replace("/agent/reset-password.html" + hash + location.search);
-      }
-    })();
-  </script>
   <script>try{var d=document.documentElement,t=localStorage.getItem("datalogs_theme"),a=localStorage.getItem("datalogs_accent");if(t==="light")d.setAttribute("data-theme","light");if(a)d.setAttribute("data-accent",a);}catch(e){}</script>
   <title>DataLogs GH &mdash; Buy MTN, AirtelTigo & Telecel data</title>
   <meta name="description" content="Buy Ghana data bundles for MTN, AirtelTigo and Telecel in a tap.">
@@ -163,7 +148,7 @@
   <script src="js/theme.js"></script>
   <script src="js/app.js?v=5"></script>
   <script src="js/paystack.js?v=1"></script>
-  <script src="js/checkout.js?v=6"></script>
+  <script src="js/checkout.js?v=8"></script>
   <script src="js/home.js?v=3"></script>
 </body>
 </html>

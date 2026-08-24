@@ -1537,6 +1537,30 @@
 
   await refreshAll();
   await initAdminFlyer();
+  if (window.DataLogsNotify) DataLogsNotify.init("#dash-topbar-end");
+
+  document.getElementById("announce-form")?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const error = document.getElementById("announce-error");
+    const ok = document.getElementById("announce-ok");
+    if (error) error.hidden = true;
+    if (ok) ok.hidden = true;
+    try {
+      await DataLogsAPI.adminCreateAnnouncement({
+        title: document.getElementById("announce-title").value.trim(),
+        body: document.getElementById("announce-body").value.trim(),
+        audience: document.getElementById("announce-audience").value,
+        priority: document.getElementById("announce-priority").value,
+      });
+      event.target.reset();
+      if (ok) ok.hidden = false;
+    } catch (err) {
+      if (error) {
+        error.hidden = false;
+        error.textContent = err.message || "Could not publish announcement.";
+      }
+    }
+  });
   } catch (err) {
     bootError(err.message || "Admin dashboard failed to start.");
   }

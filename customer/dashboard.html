@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>My account &mdash; DataLogs GH</title>
   <link rel="stylesheet" href="../css/styles.css?v=16">
-  <link rel="stylesheet" href="../css/agent.css?v=13">
+  <link rel="stylesheet" href="../css/agent.css?v=21">
+  <link rel="stylesheet" href="../css/notifications.css?v=1">
 </head>
 <body class="dash-body customer-dash">
   <div class="wrap" style="max-width:920px;margin:0 auto;padding:24px 16px 80px">
@@ -15,7 +16,7 @@
         <h1 style="margin:12px 0 4px">My account</h1>
         <p class="hint" id="cust-email"></p>
       </div>
-      <div class="hero-actions">
+      <div class="hero-actions" id="customer-dash-actions">
         <a class="btn btn-primary" href="../packages.html">Buy data</a>
         <button class="btn btn-ghost" type="button" id="cust-signout">Sign out</button>
       </div>
@@ -47,6 +48,12 @@
     </section>
 
     <section class="panel-card" style="margin-top:16px">
+      <h3>Notification preferences</h3>
+      <p class="hint">Choose which updates you want. Security alerts always stay on.</p>
+      <div id="customer-notify-prefs" class="dl-notify-prefs-inline"></div>
+    </section>
+
+    <section class="panel-card" style="margin-top:16px">
       <h3>Refunds</h3>
       <p class="hint">Request a refund for a paid order or track an existing refund request.</p>
       <a class="btn btn-primary" href="refunds.html">Open refund center</a>
@@ -64,16 +71,56 @@
   <script src="../js/data.js"></script>
   <script src="../js/customer-local.js?v=1"></script>
   <script src="../js/receipt.js?v=1"></script>
-  <script src="../js/api.js?v=14"></script>
+  <script src="../js/api.js?v=17"></script>
+  <script src="../js/notifications.js?v=1"></script>
   <script src="../js/order-tracker.js?v=5"></script>
   <script src="../js/paystack.js?v=1"></script>
-  <script src="../js/checkout.js?v=6"></script>
+  <script src="../js/checkout.js?v=8"></script>
   <script>
     (async function () {
       const profile = await DataLogsAPI.requireProfile(["customer"], "auth.html");
       if (!profile) return;
       document.getElementById("cust-email").textContent = profile.email || profile.authEmail || "";
       document.getElementById("cust-signout").addEventListener("click", () => DataLogsAPI.signOut().then(() => (window.location.href = "auth.html")));
+      DataLogsNotify.init("#customer-dash-actions");
+
+      async function paintPrefs() {
+        const box = document.getElementById("customer-notify-prefs");
+        if (!box) return;
+        try {
+          const p = await DataLogsAPI.getNotificationPreferences();
+          const rows = [
+            ["order_updates", "Order updates"],
+            ["payment_updates", "Payment updates"],
+            ["wallet_activity", "Wallet activity"],
+            ["refund_updates", "Refund updates"],
+            ["dispute_updates", "Dispute updates"],
+            ["promotional", "Promotional notifications"],
+          ];
+          box.innerHTML =
+            rows
+              .map(
+                ([key, label]) => `
+            <label class="dl-notify-pref-row">
+              <span>${label}</span>
+              <input type="checkbox" data-pref="${key}" ${p?.[key] ? "checked" : ""}>
+            </label>`
+              )
+              .join("") +
+            `<button class="btn btn-primary btn-sm" type="button" id="cust-prefs-save" style="margin-top:12px">Save preferences</button>`;
+          box.querySelector("#cust-prefs-save").addEventListener("click", async () => {
+            const next = {};
+            box.querySelectorAll("[data-pref]").forEach((el) => {
+              next[el.dataset.pref] = el.checked;
+            });
+            await DataLogsAPI.updateNotificationPreferences(next);
+            alert("Preferences saved.");
+          });
+        } catch (err) {
+          box.innerHTML = `<p class="hint">${err.message || "Could not load preferences."}</p>`;
+        }
+      }
+      paintPrefs();
 
       function paintRecent() {
         const grid = document.getElementById("cust-recent");

@@ -1231,6 +1231,9 @@
     const result = topup.challenge;
     const kind = result.next;
     const label = kind === "pin" ? "Card PIN" : kind === "otp" ? "Enter OTP" : "Phone number";
+    const placeholder = kind === "pin" ? "PIN" : kind === "otp" ? "6-digit code" : "Phone number";
+    const maxLen = kind === "otp" ? 6 : kind === "pin" ? 4 : 15;
+    const pattern = kind === "otp" ? "[0-9]{6}" : kind === "pin" ? "[0-9]{4}" : "[0-9+ ]{8,15}";
     swapTopup(() => {
       topupPopup.innerHTML = `
         <div class="pay-otp pay-fields-in">
@@ -1239,13 +1242,16 @@
           <h3 id="topup-title">${label}</h3>
           <p class="hint">${result.display_text || "Confirm this charge to continue."}</p>
           <form class="form" id="topup-challenge-form">
-            <input class="pay-otp-input" id="topup-challenge-input" required autocomplete="one-time-code" inputmode="numeric">
+            <input class="pay-otp-input" id="topup-challenge-input" required autocomplete="one-time-code" inputmode="numeric" maxlength="${maxLen}" pattern="${pattern}" placeholder="${escapeHtml(placeholder)}">
             <p class="error" id="topup-sheet-error" hidden></p>
             <button class="btn btn-primary btn-full" type="submit">Confirm payment</button>
           </form>
         </div>
       `;
       const input = topupPopup.querySelector("#topup-challenge-input");
+      input.addEventListener("input", () => {
+        input.value = String(input.value || "").replace(/\D/g, "").slice(0, maxLen);
+      });
       input.focus();
       topupPopup.querySelector("form").addEventListener("submit", async (event) => {
         event.preventDefault();
@@ -1774,4 +1780,7 @@
   await renderWallet();
   await renderWithdrawals();
   await renderApiKeys();
+  if (window.DataLogsNotify) {
+    DataLogsNotify.init("#dash-topbar-end");
+  }
 })();

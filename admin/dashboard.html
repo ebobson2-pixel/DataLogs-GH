@@ -11,7 +11,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../css/styles.css?v=13">
-  <link rel="stylesheet" href="../css/agent.css?v=13">
+  <link rel="stylesheet" href="../css/agent.css?v=21">
+  <link rel="stylesheet" href="../css/notifications.css?v=1">
 </head>
 <body class="dash-body">
   <div class="dash-shell" id="dash-shell">
@@ -57,7 +58,7 @@
             <p id="panel-sub">Control center</p>
           </div>
         </div>
-        <div class="dash-topbar-end">
+        <div class="dash-topbar-end" id="dash-topbar-end">
           <div data-theme-tools></div>
           <a class="btn btn-ghost" href="../index.html">View site</a>
         </div>
@@ -461,6 +462,35 @@
               <button class="btn btn-primary" type="submit">Save settings</button>
             </form>
           </div>
+          <div class="panel-card" style="margin-top:16px">
+            <h3>Platform announcement</h3>
+            <p class="custom-price-hint">Send a system notice to customers, agents, or everyone. It appears in their notification center.</p>
+            <form class="form" id="announce-form">
+              <label>Title <input type="text" id="announce-title" required maxlength="120" placeholder="Scheduled maintenance"></label>
+              <label>Message <textarea id="announce-body" required rows="3" maxlength="800" placeholder="DataLogs will undergo maintenance tonight from 1:00 AM to 2:00 AM."></textarea></label>
+              <div class="split" style="grid-template-columns:1fr 1fr;gap:12px">
+                <label>Audience
+                  <select id="announce-audience">
+                    <option value="all">Everyone</option>
+                    <option value="customers">Customers</option>
+                    <option value="agents">Agents</option>
+                    <option value="admins">Admins</option>
+                  </select>
+                </label>
+                <label>Priority
+                  <select id="announce-priority">
+                    <option value="normal">Normal</option>
+                    <option value="important">Important</option>
+                    <option value="urgent">Urgent</option>
+                    <option value="low">Low</option>
+                  </select>
+                </label>
+              </div>
+              <p class="error" id="announce-error" hidden></p>
+              <p class="success" id="announce-ok" hidden>Announcement published.</p>
+              <button class="btn btn-primary" type="submit">Publish announcement</button>
+            </form>
+          </div>
         </section>
       </main>
     </div>
@@ -469,12 +499,13 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="../js/config.js"></script>
   <script src="../js/data.js"></script>
-  <script src="../js/api.js?v=15"></script>
+  <script src="../js/api.js?v=17"></script>
+  <script src="../js/notifications.js?v=1"></script>
   <script src="../js/paystack.js?v=2"></script>
   <script src="../js/refunds.js?v=2"></script>
   <script src="../js/theme.js"></script>
   <script src="../js/dash-icons.js?v=1"></script>
   <script src="../js/flyer.js?v=6"></script>
-  <script src="dashboard.js?v=18"></script>
+  <script src="dashboard.js?v=19"></script>
 </body>
 </html>

@@ -427,6 +427,8 @@
     const kind = result.next;
     const label = kind === "pin" ? "Card PIN" : kind === "otp" ? "Enter OTP" : "Phone number";
     const placeholder = kind === "pin" ? "PIN" : kind === "otp" ? "6-digit code" : "Phone number";
+    const maxLen = kind === "otp" ? 6 : kind === "pin" ? 4 : 15;
+    const pattern = kind === "otp" ? "[0-9]{6}" : kind === "pin" ? "[0-9]{4}" : "[0-9+ ]{8,15}";
     modal.innerHTML = `
       <div class="pay-otp pay-fields-in">
         <div class="pay-wait" aria-hidden="true"><i></i><i></i><i></i><div class="pay-wait-phone">${kind === "pin" ? "🔒" : "🔑"}</div></div>
@@ -434,13 +436,16 @@
         <h3 id="checkout-title">${escapeHtml(label)}</h3>
         <p class="hint">${escapeHtml(result.display_text || "Confirm this charge to continue.")}</p>
         <form class="form" id="pay-challenge">
-          <input class="pay-otp-input" id="challenge-input" required autocomplete="one-time-code" inputmode="numeric" placeholder="${escapeHtml(placeholder)}">
+          <input class="pay-otp-input" id="challenge-input" required autocomplete="one-time-code" inputmode="numeric" maxlength="${maxLen}" pattern="${pattern}" placeholder="${escapeHtml(placeholder)}">
           <p class="error" id="challenge-error" hidden></p>
           <button class="btn btn-primary btn-full" type="submit">Confirm payment</button>
         </form>
       </div>
     `;
     const input = modal.querySelector("#challenge-input");
+    input.addEventListener("input", () => {
+      input.value = String(input.value || "").replace(/\D/g, "").slice(0, maxLen);
+    });
     input.focus();
     modal.querySelector("#pay-challenge").addEventListener("submit", async (event) => {
       event.preventDefault();

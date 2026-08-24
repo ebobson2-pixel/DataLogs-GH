@@ -106,93 +106,6 @@ const DataLogsAPI = (() => {
     await client.auth.signOut();
   }
 
-  function passwordResetRedirect() {
-    const host = window.location.hostname;
-    const isLocal = host === "localhost" || host === "127.0.0.1";
-    if (isLocal) {
-      return `${window.location.origin}/agent/reset-password.html`;
-    }
-    const base = (window.DATALOGS_CONFIG?.siteUrl || window.location.origin).replace(/\/$/, "");
-    return `${base}/agent/reset-password.html`;
-  }
-
-  function parseAuthHash() {
-    const raw = String(window.location.hash || "").replace(/^#/, "");
-    if (!raw) return {};
-    return Object.fromEntries(new URLSearchParams(raw));
-  }
-
-  function authHashErrorMessage(hash) {
-    const params = hash || parseAuthHash();
-    if (!params.error) return "";
-    if (params.error_code === "otp_expired") {
-      return "This reset link has expired. Go to sign in, tap Forgot password, and request a new link.";
-    }
-    if (params.error_description) {
-      return decodeURIComponent(String(params.error_description).replace(/\+/g, " "));
-    }
-    return "This reset link is invalid. Request a new one from the sign-in page.";
-  }
-
-  async function waitForRecoverySession() {
-    const hash = parseAuthHash();
-    const hashError = authHashErrorMessage(hash);
-    if (hashError) return { ok: false, message: hashError };
-
-    const query = new URLSearchParams(window.location.search);
-    if (query.has("code")) {
-      const { error } = await client.auth.exchangeCodeForSession(window.location.search.slice(1));
-      if (error) return { ok: false, message: error.message };
-      window.history.replaceState({}, document.title, window.location.pathname);
-      return { ok: true };
-    }
-
-    for (let i = 0; i < 16; i += 1) {
-      const { data: { session } } = await client.auth.getSession();
-      if (session) return { ok: true };
-      await new Promise((resolve) => setTimeout(resolve, 200));
-    }
-
-    return new Promise((resolve) => {
-      let settled = false;
-      const { data: { subscription } } = client.auth.onAuthStateChange((event, session) => {
-        if (settled) return;
-        if ((event === "PASSWORD_RECOVERY" || event === "SIGNED_IN") && session) {
-          settled = true;
-          subscription.unsubscribe();
-          resolve({ ok: true });
-        }
-      });
-      setTimeout(() => {
-        if (settled) return;
-        settled = true;
-        subscription.unsubscribe();
-        if (hash.access_token || hash.type === "recovery") {
-          resolve({ ok: false, message: "Could not verify this reset link. Request a new one." });
-        } else {
-          resolve({
-            ok: false,
-            message: "This reset link is missing or has expired. Request a new one from sign in.",
-          });
-        }
-      }, 4000);
-    });
-  }
-
-  async function requestPasswordReset(email) {
-    const { error } = await client.auth.resetPasswordForEmail(String(email || "").trim(), {
-      redirectTo: passwordResetRedirect(),
-    });
-    if (error) return { ok: false, message: error.message };
-    return { ok: true };
-  }
-
-  async function updatePassword(password) {
-    const { error } = await client.auth.updateUser({ password: String(password || "") });
-    if (error) return { ok: false, message: error.message };
-    return { ok: true };
-  }
-
   async function fetchPackages({ includeInactive = false, applyCustomPrices } = {}) {
     let query = client.from("packages").select("*").order("sort_order", { ascending: true });
     if (!includeInactive) query = query.eq("active", true);
@@ -754,6 +667,85 @@ const DataLogsAPI = (() => {
     return new URL(`store.html?s=${encodeURIComponent(slug)}`, window.location.href).href;
   }
 
+  async function listNotifications({ limit = 30, offset = 0, category = null, unreadOnly = false } = {}) {
+    const { data, error } = await client.rpc("list_my_notifications", {
+      p_limit: limit,
+      p_offset: offset,
+      p_category: category,
+      p_unread_only: unreadOnly,
+    });
+    if (error) throw error;
+    const payload = typeof data === "string" ? JSON.parse(data) : data;
+    return payload || { ok: true, unread: 0, items: [] };
+  }
+
+  async function unreadNotificationCount() {
+    const { data, error } = await client.rpc("unread_notification_count");
+    if (error) throw error;
+    return Number(data || 0);
+  }
+
+  async function markNotificationRead(id, source = "personal") {
+    const { data, error } = await client.rpc("mark_notification_read", {
+      p_id: id,
+      p_source: source || "personal",
+    });
+    if (error) throw error;
+    return typeof data === "string" ? JSON.parse(data) : data;
+  }
+
+  async function markAllNotificationsRead() {
+    const { data, error } = await client.rpc("mark_all_notifications_read");
+    if (error) throw error;
+    return typeof data === "string" ? JSON.parse(data) : data;
+  }
+
+  async function archiveNotification(id) {
+    const { data, error } = await client.rpc("archive_notification", { p_id: id });
+    if (error) throw error;
+    return typeof data === "string" ? JSON.parse(data) : data;
+  }
+
+  async function getNotificationPreferences() {
+    const { data, error } = await client.rpc("get_notification_preferences");
+    if (error) throw error;
+    return data;
+  }
+
+  async function updateNotificationPreferences(prefs) {
+    const { data, error } = await client.rpc("update_notification_preferences", {
+      p_order_updates: prefs.order_updates ?? null,
+      p_payment_updates: prefs.payment_updates ?? null,
+      p_wallet_activity: prefs.wallet_activity ?? null,
+      p_refund_updates: prefs.refund_updates ?? null,
+      p_dispute_updates: prefs.dispute_updates ?? null,
+      p_promotional: prefs.promotional ?? null,
+    });
+    if (error) throw error;
+    return data;
+  }
+
+  async function adminCreateAnnouncement({ title, body, audience = "all", priority = "normal", actionUrl = null }) {
+    const { data, error } = await client.rpc("admin_create_announcement", {
+      p_title: title,
+      p_body: body,
+      p_audience: audience,
+      p_priority: priority,
+      p_action_url: actionUrl,
+    });
+    if (error) throw error;
+    return data;
+  }
+
+  async function adminListNotifications({ limit = 50, offset = 0 } = {}) {
+    const { data, error } = await client.rpc("admin_list_notifications", {
+      p_limit: limit,
+      p_offset: offset,
+    });
+    if (error) throw error;
+    return typeof data === "string" ? JSON.parse(data) : data || [];
+  }
+
   return {
     client,
     getSession,
@@ -766,12 +758,6 @@ const DataLogsAPI = (() => {
     signUp,
     signIn,
     signOut,
-    requestPasswordReset,
-    updatePassword,
-    passwordResetRedirect,
-    parseAuthHash,
-    authHashErrorMessage,
-    waitForRecoverySession,
     fetchPackages,
     upsertPackage,
     upsertPackages,
@@ -827,5 +813,14 @@ const DataLogsAPI = (() => {
     adminRevokeApiKey,
     adminSetApiDisabled,
     storePublicUrl,
+    listNotifications,
+    unreadNotificationCount,
+    markNotificationRead,
+    markAllNotificationsRead,
+    archiveNotification,
+    getNotificationPreferences,
+    updateNotificationPreferences,
+    adminCreateAnnouncement,
+    adminListNotifications,
   };
 })();

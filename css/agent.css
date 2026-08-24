@@ -2214,32 +2214,6 @@
   box-shadow: 0 4px 14px var(--plug-green-glow);
 }
 
-.plug-auth-forgot {
-  margin: -4px 0 8px;
-  text-align: right;
-}
-
-.plug-link-btn {
-  border: 0;
-  background: none;
-  padding: 0;
-  color: var(--plug-green-dark, #166534);
-  font: inherit;
-  font-size: 0.88rem;
-  font-weight: 600;
-  cursor: pointer;
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
-
-.plug-link-btn:hover {
-  color: var(--plug-green, #22c55e);
-}
-
-.plug-form[hidden] {
-  display: none !important;
-}
-
 .plug-form {
   display: none;
   gap: 14px;
