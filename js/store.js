@@ -10,6 +10,7 @@
     { id: "mint", hex: "#2dd4bf" },
     { id: "sky", hex: "#38bdf8" },
     { id: "green", hex: "#16a34a" },
+    { id: "beige", hex: "#d4b896" },
   ];
   const NET_UI = {
     mtn: { tab: "MTN", emoji: "🟡", title: "MTN Data", chip: "024, 025, 053, 054, 055, 059" },

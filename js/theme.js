@@ -11,6 +11,7 @@
     { id: "orange", label: "Orange", hex: "#fb923c" },
     { id: "mint", label: "Mint", hex: "#2dd4bf" },
     { id: "sky", label: "Sky", hex: "#38bdf8" },
+    { id: "beige", label: "Beige", hex: "#d4b896" },
   ];
   let uid = 0;
   let docBound = false;

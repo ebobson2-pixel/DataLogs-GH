@@ -142,6 +142,17 @@ html[data-theme="light"][data-accent="sky"] {
   --accent-rgb: 3, 105, 161;
 }
 
+html[data-accent="beige"] {
+  --accent: #d4b896;
+  --accent-deep: #b8956a;
+  --accent-rgb: 212, 184, 150;
+}
+html[data-theme="light"][data-accent="beige"] {
+  --accent: #8b7355;
+  --accent-deep: #6b5740;
+  --accent-rgb: 139, 115, 85;
+}
+
 *,
 *::before,
 *::after {
