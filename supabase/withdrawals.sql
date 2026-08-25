@@ -2,7 +2,7 @@
 -- Admin can set the minimum withdrawal threshold in site_settings.
 
 alter table public.site_settings
-  add column if not exists withdrawal_threshold numeric(12,2) not null default 10
+  add column if not exists withdrawal_threshold numeric(12,2) not null default 13
     check (withdrawal_threshold >= 0);
 
 alter table public.withdrawals
@@ -44,7 +44,7 @@ begin
     raise exception 'This account is blocked';
   end if;
 
-  select coalesce(withdrawal_threshold, 10) into threshold from public.site_settings where id = 1;
+  select coalesce(withdrawal_threshold, 13) into threshold from public.site_settings where id = 1;
   if threshold is null then
     threshold := 10;
   end if;
@@ -195,7 +195,7 @@ begin
     raise exception 'Admins only';
   end if;
 
-  select coalesce(withdrawal_threshold, 10) into threshold from public.site_settings where id = 1;
+  select coalesce(withdrawal_threshold, 13) into threshold from public.site_settings where id = 1;
   if p_withdrawal_threshold is not null then
     if p_withdrawal_threshold < 0 then
       raise exception 'Withdrawal threshold cannot be negative';

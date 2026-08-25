@@ -35,7 +35,10 @@
 
         <button class="side-link" type="button" data-panel="orders"><span class="side-ico" data-icon="orders" aria-hidden="true"></span><span class="side-label">Orders</span></button>
         <button class="side-link" type="button" data-panel="customers"><span class="side-ico" data-icon="customers" aria-hidden="true"></span><span class="side-label">Customers</span></button>
+        <p class="side-group">Team</p>
+        <button class="side-link" type="button" data-panel="subagents" id="nav-subagents"><span class="side-ico" data-icon="customers" aria-hidden="true"></span><span class="side-label">Subagents</span></button>
 
+        <p class="side-group">Money</p>
         <button class="side-link" type="button" data-panel="wallet"><span class="side-ico" data-icon="wallet" aria-hidden="true"></span><span class="side-label">My Wallet</span></button>
         <button class="side-link" type="button" data-panel="withdrawal"><span class="side-ico" data-icon="withdrawal" aria-hidden="true"></span><span class="side-label">Withdrawal</span></button>
 
@@ -114,6 +117,11 @@
               <span class="agent-quick-ico">&#128228;</span>
               <strong>Share flyer</strong>
               <span>Poster + ready message for customers</span>
+            </button>
+            <button class="agent-quick-card" type="button" data-goto="subagents" id="overview-subagents-card">
+              <span class="agent-quick-ico">&#128101;</span>
+              <strong>Subagents</strong>
+              <span>Recruit resellers &amp; set their cost prices</span>
             </button>
             <button class="agent-quick-card" type="button" id="hero-copy-store">
               <span class="agent-quick-ico">&#128279;</span>
@@ -312,7 +320,7 @@
               </div>
               <div class="flyer-share-block">
                 <h4>Share with customers</h4>
-                <p class="hint">Ready-made message with your store link, phone, hours, and sample prices — edit if you like, then share the flyer image with anyone.</p>
+                <p class="hint">Ready-made message with your store link, phone, hours, and sample prices. Share or WhatsApp sends the flyer image and this message together.</p>
                 <textarea id="flyer-share-message" rows="9" spellcheck="false"></textarea>
                 <div class="hero-actions flyer-share-actions">
                   <button class="btn btn-primary" type="button" id="flyer-share-btn">Share flyer</button>
@@ -331,7 +339,7 @@
             <h3>Preview</h3>
             <p class="hint" id="flyer-url-hint">Your store link and site info are printed at the bottom of the flyer.</p>
             <div class="flyer-preview-wrap">
-              <canvas id="flyer-canvas" width="1080" height="1440"></canvas>
+              <canvas id="flyer-canvas" width="1080" height="1350"></canvas>
             </div>
           </div>
         </section>
@@ -479,7 +487,7 @@
         <section class="dash-panel" data-panel-view="withdrawal">
           <div class="panel-card">
             <h3>Request withdrawal</h3>
-            <p class="hint" id="withdraw-hint">Withdraw your wallet profits to Mobile Money. Admin must approve before money leaves your balance.</p>
+            <p class="hint" id="withdraw-hint">Withdraw your wallet profits to Mobile Money when your balance is at least GH&#8373; 13. Admin must approve before money leaves your balance.</p>
             <form class="form" id="withdraw-form" style="margin-top:14px;max-width:420px">
               <label>Amount (GH&#8373;)<input type="number" name="amount" id="withdraw-amount" min="1" step="0.01" required placeholder="50"></label>
               <label>MoMo network
@@ -513,6 +521,89 @@
               </table>
             </div>
             <div id="withdraw-empty" class="empty-state" hidden>No withdrawals yet.</div>
+          </div>
+        </section>
+
+        <section class="dash-panel" data-panel-view="subagents">
+          <div class="panel-card" id="subagents-parent-only">
+            <h3>Recruit resellers</h3>
+            <p class="hint">Turn this on if you want others to register under you as subagents. You set their buy/cost prices (like admin does for you). When they sell, you earn your markup and they earn theirs.</p>
+            <p class="hint" style="margin-top:8px">Example: your base is GH&#8373; 4.50, you charge the subagent GH&#8373; 5.00, they sell at GH&#8373; 5.50 → you get GH&#8373; 0.50, they get GH&#8373; 0.50.</p>
+            <label class="toggle-row" style="display:flex;align-items:center;gap:12px;margin-top:16px">
+              <input type="checkbox" id="subagents-enabled-toggle">
+              <span>Enable subagent registration from my invite link</span>
+            </label>
+            <p class="error" id="subagents-toggle-error" hidden></p>
+            <div id="subagents-invite-wrap" hidden style="margin-top:16px">
+              <label>Invite link
+                <input type="text" id="subagents-invite-link" readonly>
+              </label>
+              <div class="hero-actions" style="margin-top:10px">
+                <button class="btn btn-primary" type="button" id="subagents-copy-invite">Copy invite link</button>
+              </div>
+              <p class="hint" id="subagents-invite-hint" style="margin-top:8px"></p>
+            </div>
+          </div>
+
+          <div class="panel-card" id="subagents-child-note" hidden>
+            <h3>You are a subagent</h3>
+            <p class="hint">You registered under another agent. Set your store selling prices under Store pricing. Your cost prices come from your parent agent. You cannot recruit further resellers.</p>
+            <p class="hint" id="subagents-parent-label" style="margin-top:8px"></p>
+          </div>
+
+          <div class="panel-card markup-card" id="subagents-pricing-card">
+            <h3>Prices for your subagents</h3>
+            <p class="hint">Set the cost your subagents pay (their base). Must be at or above your own base. Your earn = their cost − your base.</p>
+            <div class="markup-toolbar">
+              <div class="filters" id="subagent-pricing-filters">
+                <button class="filter-btn active" type="button" data-spfilter="mtn">MTN</button>
+                <button class="filter-btn" type="button" data-spfilter="airteltigo">AirtelTigo</button>
+                <button class="filter-btn" type="button" data-spfilter="telecel">Telecel</button>
+              </div>
+              <div class="markup-inline">
+                <span>Markup:</span>
+                <input id="subagent-markup-percent" type="text" inputmode="decimal" placeholder="+10" autocomplete="off">
+                <span>%</span>
+                <button class="markup-apply" type="button" id="subagent-markup-apply">Apply</button>
+              </div>
+            </div>
+            <p class="error" id="subagent-pricing-error" hidden></p>
+            <p class="hint" id="subagent-pricing-success" hidden style="color:var(--success)"></p>
+            <div class="table-wrap" style="margin-top:14px">
+              <table class="orders-table markup-table">
+                <thead>
+                  <tr>
+                    <th>Size</th>
+                    <th>Your base</th>
+                    <th>Subagent cost</th>
+                    <th>Your earn</th>
+                  </tr>
+                </thead>
+                <tbody id="subagent-pricing-body"></tbody>
+              </table>
+            </div>
+            <div class="markup-save-wrap">
+              <button class="btn btn-primary" type="button" id="subagent-markup-save">Save subagent prices</button>
+            </div>
+          </div>
+
+          <div class="panel-card" id="subagents-list-card">
+            <h3>My subagents</h3>
+            <div class="table-wrap">
+              <table class="orders-table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Contact</th>
+                    <th>Store</th>
+                    <th>Wallet</th>
+                    <th>Joined</th>
+                  </tr>
+                </thead>
+                <tbody id="subagents-body"></tbody>
+              </table>
+            </div>
+            <div id="subagents-empty" class="empty-state" hidden>No subagents yet. Share your invite link after enabling recruiting.</div>
           </div>
         </section>
 
@@ -578,14 +669,14 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="../js/config.js"></script>
   <script src="../js/data.js?v=5"></script>
-  <script src="../js/api.js?v=17"></script>
+  <script src="../js/api.js?v=18"></script>
   <script src="../js/notifications.js?v=2"></script>
   <script src="../js/order-tracker.js?v=7"></script>
   <script src="../js/theme.js"></script>
   <script src="../js/paystack.js?v=1"></script>
   <script src="../js/checkout.js?v=9"></script>
-  <script src="../js/flyer.js?v=6"></script>
+  <script src="../js/flyer.js?v=8"></script>
   <script src="../js/dash-icons.js?v=1"></script>
-  <script src="../js/dashboard.js?v=30"></script>
+  <script src="../js/dashboard.js?v=33"></script>
 </body>
 </html>

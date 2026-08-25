@@ -5,12 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <script>try{var d=document.documentElement,t=localStorage.getItem("datalogs_theme"),a=localStorage.getItem("datalogs_accent");if(t==="light")d.setAttribute("data-theme","light");if(a)d.setAttribute("data-accent",a);}catch(e){}</script>
   <title>DataLogs GH &mdash; Buy MTN, AirtelTigo & Telecel data</title>
-  <meta name="description" content="Buy Ghana data bundles for MTN, AirtelTigo and Telecel in a tap.">
+  <meta name="description" content="Buy affordable MTN, AirtelTigo and Telecel data in Ghana. Pay with MoMo or card, track orders, and sell as an agent on DataLogs GH.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css?v=22">
-  <link rel="stylesheet" href="css/home.css?v=15">
+  <link rel="stylesheet" href="css/home.css?v=17">
   <link rel="icon" href="assets/logo-mark.svg" type="image/svg+xml">
 </head>
 <body data-page="home" class="home-page">
@@ -36,11 +36,42 @@
         <p class="home-brand reveal">DataLogs <span>GH</span></p>
         <h1 class="reveal delay-1">Data for Ghana.<br><em>In one tap.</em></h1>
         <p class="home-lede reveal delay-2">MTN &middot; AirtelTigo &middot; Telecel</p>
+        <p class="home-sub reveal delay-2">Buy affordable Ghana data bundles online — pay with MoMo or card, get delivery in minutes, and track every order from one place.</p>
         <div class="hero-actions reveal delay-3">
           <a class="btn btn-primary" href="packages.html">Buy data</a>
           <button class="btn btn-ghost" type="button" id="home-track-btn">Track transaction</button>
           <a class="btn btn-ghost" href="agent/auth.html">Become an agent</a>
           <a class="btn btn-ghost" href="customer/auth.html">Sign in</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="section home-tools" id="quick-tools">
+      <div class="wrap">
+        <div class="section-head reveal">
+          <div>
+            <p class="kicker">Quick tools</p>
+            <h2>Everything you need on this site</h2>
+            <p class="intro">Jump straight to the tool you need — buy, track, join as an agent, or open our WhatsApp channel for updates.</p>
+          </div>
+        </div>
+        <div class="home-tools-grid reveal">
+          <a class="home-tool-card" href="packages.html">
+            <strong>Buy data now</strong>
+            <p>Browse MTN, AirtelTigo and Telecel packages with live retail prices and instant checkout.</p>
+          </a>
+          <button class="home-tool-card" type="button" id="home-track-tool-btn">
+            <strong>Track an order</strong>
+            <p>Enter your order code or recipient number to see payment and delivery status in real time.</p>
+          </button>
+          <a class="home-tool-card" href="customer/auth.html">
+            <strong>Customer account</strong>
+            <p>Save your history, buy again faster, and keep receipts for every successful purchase.</p>
+          </a>
+          <a class="home-tool-card" href="agent/auth.html">
+            <strong>Start an agent store</strong>
+            <p>Set your own prices, share flyers, manage a wallet, and earn on every customer sale.</p>
+          </a>
         </div>
       </div>
     </section>
@@ -51,25 +82,44 @@
           <div>
             <p class="kicker">Networks</p>
             <h2>Pick your line</h2>
+            <p class="intro">We support Ghana’s three main networks. Choose the network that matches the SIM receiving the data — wrong network means the bundle cannot land.</p>
           </div>
         </div>
         <div class="network-grid home-network-grid">
           <a class="card network-card reveal delay-1" href="packages.html?network=mtn">
             <span class="pill">MTN</span>
-            <h3>Yellow SIM</h3>
-            <p class="hint">View MTN packages</p>
+            <h3>MTN Ghana</h3>
+            <p class="hint">Popular yellow-SIM bundles from everyday GBs to bigger packs. Clear prices on Buy data.</p>
           </a>
           <a class="card network-card reveal delay-2" href="packages.html?network=airteltigo">
             <span class="pill">AirtelTigo</span>
-            <h3>AT data</h3>
-            <p class="hint">View AT packages</p>
+            <h3>AirtelTigo</h3>
+            <p class="hint">AT data for calls, browsing and apps. Same simple checkout as every other network here.</p>
           </a>
           <a class="card network-card reveal delay-3" href="packages.html?network=telecel">
             <span class="pill">Telecel</span>
-            <h3>Steady signal</h3>
-            <p class="hint">View Telecel packages</p>
+            <h3>Telecel</h3>
+            <p class="hint">Telecel packages with transparent pricing and fast delivery after Paystack confirms payment.</p>
           </a>
         </div>
+      </div>
+    </section>
+
+    <section class="section home-about" id="about">
+      <div class="wrap home-about-inner reveal">
+        <div>
+          <p class="kicker">About DataLogs GH</p>
+          <h2>A simple data shop built for everyday Ghana</h2>
+          <p class="intro">DataLogs GH is an online store for buying mobile data without standing in a queue or chasing an agent on WhatsApp. You pick a package, enter the phone number, pay securely, and watch the order move from paid to delivered.</p>
+          <p class="intro">Whether you are topping up your own line, sending data to family, or running a small reseller business, the site keeps prices visible, payments protected, and tracking one tap away.</p>
+        </div>
+        <ul class="home-about-list">
+          <li>Works in the browser on phone or computer — no app download</li>
+          <li>Guest checkout anytime; optional account for history</li>
+          <li>Paystack-secured MoMo and card payments</li>
+          <li>Live order tracking with order code or phone number</li>
+          <li>Agent mini stores with custom prices and shareable flyers</li>
+        </ul>
       </div>
     </section>
 
@@ -78,8 +128,8 @@
         <div class="section-head reveal">
           <div>
             <p class="kicker">Data bundles</p>
-            <h2>We have packages for every network</h2>
-            <p class="intro">MTN, AirtelTigo and Telecel bundles are available from 1GB up. Full prices and checkout are on our <strong>Buy data</strong> page.</p>
+            <h2>Packages for every budget and network</h2>
+            <p class="intro">From small top-ups to larger bundles, retail prices are listed openly. Tap a network below for a quick snapshot, then open <strong>Buy data</strong> for the full list and checkout.</p>
           </div>
         </div>
         <div class="home-package-teaser reveal delay-1" id="home-package-teaser" aria-live="polite">
@@ -91,21 +141,221 @@
       </div>
     </section>
 
+    <section class="section home-features" id="features">
+      <div class="wrap">
+        <div class="section-head reveal">
+          <div>
+            <p class="kicker">Features</p>
+            <h2>What you can do on DataLogs GH</h2>
+            <p class="intro">More than a price list — the site is built around buying, tracking, reordering, and selling data without friction.</p>
+          </div>
+        </div>
+        <div class="home-features-grid reveal">
+          <article class="home-feature-card">
+            <strong>One-page checkout</strong>
+            <p>Select a package, enter the recipient number, choose MoMo, card, or wallet, and finish without leaving the site.</p>
+          </article>
+          <article class="home-feature-card">
+            <strong>Live order tracking</strong>
+            <p>Follow each step — paid, processing, delivered — using your order code or the phone number that received the data.</p>
+          </article>
+          <article class="home-feature-card">
+            <strong>Buy again</strong>
+            <p>Signed-in customers see recent purchases on the home page and can reorder the same bundle in a few taps.</p>
+          </article>
+          <article class="home-feature-card">
+            <strong>Secure Paystack payments</strong>
+            <p>We only process data after Paystack confirms the payment, so failed charges do not create fake orders.</p>
+          </article>
+          <article class="home-feature-card">
+            <strong>WhatsApp updates</strong>
+            <p>Follow our channel from the green button for store news, tips, and support pointers while you shop.</p>
+          </article>
+          <article class="home-feature-card">
+            <strong>Agent mini stores</strong>
+            <p>Agents get wallets, custom markups, dashboards, and marketing flyers with ready-made share messages.</p>
+          </article>
+          <article class="home-feature-card">
+            <strong>Clear Ghana pricing</strong>
+            <p>Prices show in GH₵. Package size and network are always visible before you pay — no surprise switches at checkout.</p>
+          </article>
+          <article class="home-feature-card">
+            <strong>Works on mobile</strong>
+            <p>The full site is designed for phones first: buy, track, and manage accounts comfortably from your handset.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section home-how" id="how-it-works">
+      <div class="wrap">
+        <div class="section-head reveal">
+          <div>
+            <p class="kicker">How it works</p>
+            <h2>Buy data in four clear steps</h2>
+            <p class="intro">No app install. No agent hunt. Pick a package, pay once, and follow your order until it lands on the number. Most customers finish in under two minutes.</p>
+          </div>
+        </div>
+        <ol class="home-steps reveal">
+          <li class="home-step">
+            <span class="home-step-num" aria-hidden="true">1</span>
+            <div>
+              <strong>Choose network &amp; size</strong>
+              <p>Open <a href="packages.html">Buy data</a>, pick MTN, AirtelTigo or Telecel, then select the GB you need. Compare sizes and prices before you tap buy.</p>
+            </div>
+          </li>
+          <li class="home-step">
+            <span class="home-step-num" aria-hidden="true">2</span>
+            <div>
+              <strong>Enter the phone number</strong>
+              <p>Type the Ghana number that should receive the bundle. Double-check the network matches the SIM — MTN data cannot load on a Telecel line, and so on.</p>
+            </div>
+          </li>
+          <li class="home-step">
+            <span class="home-step-num" aria-hidden="true">3</span>
+            <div>
+              <strong>Pay with MoMo or card</strong>
+              <p>Checkout runs through Paystack. You pay the package price shown — plus the small Paystack fee when you use MoMo or card. Wallet checkout (where available) uses the package price only.</p>
+            </div>
+          </li>
+          <li class="home-step">
+            <span class="home-step-num" aria-hidden="true">4</span>
+            <div>
+              <strong>Track until delivered</strong>
+              <p>Save your order code from the confirmation screen. Use <a href="track.html">Track order</a>, the floating tracker, or <strong>Track transaction</strong> on this page anytime to see status.</p>
+            </div>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <section class="section home-guide" id="site-guide">
+      <div class="wrap">
+        <div class="section-head reveal">
+          <div>
+            <p class="kicker">How to navigate</p>
+            <h2>Where everything lives</h2>
+            <p class="intro">Use the top menu or the links below. Each page does one job so you always know where to tap next — whether you are buying once or running a store.</p>
+          </div>
+        </div>
+        <div class="home-guide-grid reveal">
+          <a class="home-guide-card" href="packages.html">
+            <strong>Buy data</strong>
+            <p>Full price list for all networks. Filter by network, compare GB sizes, and start checkout from any package card.</p>
+            <span class="home-guide-link">Go to packages →</span>
+          </a>
+          <a class="home-guide-card" href="track.html">
+            <strong>Track order</strong>
+            <p>Look up an order with your order code or the recipient phone number. See if payment cleared and whether data has been sent.</p>
+            <span class="home-guide-link">Track now →</span>
+          </a>
+          <a class="home-guide-card" href="customer/auth.html">
+            <strong>Customer account</strong>
+            <p>Sign in to see past purchases, buy again faster, download receipts, and keep your details ready for the next order.</p>
+            <span class="home-guide-link">Sign in →</span>
+          </a>
+          <a class="home-guide-card" href="agent/auth.html">
+            <strong>Agent store</strong>
+            <p>Sell data with your own prices, wallet top-ups, order history, and shareable flyers with ready-made customer messages.</p>
+            <span class="home-guide-link">Become an agent →</span>
+          </a>
+        </div>
+        <p class="home-guide-note reveal delay-1">Need help mid-purchase? Use the green WhatsApp button on any page to open our channel, or track from the home page with <strong>Track transaction</strong>. Keep your order code handy — support and tracking both move faster with it.</p>
+      </div>
+    </section>
+
+    <section class="section home-expect" id="what-to-expect">
+      <div class="wrap">
+        <div class="section-head reveal">
+          <div>
+            <p class="kicker">What to expect</p>
+            <h2>Before you pay — the honest details</h2>
+            <p class="intro">Here is what a normal order looks like on DataLogs GH, so there are no surprises after you tap pay.</p>
+          </div>
+        </div>
+        <div class="home-expect-grid reveal">
+          <article class="home-expect-card">
+            <strong>Delivery</strong>
+            <p>Most bundles arrive within <em>1–5 minutes</em> after payment confirms. Busy periods can take a little longer — tracking shows live status so you are never guessing.</p>
+          </article>
+          <article class="home-expect-card">
+            <strong>Payments</strong>
+            <p>Mobile Money and cards go through Paystack. Wallet (for signed-in users and agents) pays the package price only, without the Paystack fee.</p>
+          </article>
+          <article class="home-expect-card">
+            <strong>Order proof</strong>
+            <p>You’ll get an order code after checkout. Keep it — that’s how you track, buy again, or show support exactly what happened.</p>
+          </article>
+          <article class="home-expect-card">
+            <strong>Networks covered</strong>
+            <p>MTN, AirtelTigo, and Telecel. Always choose the network that matches the SIM receiving the data.</p>
+          </article>
+          <article class="home-expect-card">
+            <strong>Guest or account</strong>
+            <p>Buy as a guest anytime. Create a customer account when you want history, quicker reorders, and a cleaner buy-again experience.</p>
+          </article>
+          <article class="home-expect-card">
+            <strong>Agents</strong>
+            <p>Agents get a mini store, custom pricing, wallet, and shareable flyers. Everyday customer purchases stay on Buy data as usual.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
     <section class="section home-why">
       <div class="wrap">
         <div class="section-head reveal">
           <div>
             <p class="kicker">Why DataLogs?</p>
-            <h2>Built for Ghana</h2>
+            <h2>Built for how Ghana buys data</h2>
+            <p class="intro">Fast top-ups, clear cedis pricing, and tools for both everyday buyers and people who sell data every day.</p>
           </div>
         </div>
         <div class="why-grid reveal">
-          <article class="why-card"><strong>Fast delivery</strong><p>Pay with MoMo or card and get bundles sent within minutes.</p></article>
-          <article class="why-card"><strong>Secure payments</strong><p>Paystack confirms every payment before we send data.</p></article>
-          <article class="why-card"><strong>All major networks</strong><p>MTN, AirtelTigo and Telecel in one place.</p></article>
-          <article class="why-card"><strong>Track every order</strong><p>Look up status by order code or recipient number anytime.</p></article>
-          <article class="why-card"><strong>Affordable data</strong><p>Clear retail prices with no hidden steps at checkout.</p></article>
-          <article class="why-card"><strong>Agent opportunities</strong><p>Open your own mini store and earn on every sale.</p></article>
+          <article class="why-card"><strong>Fast delivery</strong><p>Pay with MoMo or card and get bundles sent within minutes after payment confirms.</p></article>
+          <article class="why-card"><strong>Secure payments</strong><p>Paystack confirms every payment before we send data — no guessing if a charge went through.</p></article>
+          <article class="why-card"><strong>All major networks</strong><p>MTN, AirtelTigo and Telecel in one place, with the same checkout flow for each.</p></article>
+          <article class="why-card"><strong>Track every order</strong><p>Look up status by order code or recipient number anytime, from phone or computer.</p></article>
+          <article class="why-card"><strong>Affordable data</strong><p>Clear retail prices with no hidden package switches at checkout.</p></article>
+          <article class="why-card"><strong>Agent opportunities</strong><p>Open your own mini store, set profit, share flyers, and earn on every sale.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section home-faq" id="faq">
+      <div class="wrap">
+        <div class="section-head reveal">
+          <div>
+            <p class="kicker">FAQ</p>
+            <h2>Common questions</h2>
+            <p class="intro">Quick answers before you buy. Still stuck? Open WhatsApp from the green button or track your order with the code from checkout.</p>
+          </div>
+        </div>
+        <div class="home-faq-list reveal">
+          <details class="home-faq-item">
+            <summary>Do I need an account to buy data?</summary>
+            <p>No. You can buy as a guest. An account is optional and helps if you reorder often or want to keep purchase history.</p>
+          </details>
+          <details class="home-faq-item">
+            <summary>How long does delivery take?</summary>
+            <p>Most orders finish within 1–5 minutes after Paystack confirms payment. If it takes longer, use Track order with your order code — status updates as the bundle is processed.</p>
+          </details>
+          <details class="home-faq-item">
+            <summary>Which payment methods work?</summary>
+            <p>Mobile Money and cards via Paystack. Signed-in customers and agents may also pay from wallet balance where that option is shown at checkout.</p>
+          </details>
+          <details class="home-faq-item">
+            <summary>What if I pick the wrong network?</summary>
+            <p>The bundle must match the recipient SIM. Always select MTN, AirtelTigo, or Telecel based on the line receiving the data before you pay.</p>
+          </details>
+          <details class="home-faq-item">
+            <summary>How do I track my order?</summary>
+            <p>Use Track order in the menu, the floating tracker, or Track transaction on this page. Enter the order code from checkout or the recipient phone number.</p>
+          </details>
+          <details class="home-faq-item">
+            <summary>Can I sell data as an agent?</summary>
+            <p>Yes. Register under Become an agent to open a mini store, set your prices, manage a wallet, and share flyers with customers.</p>
+          </details>
         </div>
       </div>
     </section>
@@ -116,6 +366,7 @@
           <div>
             <p class="kicker">Buy again</p>
             <h2>Your recent purchases</h2>
+            <p class="intro">Tap a card to reorder the same network, size, and number — handy when you top up the same lines often.</p>
           </div>
           <a class="btn btn-ghost" href="customer/dashboard.html">My account</a>
         </div>
@@ -128,7 +379,7 @@
         <div class="home-cta reveal">
           <div>
             <h2>Sell data your way</h2>
-            <p>Open a mini store. Set your profit. Get paid.</p>
+            <p>Open a mini store, set your own profit, share price flyers with customers, and get paid into your agent wallet.</p>
           </div>
           <a class="btn btn-primary" href="agent/auth.html">Start selling</a>
         </div>
@@ -154,6 +405,6 @@
   <script src="js/app.js?v=5"></script>
   <script src="js/paystack.js?v=1"></script>
   <script src="js/checkout.js?v=9"></script>
-  <script src="js/home.js?v=3"></script>
+  <script src="js/home.js?v=5"></script>
 </body>
 </html>

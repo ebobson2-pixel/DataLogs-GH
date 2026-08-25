@@ -1,6 +1,6 @@
 window.DataLogsFlyer = (() => {
   const W = 1080;
-  const H = 1440;
+  const H = 1350;
   const MODELS = {
     hub: "../assets/flyers/model-hub.png",
     plug: "../assets/flyers/model-plug.png",
@@ -148,27 +148,36 @@ window.DataLogsFlyer = (() => {
 
   function drawPriceLines(ctx, list, x, y, w, h, color, kind) {
     ctx.save();
-    ctx.fillStyle = color;
     ctx.textAlign = "left";
     ctx.textBaseline = "middle";
     if (!list.length) {
+      ctx.fillStyle = color;
       ctx.globalAlpha = 0.85;
-      ctx.font = "700 22px Outfit, sans-serif";
-      ctx.fillText("Set store prices", x + 16, y + 36);
+      ctx.font = "800 26px Outfit, sans-serif";
+      ctx.fillText("Set store prices", x + 18, y + 40);
       ctx.restore();
       return;
     }
-    const row = Math.min(42, h / list.length);
-    const size = Math.max(16, Math.min(26, row * 0.58));
-    ctx.font = `700 ${size}px Montserrat, Outfit, sans-serif`;
-    list.forEach((pkg, i) => {
+    const rows = list.slice(0, 14);
+    const row = Math.min(56, h / rows.length);
+    const size = Math.max(24, Math.min(34, row * 0.62));
+    rows.forEach((pkg, i) => {
       const cy = y + row * i + row / 2;
-      const left = `${Number(pkg.gb) % 1 === 0 ? pkg.gb : pkg.gb} GB`;
-      const right = priceLabel(pkg.price, kind);
+      if (i % 2 === 0) {
+        ctx.globalAlpha = 0.12;
+        ctx.fillStyle = color;
+        ctx.fillRect(x + 6, y + row * i + 2, w - 12, row - 4);
+        ctx.globalAlpha = 1;
+      }
+      const left = gbLabel(pkg.gb);
+      const right = priceLabel(pkg.price, kind === "cent" ? "ghc" : kind);
+      ctx.fillStyle = color;
+      ctx.font = `800 ${size}px Montserrat, Outfit, sans-serif`;
       ctx.textAlign = "left";
-      ctx.fillText(left, x + 14, cy);
+      ctx.fillText(left, x + 18, cy);
+      ctx.font = `900 ${size + 2}px Montserrat, Outfit, sans-serif`;
       ctx.textAlign = "right";
-      ctx.fillText(right, x + w - 14, cy);
+      ctx.fillText(right, x + w - 18, cy);
     });
     ctx.restore();
   }
@@ -187,28 +196,28 @@ window.DataLogsFlyer = (() => {
 
   function drawSiteInfoBar(ctx, y, data, bg) {
     const pad = 36;
-    fillRound(ctx, pad, y, W - pad * 2, 40, 12, bg || "#1a1a1a");
-    ctx.fillStyle = "rgba(255,255,255,0.82)";
-    ctx.font = "600 17px Outfit, sans-serif";
+    fillRound(ctx, pad, y, W - pad * 2, 44, 12, bg || "#1a1a1a");
+    ctx.fillStyle = "rgba(255,255,255,0.88)";
+    ctx.font = "700 18px Outfit, sans-serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     const line = siteInfoLine(data);
-    fitText(ctx, line, W - pad * 2 - 24, (s) => `600 ${s}px Outfit, sans-serif`);
-    ctx.fillText(line, W / 2, y + 20);
+    fitText(ctx, line, W - pad * 2 - 24, (s) => `700 ${s}px Outfit, sans-serif`);
+    ctx.fillText(line, W / 2, y + 22);
   }
 
   function drawCaption(ctx, dataOrUrl) {
     const data = typeof dataOrUrl === "object" && dataOrUrl !== null ? dataOrUrl : { url: dataOrUrl };
     const pad = 36;
-    drawSiteInfoBar(ctx, H - 130, data, "#1a1a1a");
-    fillRound(ctx, pad, H - 78, W - pad * 2, 48, 16, "#111");
+    drawSiteInfoBar(ctx, H - 122, data, "#1a1a1a");
+    fillRound(ctx, pad, H - 68, W - pad * 2, 48, 16, "#111");
     ctx.fillStyle = "#fff";
-    ctx.font = "700 22px Outfit, sans-serif";
+    ctx.font = "800 24px Outfit, sans-serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     const label = String(data.url || "").replace(/^https?:\/\//, "");
-    fitText(ctx, label, W - 120, (s) => `700 ${s}px Outfit, sans-serif`);
-    ctx.fillText(label, W / 2, H - 54);
+    fitText(ctx, label, W - 120, (s) => `800 ${s}px Outfit, sans-serif`);
+    ctx.fillText(label, W / 2, H - 44);
   }
 
   function doodleHub(ctx) {
@@ -247,47 +256,27 @@ window.DataLogsFlyer = (() => {
 
     const groups = byNetwork(data.packages);
     const cols = [
-      { x: 48, y: 200, w: 312, h: 720, bg: COLORS.mtn, color: "#111", list: groups.mtn, logo: drawMtnLogo, kind: "ghc" },
-      { x: 384, y: 188, w: 312, h: 760, bg: COLORS.at, color: "#fff", list: groups.airteltigo, logo: drawAtLogo, kind: "ghc" },
-      { x: 720, y: 200, w: 312, h: 560, bg: COLORS.telecel, color: "#fff", list: groups.telecel, logo: drawTelecelLogo, kind: "ghc" },
+      { x: 40, y: 190, w: 320, h: 780, bg: COLORS.mtn, color: "#111", list: groups.mtn, logo: drawMtnLogo, kind: "ghc" },
+      { x: 380, y: 190, w: 320, h: 780, bg: COLORS.at, color: "#fff", list: groups.airteltigo, logo: drawAtLogo, kind: "ghc" },
+      { x: 720, y: 190, w: 320, h: 780, bg: COLORS.telecel, color: "#fff", list: groups.telecel, logo: drawTelecelLogo, kind: "ghc" },
     ];
     cols.forEach((col) => {
-      fillRound(ctx, col.x, col.y, col.w, col.h, 90, col.bg);
-      col.logo(ctx, col.x + col.w / 2, col.y + 78, 52);
-      drawPriceLines(ctx, col.list, col.x + 8, col.y + 150, col.w - 16, col.h - 180, col.color, col.kind);
+      fillRound(ctx, col.x, col.y, col.w, col.h, 48, col.bg);
+      col.logo(ctx, col.x + col.w / 2, col.y + 70, 48);
+      drawPriceLines(ctx, col.list, col.x + 4, col.y + 140, col.w - 8, col.h - 170, col.color, col.kind);
     });
 
-    const model = await cutout(MODELS.hub);
-    ctx.drawImage(model, 430, 640, 680, 780);
-
-    fillRound(ctx, 0, 930, 560, 390, 0, COLORS.telecel);
+    fillRound(ctx, 40, 1000, W - 80, 170, 24, COLORS.telecel);
     ctx.fillStyle = "#fff";
     ctx.textAlign = "left";
-    ctx.font = "800 34px Montserrat, Outfit, sans-serif";
-    ctx.fillText("Buy Affordable", 36, 990);
-    ctx.fillStyle = COLORS.mtn;
-    ctx.font = "900 72px Montserrat, Outfit, sans-serif";
-    ctx.fillText("Data", 36, 1068);
-    ctx.fillStyle = "#fff";
-    ctx.font = "800 34px Montserrat, Outfit, sans-serif";
-    ctx.fillText("Package", 36, 1118);
-    ctx.font = "700 22px Montserrat, Outfit, sans-serif";
-    ctx.fillText("WHATSAPP OR CALL", 36, 1170);
-    ctx.fillStyle = COLORS.mtn;
-    ctx.font = "900 52px Montserrat, Outfit, sans-serif";
-    ctx.fillText(data.phone || "Add your number", 36, 1238);
-    ctx.fillStyle = COLORS.mtn;
-    ctx.fillRect(0, 1270, 560, 48);
-    ctx.fillStyle = COLORS.telecel;
-    ctx.font = "800 24px Montserrat, Outfit, sans-serif";
-    ctx.textAlign = "center";
-    ctx.fillText("Delivery Within Few Minutes", 280, 1296);
-
-    fillRound(ctx, 790, 820, 230, 150, 28, COLORS.mtn);
-    ctx.fillStyle = COLORS.telecel;
     ctx.font = "800 28px Montserrat, Outfit, sans-serif";
-    ctx.textAlign = "center";
-    wrapLines(ctx, "BUY YOUR DATA HERE", 790, 870, 230, 32);
+    ctx.fillText("Buy Affordable Data", 64, 1048);
+    ctx.fillStyle = COLORS.mtn;
+    ctx.font = "900 40px Montserrat, Outfit, sans-serif";
+    ctx.fillText(data.phone || "Add your number", 64, 1100);
+    ctx.fillStyle = "#fff";
+    ctx.font = "700 22px Montserrat, Outfit, sans-serif";
+    ctx.fillText("WhatsApp / Call · Delivery in minutes", 64, 1140);
 
     drawCaption(ctx, data);
   }
@@ -317,12 +306,13 @@ window.DataLogsFlyer = (() => {
     ctx.fill();
     fillRound(ctx, x, y + h - 24, w, 24, 18, splitAt != null ? splitColor || bodyColor : bodyColor);
     logoFn(ctx, x + w / 2, y + 46, 36);
-    const rows = list.length ? list : [];
+    const rows = list.length ? list.slice(0, 12) : [];
     const top = y + 102;
-    const rowH = rows.length ? Math.min(48, (h - 120) / Math.max(rows.length, 1)) : 40;
+    const rowH = rows.length ? Math.min(58, (h - 120) / Math.max(rows.length, 1)) : 40;
+    const fontSize = Math.max(24, Math.min(32, rowH * 0.55));
     ctx.strokeStyle = lineColor;
     ctx.lineWidth = 2;
-    ctx.font = "800 22px Montserrat, Outfit, sans-serif";
+    ctx.font = `800 ${fontSize}px Montserrat, Outfit, sans-serif`;
     ctx.textBaseline = "middle";
     if (!rows.length) {
       ctx.fillStyle = textColor;
@@ -341,13 +331,15 @@ window.DataLogsFlyer = (() => {
       ctx.lineTo(x + w, ry);
       ctx.stroke();
       ctx.beginPath();
-      ctx.moveTo(x + w * 0.46, ry);
-      ctx.lineTo(x + w * 0.46, ry + rowH);
+      ctx.moveTo(x + w * 0.42, ry);
+      ctx.lineTo(x + w * 0.42, ry + rowH);
       ctx.stroke();
       ctx.fillStyle = textColor;
       ctx.textAlign = "center";
-      ctx.fillText(gbLabel(pkg.gb), x + w * 0.23, ry + rowH / 2);
-      ctx.fillText(priceLabel(pkg.price, "cent"), x + w * 0.73, ry + rowH / 2);
+      ctx.fillText(gbLabel(pkg.gb), x + w * 0.21, ry + rowH / 2);
+      ctx.font = `900 ${fontSize + 2}px Montserrat, Outfit, sans-serif`;
+      ctx.fillText(priceLabel(pkg.price, "ghc"), x + w * 0.71, ry + rowH / 2);
+      ctx.font = `800 ${fontSize}px Montserrat, Outfit, sans-serif`;
     });
   }
 
@@ -392,30 +384,22 @@ window.DataLogsFlyer = (() => {
 
     const groups = byNetwork(data.packages);
     drawGridColumn(
-      ctx, 46, 170, 320, 620, COLORS.at, COLORS.at, "#fff",
+      ctx, 40, 160, 320, 780, COLORS.at, COLORS.at, "#fff",
       groups.airteltigo, drawAtLogo, "rgba(255,255,255,0.55)", 4, COLORS.telecel
     );
-    drawGridColumn(ctx, 380, 170, 320, 620, COLORS.mtn, COLORS.mtn, "#111", groups.mtn, drawMtnLogo, "rgba(0,0,0,0.35)");
-    drawGridColumn(ctx, 714, 170, 320, 520, COLORS.telecel, COLORS.telecel, "#fff", groups.telecel, drawTelecelLogo, "rgba(255,255,255,0.45)");
+    drawGridColumn(ctx, 380, 160, 320, 780, COLORS.mtn, COLORS.mtn, "#111", groups.mtn, drawMtnLogo, "rgba(0,0,0,0.35)");
+    drawGridColumn(ctx, 720, 160, 320, 780, COLORS.telecel, COLORS.telecel, "#fff", groups.telecel, drawTelecelLogo, "rgba(255,255,255,0.45)");
 
-    const model = await cutout(MODELS.plug);
-    ctx.drawImage(model, 520, 760, 620, 720);
-
+    fillRound(ctx, 40, 970, W - 80, 160, 24, "#fff");
     ctx.textAlign = "left";
     ctx.fillStyle = COLORS.ink;
-    ctx.font = "700 36px Montserrat, Outfit, sans-serif";
-    ctx.fillText("Buy Affordable", 48, 920);
+    ctx.font = "800 28px Montserrat, Outfit, sans-serif";
+    ctx.fillText("Buy Affordable Data Package", 64, 1020);
+    ctx.font = "800 24px Montserrat, Outfit, sans-serif";
+    ctx.fillText("DM or CALL", 64, 1060);
     ctx.fillStyle = COLORS.telecel;
-    ctx.font = "900 92px Montserrat, Outfit, sans-serif";
-    ctx.fillText("Data", 48, 1018);
-    ctx.fillStyle = COLORS.ink;
-    ctx.font = "800 42px Montserrat, Outfit, sans-serif";
-    ctx.fillText("Package", 48, 1072);
-    ctx.font = "800 34px Montserrat, Outfit, sans-serif";
-    ctx.fillText("DM or CALL", 48, 1140);
-    ctx.fillStyle = COLORS.telecel;
-    ctx.font = "900 58px Montserrat, Outfit, sans-serif";
-    ctx.fillText(data.phone || "Add your number", 48, 1218);
+    ctx.font = "900 40px Montserrat, Outfit, sans-serif";
+    ctx.fillText(data.phone || "Add your number", 64, 1108);
 
     drawCaption(ctx, data);
   }
@@ -429,12 +413,12 @@ window.DataLogsFlyer = (() => {
 
     ctx.fillStyle = "rgba(255,255,255,0.08)";
     ctx.beginPath();
-    ctx.arc(90, 1280, 90, 0, Math.PI * 2);
+    ctx.arc(990, 200, 70, 0, Math.PI * 2);
     ctx.fill();
     ctx.fillStyle = "#fff";
-    ctx.font = "800 42px Outfit, sans-serif";
+    ctx.font = "800 36px Outfit, sans-serif";
     ctx.textAlign = "center";
-    ctx.fillText("♥", 90, 1294);
+    ctx.fillText("♥", 990, 212);
 
     const name = data.name || "Agent";
     ctx.textAlign = "left";
@@ -457,41 +441,32 @@ window.DataLogsFlyer = (() => {
 
     const groups = byNetwork(data.packages);
     const cards = [
-      { x: 40, y: 250, w: 320, border: COLORS.mtn, list: groups.mtn, logo: drawMtnLogo },
-      { x: 380, y: 250, w: 320, border: "#cfd8e3", list: groups.airteltigo, logo: drawAtLogo },
-      { x: 720, y: 250, w: 320, border: COLORS.telecel, list: groups.telecel, logo: drawTelecelLogo },
+      { x: 40, y: 230, w: 320, border: COLORS.mtn, list: groups.mtn, logo: drawMtnLogo },
+      { x: 380, y: 230, w: 320, border: "#cfd8e3", list: groups.airteltigo, logo: drawAtLogo },
+      { x: 720, y: 230, w: 320, border: COLORS.telecel, list: groups.telecel, logo: drawTelecelLogo },
     ];
     cards.forEach((card) => {
       ctx.save();
       ctx.shadowColor = card.border;
-      ctx.shadowBlur = 18;
-      fillRound(ctx, card.x, card.y, card.w, 620, 28, "#123d2d");
+      ctx.shadowBlur = 14;
+      fillRound(ctx, card.x, card.y, card.w, 720, 28, "#123d2d");
       ctx.restore();
       ctx.lineWidth = 5;
       ctx.strokeStyle = card.border;
-      roundRect(ctx, card.x, card.y, card.w, 620, 28);
+      roundRect(ctx, card.x, card.y, card.w, 720, 28);
       ctx.stroke();
       card.logo(ctx, card.x + card.w / 2, card.y + 58, 42);
-      drawPriceLines(ctx, card.list, card.x + 6, card.y + 120, card.w - 12, 470, "#fff", "cedi");
+      drawPriceLines(ctx, card.list, card.x + 6, card.y + 120, card.w - 12, 560, "#fff", "ghc");
     });
 
-    const model = await cutout(MODELS.package);
-    ctx.drawImage(model, 430, 780, 680, 720);
-
-    fillRound(ctx, 40, 1260, 700, 88, 44, "#fff");
-    fillRound(ctx, 70, 1228, 220, 36, 18, "#fff");
-    ctx.strokeStyle = "#123d2d";
-    ctx.lineWidth = 2;
-    roundRect(ctx, 70, 1228, 220, 36, 18);
-    ctx.stroke();
+    fillRound(ctx, 40, 980, W - 80, 140, 28, "#fff");
     ctx.fillStyle = "#123d2d";
-    ctx.font = "700 16px Outfit, sans-serif";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText("To purchase contact,", 180, 1246);
-    ctx.font = "800 32px Montserrat, Outfit, sans-serif";
+    ctx.font = "700 22px Outfit, sans-serif";
     ctx.textAlign = "left";
-    ctx.fillText(`☎  ${data.phoneIntl || data.phone || "Add your number"}`, 70, 1306);
+    ctx.textBaseline = "middle";
+    ctx.fillText("To purchase contact", 70, 1020);
+    ctx.font = "900 40px Montserrat, Outfit, sans-serif";
+    ctx.fillText(`☎  ${data.phoneIntl || data.phone || "Add your number"}`, 70, 1075);
 
     drawCaption(ctx, data);
   }
@@ -567,18 +542,8 @@ window.DataLogsFlyer = (() => {
     },
   ];
 
-  function shopHeight(groups) {
-    const cols = 4;
-    const cardH = 208;
-    const gap = 16;
-    let h = 560;
-    SHOP_NETS.forEach((net) => {
-      const list = groups[net.key] || [];
-      if (!list.length) return;
-      const rows = Math.ceil(list.length / cols);
-      h += 86 + rows * (cardH + gap) + 24;
-    });
-    return Math.max(1440, h + 200);
+  function shopHeight() {
+    return H;
   }
 
   async function drawShop(ctx, data, canvas) {
@@ -586,143 +551,115 @@ window.DataLogsFlyer = (() => {
     const onAccent = contrastInk(accent);
     const groups = byNetwork(data.packages);
     SHOP_NETS.forEach((net) => {
-      groups[net.key] = (groups[net.key] || []).slice(0, 16);
+      groups[net.key] = (groups[net.key] || []).slice(0, 12);
     });
-    const height = shopHeight(groups);
-    canvas.height = height;
+    canvas.height = H;
     canvas.width = W;
 
     ctx.fillStyle = "#05070b";
-    ctx.fillRect(0, 0, W, height);
+    ctx.fillRect(0, 0, W, H);
     const glow = ctx.createRadialGradient(W * 0.72, 40, 20, W * 0.55, 120, 640);
     glow.addColorStop(0, rgba(accent, 0.28));
     glow.addColorStop(1, "rgba(0,0,0,0)");
     ctx.fillStyle = glow;
-    ctx.fillRect(0, 0, W, 520);
+    ctx.fillRect(0, 0, W, 420);
 
-    const pad = 44;
-    fillRound(ctx, pad, 36, 64, 64, 16, accent);
-    drawBolt(ctx, pad + 4, 40, 56, onAccent);
+    const pad = 36;
+    fillRound(ctx, pad, 28, 58, 58, 14, accent);
+    drawBolt(ctx, pad + 2, 30, 54, onAccent);
 
     ctx.textAlign = "left";
     ctx.textBaseline = "middle";
     ctx.fillStyle = "#fff";
-    ctx.font = "800 34px Montserrat, Outfit, sans-serif";
+    ctx.font = "800 36px Montserrat, Outfit, sans-serif";
     const storeName = String(data.name || "DATA HUB").toUpperCase();
-    ctx.fillText(storeName, pad + 80, 68);
+    ctx.fillText(storeName, pad + 74, 48);
     ctx.fillStyle = accent;
-    ctx.font = "600 16px Outfit, sans-serif";
-    ctx.fillText((data.tagline || "Affordable. Instant. Reliable.").slice(0, 42), pad + 80, 96);
+    ctx.font = "700 18px Outfit, sans-serif";
+    ctx.fillText((data.tagline || "Affordable. Instant. Reliable.").slice(0, 42), pad + 74, 78);
 
-    fillRound(ctx, W - pad - 200, 44, 200, 48, 24, accent);
+    fillRound(ctx, W - pad - 210, 32, 210, 50, 24, accent);
     ctx.fillStyle = onAccent;
-    ctx.font = "800 16px Outfit, sans-serif";
+    ctx.font = "800 18px Outfit, sans-serif";
     ctx.textAlign = "center";
-    ctx.fillText("Visit store →", W - pad - 100, 68);
+    ctx.fillText("Visit store →", W - pad - 105, 57);
 
     ctx.textAlign = "left";
     ctx.fillStyle = "#fff";
-    ctx.font = "800 42px Montserrat, Outfit, sans-serif";
+    ctx.font = "900 40px Montserrat, Outfit, sans-serif";
     ctx.textBaseline = "alphabetic";
-    ctx.fillText("DATA BUNDLES – ALL NETWORKS", pad, 180);
-    ctx.fillStyle = "rgba(255,255,255,0.62)";
-    ctx.font = "600 20px Outfit, sans-serif";
-    ctx.fillText("Affordable. Instant. Reliable.", pad, 214);
+    ctx.fillText("CLEAR PRICES — ALL NETWORKS", pad, 150);
+    ctx.fillStyle = "rgba(255,255,255,0.7)";
+    ctx.font = "700 20px Outfit, sans-serif";
+    ctx.fillText("MTN · AirtelTigo · Telecel  ·  MoMo  ·  Fast delivery", pad, 182);
 
     const chips = [
       { label: "WHATSAPP / CALL", value: data.phone || "Add your number", bg: "#0f1720", color: "#fff" },
       { label: "WORKING HOURS", value: data.hours || "8am - 9pm Each day", bg: "#0f1720", color: "#fff" },
       { label: "CHAT ON WHATSAPP", value: "Chat now", bg: "#25d366", color: "#06240f" },
     ];
-    const chipW = (W - pad * 2 - 24) / 3;
+    const chipW = (W - pad * 2 - 20) / 3;
     chips.forEach((chip, i) => {
-      const x = pad + i * (chipW + 12);
-      fillRound(ctx, x, 242, chipW, 96, 18, chip.bg);
-      ctx.fillStyle = "rgba(255,255,255,0.55)";
-      ctx.font = "700 13px Outfit, sans-serif";
+      const x = pad + i * (chipW + 10);
+      fillRound(ctx, x, 206, chipW, 84, 16, chip.bg);
+      ctx.fillStyle = "rgba(255,255,255,0.6)";
+      ctx.font = "800 14px Outfit, sans-serif";
       ctx.textAlign = "left";
-      ctx.fillText(chip.label, x + 18, 272);
+      ctx.fillText(chip.label, x + 16, 234);
       ctx.fillStyle = chip.color;
-      ctx.font = "800 22px Outfit, sans-serif";
-      fitText(ctx, chip.value, chipW - 36, (s) => `800 ${s}px Outfit, sans-serif`);
-      ctx.fillText(chip.value, x + 18, 308);
+      ctx.font = "900 24px Outfit, sans-serif";
+      fitText(ctx, chip.value, chipW - 32, (s) => `900 ${s}px Outfit, sans-serif`);
+      ctx.fillText(chip.value, x + 16, 268);
     });
 
-    const visibleNets = SHOP_NETS.filter((net) => (groups[net.key] || []).length);
-    const tabs = visibleNets.length ? visibleNets : SHOP_NETS;
-    const tabW = (W - pad * 2 - 16 * (tabs.length - 1)) / tabs.length;
-    tabs.forEach((net, i) => {
-      const x = pad + i * (tabW + 16);
-      fillRound(ctx, x, 364, tabW, 70, 16, net.btn);
-      ctx.fillStyle = net.btnInk;
-      ctx.font = "800 24px Montserrat, Outfit, sans-serif";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText(net.tab, x + tabW / 2, 399);
-    });
+    const nets = [
+      { key: "mtn", title: "MTN", bg: COLORS.mtn, ink: "#111", logo: drawMtnLogo },
+      { key: "airteltigo", title: "AIRTELTIGO", bg: COLORS.at, ink: "#fff", logo: drawAtLogo },
+      { key: "telecel", title: "TELECEL", bg: COLORS.telecel, ink: "#fff", logo: drawTelecelLogo },
+    ];
+    const colW = (W - pad * 2 - 24) / 3;
+    const colY = 316;
+    const colH = 860;
 
-    let y = 470;
-    const cols = 4;
-    const gap = 16;
-    const cardW = (W - pad * 2 - gap * (cols - 1)) / cols;
-    const cardH = 208;
-
-    visibleNets.forEach((net) => {
+    nets.forEach((net, i) => {
+      const x = pad + i * (colW + 12);
       const list = groups[net.key] || [];
-      ctx.textAlign = "left";
-      ctx.textBaseline = "alphabetic";
+      fillRound(ctx, x, colY, colW, colH, 28, "#0d1118");
+      strokeRound(ctx, x, colY, colW, colH, 28, net.bg, 4);
+      fillRound(ctx, x + 14, colY + 14, colW - 28, 72, 18, net.bg);
+      net.logo(ctx, x + 52, colY + 50, 28);
       ctx.fillStyle = net.ink;
-      ctx.font = "800 28px Montserrat, Outfit, sans-serif";
-      ctx.fillText(net.title, pad, y);
-      net.key === "mtn" ? drawMtnLogo(ctx, W - pad - 28, y - 12, 24) : net.key === "telecel" ? drawTelecelLogo(ctx, W - pad - 28, y - 12, 24) : drawAtLogo(ctx, W - pad - 28, y - 12, 24);
-      y += 28;
+      ctx.font = "900 22px Montserrat, Outfit, sans-serif";
+      ctx.textAlign = "left";
+      ctx.textBaseline = "middle";
+      ctx.fillText(net.title, x + 92, colY + 50);
 
-      list.forEach((pkg, i) => {
-        const col = i % cols;
-        const row = Math.floor(i / cols);
-        const x = pad + col * (cardW + gap);
-        const cy = y + row * (cardH + gap);
-        fillRound(ctx, x, cy, cardW, cardH, 18, "#0d1118");
-        strokeRound(ctx, x, cy, cardW, cardH, 18, net.color, 3);
-        ctx.textAlign = "left";
-        ctx.textBaseline = "alphabetic";
-        ctx.fillStyle = "#fff";
-        ctx.font = "800 34px Montserrat, Outfit, sans-serif";
-        ctx.fillText(gbLabel(pkg.gb), x + 16, cy + 48);
-        ctx.fillStyle = net.ink;
-        ctx.font = "800 14px Outfit, sans-serif";
-        ctx.fillText(net.name, x + 16, cy + 74);
-        ctx.fillStyle = "#fff";
-        ctx.font = "800 22px Montserrat, Outfit, sans-serif";
-        ctx.fillText(priceLabel(pkg.price, "ghc"), x + 16, cy + 112);
-        fillRound(ctx, x + 14, cy + cardH - 58, cardW - 28, 40, 10, net.btn);
-        ctx.fillStyle = net.btnInk;
-        ctx.font = "800 16px Outfit, sans-serif";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText("BUY NOW", x + cardW / 2, cy + cardH - 38);
-      });
+      ctx.fillStyle = "rgba(255,255,255,0.55)";
+      ctx.font = "800 16px Outfit, sans-serif";
+      ctx.textAlign = "left";
+      ctx.fillText("DATA", x + 22, colY + 118);
+      ctx.textAlign = "right";
+      ctx.fillText("PRICE", x + colW - 22, colY + 118);
 
-      const rows = Math.ceil(list.length / cols);
-      y += rows * (cardH + gap) + 36;
+      drawPriceLines(ctx, list, x + 4, colY + 138, colW - 8, colH - 168, "#ffffff", "ghc");
     });
 
-    if (!visibleNets.length) {
-      ctx.fillStyle = "rgba(255,255,255,0.7)";
-      ctx.font = "700 24px Outfit, sans-serif";
+    if (!nets.some((n) => (groups[n.key] || []).length)) {
+      ctx.fillStyle = "rgba(255,255,255,0.75)";
+      ctx.font = "800 28px Outfit, sans-serif";
       ctx.textAlign = "center";
-      ctx.fillText("Set store prices to fill this flyer.", W / 2, 620);
+      ctx.fillText("Set store prices to fill this flyer.", W / 2, 700);
     }
 
-    drawSiteInfoBar(ctx, height - 148, data, "#0d1118");
-    fillRound(ctx, pad, height - 92, W - pad * 2, 52, 16, accent);
+    drawSiteInfoBar(ctx, H - 122, data, "#0d1118");
+    fillRound(ctx, pad, H - 68, W - pad * 2, 48, 16, accent);
     ctx.fillStyle = onAccent;
-    ctx.font = "700 20px Outfit, sans-serif";
+    ctx.font = "800 22px Outfit, sans-serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     const label = String(data.url || "").replace(/^https?:\/\//, "");
-    fitText(ctx, label, W - pad * 2 - 40, (s) => `700 ${s}px Outfit, sans-serif`);
-    ctx.fillText(label, W / 2, height - 66);
+    fitText(ctx, label, W - pad * 2 - 40, (s) => `800 ${s}px Outfit, sans-serif`);
+    ctx.fillText(label, W / 2, H - 44);
   }
 
   function buildShareMessage(data) {
@@ -762,6 +699,21 @@ window.DataLogsFlyer = (() => {
     });
   }
 
+  function blobToPng(blob) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const bitmap = await createImageBitmap(blob);
+        const c = document.createElement("canvas");
+        c.width = bitmap.width;
+        c.height = bitmap.height;
+        c.getContext("2d").drawImage(bitmap, 0, 0);
+        c.toBlob((png) => (png ? resolve(png) : reject(new Error("Could not convert flyer image."))), "image/png");
+      } catch (err) {
+        reject(err);
+      }
+    });
+  }
+
   function whatsappShareUrl(text) {
     return `https://wa.me/?text=${encodeURIComponent(text)}`;
   }
@@ -784,45 +736,96 @@ window.DataLogsFlyer = (() => {
     area.remove();
   }
 
+  function canSharePayload(payload) {
+    if (!navigator.share) return false;
+    if (!navigator.canShare) return true;
+    try {
+      return navigator.canShare(payload);
+    } catch {
+      return false;
+    }
+  }
+
+  async function tryNativeShareBoth(file, text) {
+    if (!navigator.share) return false;
+    const both = { files: [file], text, title: "DataLogs flyer" };
+    const filesOnly = { files: [file], title: "DataLogs flyer" };
+
+    if (canSharePayload(both)) {
+      await navigator.share(both);
+      return "shared";
+    }
+
+    if (canSharePayload(filesOnly)) {
+      try {
+        await navigator.share(both);
+        return "shared";
+      } catch (err) {
+        if (err?.name === "AbortError") throw err;
+        await copyShareMessage(text);
+        await navigator.share(filesOnly);
+        return "shared-file-text-copied";
+      }
+    }
+
+    return false;
+  }
+
+  async function copyImageAndText(blob, text) {
+    if (!navigator.clipboard?.write || typeof ClipboardItem === "undefined") return false;
+    const plain = new Blob([text], { type: "text/plain" });
+    const attempts = [];
+
+    try {
+      const png = await blobToPng(blob);
+      attempts.push({ "image/png": png, "text/plain": plain });
+      attempts.push({ "image/png": png });
+    } catch {
+      /* jpeg fallback below */
+    }
+    attempts.push({ "image/jpeg": blob, "text/plain": plain });
+    attempts.push({ "image/jpeg": blob });
+
+    for (const types of attempts) {
+      try {
+        await navigator.clipboard.write([new ClipboardItem(types)]);
+        const hasImage = Object.keys(types).some((k) => k.startsWith("image/"));
+        const hasText = "text/plain" in types;
+        if (hasImage && hasText) return "both";
+        if (hasImage) return "image";
+      } catch {
+        /* try next mime combo */
+      }
+    }
+    return false;
+  }
+
   async function shareWithMessage(canvas, message, filename, { openWhatsApp = false } = {}) {
     const text = String(message || "").trim();
     if (!text) throw new Error("Share message is empty.");
     const blob = await canvasToBlob(canvas);
-    const file = new File([blob], filename || "store-flyer.jpg", { type: "image/jpeg" });
+    const name = filename || "store-flyer.jpg";
+    const file = new File([blob], name, { type: "image/jpeg" });
 
-    if (navigator.share) {
-      const payload = { title: "Store flyer", text };
-      const shareData = { files: [file], text };
-      if (navigator.canShare?.(shareData)) payload.files = [file];
-      else if (navigator.canShare?.({ files: [file] })) payload.files = [file];
-      try {
-        await navigator.share(payload);
-        return "shared";
-      } catch (err) {
-        if (err?.name === "AbortError") throw err;
-      }
+    // Never share text-only — always include the flyer image when possible.
+    try {
+      const mode = await tryNativeShareBoth(file, text);
+      if (mode) return mode;
+    } catch (err) {
+      if (err?.name === "AbortError") throw err;
     }
 
-    if (navigator.clipboard?.write && typeof ClipboardItem !== "undefined") {
-      try {
-        await navigator.clipboard.write([
-          new ClipboardItem({
-            "text/plain": new Blob([text], { type: "text/plain" }),
-            "image/jpeg": blob,
-          }),
-        ]);
-        if (openWhatsApp) {
-          window.open(whatsappShareUrl(text), "_blank", "noopener,noreferrer");
-          return "clipboard-whatsapp";
-        }
-        return "clipboard";
-      } catch {
-        /* fall through */
+    const copied = await copyImageAndText(blob, text);
+    if (copied) {
+      if (openWhatsApp) {
+        window.open(whatsappShareUrl(text), "_blank", "noopener,noreferrer");
+        return "clipboard-whatsapp";
       }
+      return "clipboard";
     }
 
     await copyShareMessage(text);
-    await download(canvas, filename);
+    await download(canvas, name);
     if (openWhatsApp) {
       window.open(whatsappShareUrl(text), "_blank", "noopener,noreferrer");
       return "copy-download-whatsapp";

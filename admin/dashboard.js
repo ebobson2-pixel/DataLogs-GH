@@ -150,7 +150,7 @@
       document.getElementById("setting-wa").value = settings?.whatsapp_channel_url || "";
       document.getElementById("setting-support").value = settings?.support_contact || "";
       document.getElementById("setting-support-label").value = settings?.support_label || "Support";
-      document.getElementById("setting-withdraw-threshold").value = settings?.withdrawal_threshold ?? 10;
+      document.getElementById("setting-withdraw-threshold").value = settings?.withdrawal_threshold ?? 13;
       document.getElementById("setting-activation-enabled").checked = !!settings?.agent_activation_fee_enabled;
       document.getElementById("setting-activation-fee").value = settings?.agent_activation_fee ?? 0;
     } catch {
@@ -1425,14 +1425,25 @@
   });
 
   function adminFlyerShareFeedback(errorEl, mode) {
-    if (!errorEl || !mode || mode === "shared") return;
+    if (!errorEl || !mode) return;
     errorEl.hidden = false;
-    if (mode === "clipboard" || mode === "clipboard-whatsapp") {
+    errorEl.style.color = "var(--accent, #22c55e)";
+    if (mode === "shared") {
+      errorEl.textContent = "Shared the flyer image with your message. Choose WhatsApp (or any app) in the share sheet.";
+    } else if (mode === "shared-file-text-copied") {
       errorEl.textContent =
-        "Flyer image and message copied. In WhatsApp, paste into the chat to send both together.";
-    } else if (mode === "copy-download" || mode === "copy-download-whatsapp") {
+        "Flyer image shared. Message is copied — paste it in the same chat if the caption did not appear.";
+    } else if (mode === "clipboard-whatsapp") {
       errorEl.textContent =
-        "Message copied and flyer downloaded. Attach the JPG in WhatsApp — the text is already filled in.";
+        "WhatsApp has your message. Paste in the chat to add the flyer image too.";
+    } else if (mode === "clipboard") {
+      errorEl.textContent = "Flyer image and message copied. Paste into a chat to send both.";
+    } else if (mode === "copy-download-whatsapp") {
+      errorEl.textContent =
+        "Message opened in WhatsApp and flyer downloaded. Attach the JPG in the chat to send both.";
+    } else if (mode === "copy-download") {
+      errorEl.textContent =
+        "Message copied and flyer downloaded. Attach the JPG when you send the message.";
     }
   }
 

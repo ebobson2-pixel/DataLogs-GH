@@ -68,17 +68,19 @@ const DataLogsAPI = (() => {
     return "dashboard.html";
   }
 
-  async function signUp({ name, email, phone, password, role }) {
+  async function signUp({ name, email, phone, password, role, parentAgentId }) {
+    const meta = {
+      full_name: name.trim(),
+      phone: phone.trim(),
+      role: role === "agent" ? "agent" : "customer",
+    };
+    if (role === "agent" && parentAgentId) {
+      meta.parent_agent_id = parentAgentId;
+    }
     const { data, error } = await client.auth.signUp({
       email: email.trim(),
       password,
-      options: {
-        data: {
-          full_name: name.trim(),
-          phone: phone.trim(),
-          role: role === "agent" ? "agent" : "customer",
-        },
-      },
+      options: { data: meta },
     });
     if (error) return { ok: false, message: error.message };
     return { ok: true, data };
@@ -114,15 +116,37 @@ const DataLogsAPI = (() => {
     const rows = data || [];
     const useCustom = applyCustomPrices ?? !includeInactive;
     let customMap = new Map();
+    let profile = null;
     if (useCustom) {
       try {
         const user = await getUser();
         if (user) {
-          const { data: custom } = await client
-            .from("user_custom_prices")
-            .select("package_id, agent_price")
-            .eq("user_id", user.id);
-          customMap = new Map((custom || []).map((row) => [row.package_id, Number(row.agent_price)]));
+          profile = await getProfile().catch(() => null);
+          if (profile?.parent_agent_id) {
+            const [{ data: subPrices }, { data: parentCustom }] = await Promise.all([
+              client
+                .from("subagent_package_prices")
+                .select("package_id, agent_price")
+                .eq("parent_id", profile.parent_agent_id),
+              client
+                .from("user_custom_prices")
+                .select("package_id, agent_price")
+                .eq("user_id", profile.parent_agent_id),
+            ]);
+            const parentMap = new Map((parentCustom || []).map((row) => [row.package_id, Number(row.agent_price)]));
+            customMap = new Map((subPrices || []).map((row) => [row.package_id, Number(row.agent_price)]));
+            rows.forEach((row) => {
+              if (!customMap.has(row.id) && parentMap.has(row.id)) {
+                customMap.set(row.id, parentMap.get(row.id));
+              }
+            });
+          } else {
+            const { data: custom } = await client
+              .from("user_custom_prices")
+              .select("package_id, agent_price")
+              .eq("user_id", user.id);
+            customMap = new Map((custom || []).map((row) => [row.package_id, Number(row.agent_price)]));
+          }
         }
       } catch {
         /* guests have no custom prices */
@@ -133,6 +157,7 @@ const DataLogsAPI = (() => {
       if (customMap.has(row.id)) {
         mapped.agentPrice = customMap.get(row.id);
         mapped.customPriced = true;
+        if (profile?.parent_agent_id) mapped.subagentPriced = true;
       }
       return mapped;
     });
@@ -434,6 +459,57 @@ const DataLogsAPI = (() => {
       results.push(row);
     }
     return results;
+  }
+
+  async function setAgentSubagentsEnabled(enabled) {
+    const { data, error } = await client.rpc("set_agent_subagents_enabled", {
+      p_enabled: !!enabled,
+    });
+    if (error) throw error;
+    return data;
+  }
+
+  async function setSubagentPackagePrice(packageId, agentPrice) {
+    const { data, error } = await client.rpc("set_subagent_package_price", {
+      p_package_id: packageId,
+      p_agent_price: Number(agentPrice),
+    });
+    if (error) throw error;
+    return data;
+  }
+
+  async function setSubagentPackagePrices(items) {
+    const list = Array.isArray(items) ? items : [];
+    const results = [];
+    for (const item of list) {
+      results.push(await setSubagentPackagePrice(item.packageId, item.agentPrice));
+    }
+    return results;
+  }
+
+  async function getSubagentPackagePrices(parentId) {
+    const id = parentId || (await getProfile())?.id;
+    if (!id) return [];
+    const { data, error } = await client
+      .from("subagent_package_prices")
+      .select("*")
+      .eq("parent_id", id);
+    if (error) throw error;
+    return data || [];
+  }
+
+  async function listMySubagents() {
+    const { data, error } = await client.rpc("list_my_subagents");
+    if (error) throw error;
+    return typeof data === "string" ? JSON.parse(data) : data || [];
+  }
+
+  async function resolveSubagentInvite(ref) {
+    const { data, error } = await client.rpc("resolve_subagent_invite", {
+      p_ref: String(ref || "").trim(),
+    });
+    if (error) throw error;
+    return typeof data === "string" ? JSON.parse(data) : data;
   }
 
   async function upsertPackages(payloads) {
@@ -787,6 +863,12 @@ const DataLogsAPI = (() => {
     getAgentStorePrices,
     setAgentPackageProfit,
     setAgentPackageProfits,
+    setAgentSubagentsEnabled,
+    setSubagentPackagePrice,
+    setSubagentPackagePrices,
+    getSubagentPackagePrices,
+    listMySubagents,
+    resolveSubagentInvite,
     trackOrdersByPhone,
     trackOrderByCode,
     trendingPackages,

@@ -2,7 +2,7 @@
   if (!document.body.classList.contains("home-page")) return;
 
   const nodes = document.querySelectorAll(
-    ".home-networks .reveal, .home-buy-data .reveal, .home-why .reveal, .home-cta-section .reveal, .home-buy-again .reveal"
+    ".home-tools .reveal, .home-networks .reveal, .home-about .reveal, .home-buy-data .reveal, .home-features .reveal, .home-how .reveal, .home-guide .reveal, .home-expect .reveal, .home-why .reveal, .home-faq .reveal, .home-cta-section .reveal, .home-buy-again .reveal"
   );
   if ("IntersectionObserver" in window) {
     const io = new IntersectionObserver(
@@ -21,6 +21,9 @@
   }
 
   document.getElementById("home-track-btn")?.addEventListener("click", () => {
+    window.DataLogsTrack?.open?.();
+  });
+  document.getElementById("home-track-tool-btn")?.addEventListener("click", () => {
     window.DataLogsTrack?.open?.();
   });
 

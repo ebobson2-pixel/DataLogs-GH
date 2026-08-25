@@ -64,6 +64,7 @@
 
         <form class="plug-form form" id="signup-form" data-auth-form="signup">
           <p class="plug-signup-lede signup-lede">Create your vendor account in under a minute.</p>
+          <p class="hint" id="subagent-invite-banner" hidden style="margin-bottom:12px"></p>
           <label>Full name<input type="text" name="name" required placeholder="Kwame Asante"></label>
           <label>Email<input type="email" name="email" required placeholder="you@email.com"></label>
           <label>Phone<input type="tel" name="phone" required placeholder="024 000 0000"></label>
@@ -90,7 +91,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="../js/config.js"></script>
   <script src="../js/data.js?v=5"></script>
-  <script src="../js/api.js?v=14"></script>
+  <script src="../js/api.js?v=18"></script>
   <script src="../js/whatsapp-fab.js?v=4"></script>
   <script>
     (async function () {
@@ -100,13 +101,47 @@
         return;
       }
 
+      let inviteParentId = null;
+      const inviteRef = new URLSearchParams(location.search).get("ref");
+      const inviteBanner = document.getElementById("subagent-invite-banner");
+
+      async function paintInvite() {
+        if (!inviteRef) return;
+        try {
+          const invite = await DataLogsAPI.resolveSubagentInvite(inviteRef);
+          if (!invite?.ok) {
+            if (inviteBanner) {
+              inviteBanner.hidden = false;
+              inviteBanner.style.color = "var(--danger, #c0392b)";
+              inviteBanner.textContent = invite?.message || "This invite link is invalid.";
+            }
+            return;
+          }
+          inviteParentId = invite.parent_agent_id;
+          if (inviteBanner) {
+            inviteBanner.hidden = false;
+            inviteBanner.style.color = "";
+            inviteBanner.textContent = `Registering as a reseller under ${invite.parent_name}. You will sell with your own store and earn your markup.`;
+          }
+          const lede = document.querySelector("#signup-form .signup-lede");
+          if (lede) lede.textContent = "Create your reseller account under this agent.";
+          document.querySelector('[data-auth-tab="signup"]')?.click();
+        } catch (err) {
+          if (inviteBanner) {
+            inviteBanner.hidden = false;
+            inviteBanner.style.color = "var(--danger, #c0392b)";
+            inviteBanner.textContent = err.message || "Could not load this invite.";
+          }
+        }
+      }
+
       async function paintFeeHint() {
         try {
           const settings = await DataLogsAPI.getSiteSettings();
           const enabled = !!settings?.agent_activation_fee_enabled;
           const fee = Number(settings?.agent_activation_fee || 0);
           const lede = document.querySelector("#signup-form .signup-lede");
-          if (!lede) return;
+          if (!lede || inviteParentId) return;
           if (enabled && fee > 0) {
             lede.textContent = `Create your account, then pay ${formatCedi(fee)} once to unlock the agent dashboard.`;
           } else {
@@ -116,6 +151,7 @@
           /* keep default copy */
         }
       }
+      await paintInvite();
       paintFeeHint();
 
       const blocked = new URLSearchParams(location.search).get("blocked");
@@ -166,7 +202,17 @@
       document.getElementById("signup-form").addEventListener("submit", async (event) => {
         event.preventDefault();
         const data = Object.fromEntries(new FormData(event.target).entries());
-        const result = await DataLogsAPI.signUp({ ...data, role: "agent" });
+        if (inviteRef && !inviteParentId) {
+          const error = document.getElementById("signup-error");
+          error.hidden = false;
+          error.textContent = "This invite link is invalid or disabled. Ask your agent for a new link.";
+          return;
+        }
+        const result = await DataLogsAPI.signUp({
+          ...data,
+          role: "agent",
+          parentAgentId: inviteParentId || undefined,
+        });
         const error = document.getElementById("signup-error");
         if (!result.ok) {
           error.hidden = false;

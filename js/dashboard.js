@@ -24,6 +24,7 @@
     wholesale: ["Buy wholesale", "Subsidized agent rates"],
     orders: ["Orders", "Store sales & wholesale"],
     customers: ["Customers", "People who bought from your store"],
+    subagents: ["Subagents", "Recruit resellers and set their cost prices"],
     wallet: ["My Wallet", "Commissions and balance"],
     withdrawal: ["Withdrawal", "Cash out to MoMo"],
     developer: ["API keys", "Connect your own website"],
@@ -32,10 +33,13 @@
 
   let wholesaleFilter = "all";
   let pricingFilter = "mtn";
+  let subagentPricingFilter = "mtn";
   let ordersFilter = "all";
   let packages = [];
   let priceMap = new Map();
+  let subagentPriceMap = new Map();
   let storeCache = null;
+  const isSubagent = !!profile.parent_agent_id;
 
   document.getElementById("user-name").textContent = profile.full_name || "Agent";
   document.getElementById("user-email").textContent = profile.email || profile.authEmail || "";
@@ -191,6 +195,7 @@
     if (id === "customers") renderCustomers();
     if (id === "wallet") renderWallet();
     if (id === "withdrawal") renderWithdrawals();
+    if (id === "subagents") renderSubagents();
     if (id === "developer") renderApiKeys();
     if (id === "overview") renderOverview();
     if (id === "flyer") renderFlyerPreview();
@@ -728,6 +733,7 @@
     document.getElementById("preview-link").href = url;
     openBtn.href = url;
     paintHeroStore(storeCache);
+    paintSubagentInvite();
   }
 
   function isStoreSale(order) {
@@ -1391,7 +1397,7 @@
       DataLogsAPI.getSiteSettings().catch(() => null),
       DataLogsAPI.getWallet().catch(() => null),
     ]);
-    const threshold = Number(settings?.withdrawal_threshold ?? 10);
+    const threshold = Number(settings?.withdrawal_threshold ?? 13);
     const hint = document.getElementById("withdraw-hint");
     const amountInput = document.getElementById("withdraw-amount");
     if (hint) {
@@ -1642,15 +1648,25 @@
   });
 
   function flyerShareFeedback(errorEl, mode) {
-    if (!errorEl || !mode || mode === "shared") return;
+    if (!errorEl || !mode) return;
     errorEl.hidden = false;
-    errorEl.style.color = mode.startsWith("clipboard") ? "var(--accent, #22c55e)" : "";
-    if (mode === "clipboard" || mode === "clipboard-whatsapp") {
+    errorEl.style.color = "var(--accent, #22c55e)";
+    if (mode === "shared") {
+      errorEl.textContent = "Shared the flyer image with your message. Choose WhatsApp (or any app) in the share sheet.";
+    } else if (mode === "shared-file-text-copied") {
       errorEl.textContent =
-        "Flyer image and message copied. In WhatsApp, paste into the chat to send both together.";
-    } else if (mode === "copy-download" || mode === "copy-download-whatsapp") {
+        "Flyer image shared. Message is copied — paste it in the same chat if the caption did not appear.";
+    } else if (mode === "clipboard-whatsapp") {
       errorEl.textContent =
-        "Message copied and flyer downloaded. Attach the JPG in WhatsApp — the text is already filled in.";
+        "WhatsApp has your message. Paste in the chat to add the flyer image too.";
+    } else if (mode === "clipboard") {
+      errorEl.textContent = "Flyer image and message copied. Paste into a chat to send both.";
+    } else if (mode === "copy-download-whatsapp") {
+      errorEl.textContent =
+        "Message opened in WhatsApp and flyer downloaded. Attach the JPG in the chat to send both.";
+    } else if (mode === "copy-download") {
+      errorEl.textContent =
+        "Message copied and flyer downloaded. Attach the JPG when you send the message.";
     }
   }
 
@@ -1758,15 +1774,282 @@
     if (panel?.classList.contains("active")) renderFlyerPreview();
   }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-accent"] });
 
+  function subagentInviteUrl() {
+    const ref = storeCache?.slug || profile.id;
+    const url = new URL("auth.html", window.location.href);
+    url.searchParams.set("ref", ref);
+    return url.toString();
+  }
+
+  function paintSubagentInvite() {
+    const wrap = document.getElementById("subagents-invite-wrap");
+    const input = document.getElementById("subagents-invite-link");
+    const hint = document.getElementById("subagents-invite-hint");
+    const enabled = !!document.getElementById("subagents-enabled-toggle")?.checked;
+    if (!wrap) return;
+    wrap.hidden = !enabled;
+    if (!enabled) return;
+    const link = subagentInviteUrl();
+    if (input) input.value = link;
+    if (hint) {
+      hint.textContent = storeCache?.slug
+        ? "Share this link so new agents register under your store."
+        : "Save your mini store to get a short invite slug. Your agent id works until then.";
+    }
+  }
+
+  function currentSubagentCost(pkg) {
+    if (subagentPriceMap.has(pkg.id)) return roundCedi(Number(subagentPriceMap.get(pkg.id)));
+    return roundCedi(pkg.agentPrice);
+  }
+
+  function updateSubagentRowEarn(packageId) {
+    const pkg = packages.find((p) => p.id === packageId);
+    const input = document.querySelector(`[data-sub-cost-input="${packageId}"]`);
+    const earnEl = document.querySelector(`[data-sub-earn-preview="${packageId}"]`);
+    if (!pkg || !input || !earnEl) return;
+    const cost = Number(input.value);
+    if (!Number.isFinite(cost)) {
+      earnEl.textContent = "\u2014";
+      return;
+    }
+    const earn = roundCedi(cost - pkg.agentPrice);
+    earnEl.textContent = formatCedi(earn);
+    earnEl.classList.toggle("is-low", earn < 0);
+  }
+
+  function renderSubagentPricing() {
+    const body = document.getElementById("subagent-pricing-body");
+    if (!body || isSubagent) return;
+    const list = packagesFor(subagentPricingFilter, packages).slice().sort((a, b) => a.gb - b.gb);
+    if (!list.length) {
+      body.innerHTML = `<tr><td colspan="4">No ${NETWORKS[subagentPricingFilter]?.name || subagentPricingFilter} bundles yet.</td></tr>`;
+      return;
+    }
+    body.innerHTML = list
+      .map((item) => {
+        const cost = currentSubagentCost(item);
+        const earn = roundCedi(cost - item.agentPrice);
+        return `
+          <tr>
+            <td>${item.gb}GB</td>
+            <td>${formatCedi(item.agentPrice)}</td>
+            <td>
+              <input class="markup-sell-input" data-sub-cost-input="${item.id}" type="number" min="0" step="0.01" value="${cost.toFixed(2)}">
+            </td>
+            <td class="markup-profit${earn < 0 ? " is-low" : ""}" data-sub-earn-preview="${item.id}">${formatCedi(earn)}</td>
+          </tr>`;
+      })
+      .join("");
+  }
+
+  async function renderSubagentsList() {
+    const body = document.getElementById("subagents-body");
+    const empty = document.getElementById("subagents-empty");
+    if (!body || isSubagent) return;
+    try {
+      const list = await DataLogsAPI.listMySubagents();
+      if (!list.length) {
+        body.innerHTML = "";
+        if (empty) empty.hidden = false;
+        return;
+      }
+      if (empty) empty.hidden = true;
+      body.innerHTML = list
+        .map((row) => {
+          const storeLabel = row.store_slug
+            ? `<a href="${escapeHtml(DataLogsAPI.storePublicUrl(row.store_slug))}" target="_blank" rel="noopener">${escapeHtml(row.store_name || row.store_slug)}</a>`
+            : "—";
+          return `
+            <tr>
+              <td>${escapeHtml(row.full_name || "Agent")}</td>
+              <td>${escapeHtml(row.phone || row.email || "—")}</td>
+              <td>${storeLabel}</td>
+              <td>${formatCedi(row.wallet_balance || 0)}</td>
+              <td>${row.created_at ? new Date(row.created_at).toLocaleDateString() : "—"}</td>
+            </tr>`;
+        })
+        .join("");
+    } catch (err) {
+      body.innerHTML = `<tr><td colspan="5">${escapeHtml(err.message || "Could not load subagents.")}</td></tr>`;
+      if (empty) empty.hidden = true;
+    }
+  }
+
+  async function renderSubagents() {
+    const parentOnly = document.getElementById("subagents-parent-only");
+    const childNote = document.getElementById("subagents-child-note");
+    const pricingCard = document.getElementById("subagents-pricing-card");
+    const listCard = document.getElementById("subagents-list-card");
+    const toggle = document.getElementById("subagents-enabled-toggle");
+
+    if (isSubagent) {
+      if (parentOnly) parentOnly.hidden = true;
+      if (pricingCard) pricingCard.hidden = true;
+      if (listCard) listCard.hidden = true;
+      if (childNote) childNote.hidden = false;
+      const label = document.getElementById("subagents-parent-label");
+      if (label) label.textContent = `Parent agent id: ${profile.parent_agent_id}`;
+      return;
+    }
+
+    if (parentOnly) parentOnly.hidden = false;
+    if (pricingCard) pricingCard.hidden = false;
+    if (listCard) listCard.hidden = false;
+    if (childNote) childNote.hidden = true;
+    if (toggle) toggle.checked = !!profile.subagents_enabled;
+    paintSubagentInvite();
+    renderSubagentPricing();
+    await renderSubagentsList();
+  }
+
+  document.getElementById("subagents-enabled-toggle")?.addEventListener("change", async (event) => {
+    const error = document.getElementById("subagents-toggle-error");
+    if (error) error.hidden = true;
+    try {
+      const updated = await DataLogsAPI.setAgentSubagentsEnabled(event.target.checked);
+      profile.subagents_enabled = !!updated?.subagents_enabled;
+      event.target.checked = !!profile.subagents_enabled;
+      paintSubagentInvite();
+    } catch (err) {
+      event.target.checked = !!profile.subagents_enabled;
+      if (error) {
+        error.hidden = false;
+        error.textContent = err.message || "Could not update setting.";
+      }
+    }
+  });
+
+  document.getElementById("subagents-copy-invite")?.addEventListener("click", async () => {
+    const input = document.getElementById("subagents-invite-link");
+    const hint = document.getElementById("subagents-invite-hint");
+    const value = input?.value || subagentInviteUrl();
+    try {
+      await navigator.clipboard.writeText(value);
+      if (hint) hint.textContent = "Invite link copied.";
+    } catch {
+      if (input) {
+        input.focus();
+        input.select();
+      }
+      if (hint) hint.textContent = "Copy the link from the field above.";
+    }
+  });
+
+  document.getElementById("subagent-pricing-filters")?.addEventListener("click", (event) => {
+    const btn = event.target.closest("[data-spfilter]");
+    if (!btn) return;
+    subagentPricingFilter = btn.dataset.spfilter;
+    document.querySelectorAll("#subagent-pricing-filters .filter-btn").forEach((el) => {
+      el.classList.toggle("active", el === btn);
+    });
+    renderSubagentPricing();
+  });
+
+  document.getElementById("subagent-markup-apply")?.addEventListener("click", () => {
+    const error = document.getElementById("subagent-pricing-error");
+    const success = document.getElementById("subagent-pricing-success");
+    if (error) error.hidden = true;
+    if (success) success.hidden = true;
+    const raw = String(document.getElementById("subagent-markup-percent")?.value || "")
+      .replace("%", "")
+      .replace(/\s/g, "")
+      .trim();
+    const percent = Number(raw);
+    if (!Number.isFinite(percent)) {
+      if (error) {
+        error.hidden = false;
+        error.textContent = "Enter a markup % such as +10.";
+      }
+      return;
+    }
+    const list = packagesFor(subagentPricingFilter, packages);
+    const rate = percent / 100;
+    list.forEach((pkg) => {
+      const input = document.querySelector(`[data-sub-cost-input="${pkg.id}"]`);
+      if (!input) return;
+      let cost = roundCedi(pkg.agentPrice + pkg.agentPrice * rate);
+      if (cost < pkg.agentPrice) cost = roundCedi(pkg.agentPrice);
+      input.value = cost.toFixed(2);
+      updateSubagentRowEarn(pkg.id);
+    });
+  });
+
+  document.getElementById("subagent-markup-save")?.addEventListener("click", async () => {
+    const error = document.getElementById("subagent-pricing-error");
+    const success = document.getElementById("subagent-pricing-success");
+    if (error) error.hidden = true;
+    if (success) success.hidden = true;
+    const inputs = [...document.querySelectorAll("#subagent-pricing-body [data-sub-cost-input]")];
+    if (!inputs.length) {
+      if (error) {
+        error.hidden = false;
+        error.textContent = "No bundles to save for this network.";
+      }
+      return;
+    }
+    const items = [];
+    for (const input of inputs) {
+      const pkg = packages.find((p) => p.id === input.dataset.subCostInput);
+      const cost = Number(input.value);
+      if (!pkg || !Number.isFinite(cost)) {
+        if (error) {
+          error.hidden = false;
+          error.textContent = "Enter a valid cost for every bundle.";
+        }
+        return;
+      }
+      if (cost < pkg.agentPrice) {
+        if (error) {
+          error.hidden = false;
+          error.textContent = "Subagent cost cannot be below your base price.";
+        }
+        return;
+      }
+      items.push({ packageId: pkg.id, agentPrice: roundCedi(cost) });
+    }
+    const btn = document.getElementById("subagent-markup-save");
+    try {
+      if (btn) btn.disabled = true;
+      await DataLogsAPI.setSubagentPackagePrices(items);
+      items.forEach((item) => subagentPriceMap.set(item.packageId, item.agentPrice));
+      if (success) {
+        success.hidden = false;
+        success.textContent = "Subagent prices saved.";
+      }
+      renderSubagentPricing();
+    } catch (err) {
+      if (error) {
+        error.hidden = false;
+        error.textContent = err.message || "Could not save subagent prices.";
+      }
+    } finally {
+      if (btn) btn.disabled = false;
+    }
+  });
+
+  document.getElementById("subagent-pricing-body")?.addEventListener("input", (event) => {
+    const input = event.target.closest("[data-sub-cost-input]");
+    if (!input) return;
+    updateSubagentRowEarn(input.dataset.subCostInput);
+  });
+
   // Overview labels already set in HTML
   try {
     packages = await DataLogsAPI.fetchPackages();
     window.__PACKAGES = packages;
     const prices = await DataLogsAPI.getAgentStorePrices(profile.id);
     priceMap = new Map(prices.map((p) => [p.package_id, Number(p.profit)]));
+    if (!isSubagent) {
+      const subPrices = await DataLogsAPI.getSubagentPackagePrices(profile.id).catch(() => []);
+      subagentPriceMap = new Map(subPrices.map((p) => [p.package_id, Number(p.agent_price)]));
+    }
     await refreshStoreUI();
   } catch (err) {
     console.error(err);
+  }
+  if (isSubagent) {
+    document.getElementById("nav-subagents")?.classList.add("is-subagent-view");
   }
   try {
     await renderOverview();
@@ -1783,6 +2066,7 @@
   await renderWallet();
   await renderWithdrawals();
   await renderApiKeys();
+  await renderSubagents().catch(() => {});
   if (window.DataLogsNotify) {
     DataLogsNotify.init("#dash-topbar-end");
   }
