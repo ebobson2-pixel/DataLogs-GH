@@ -475,12 +475,37 @@
     const packagesBody = document.getElementById("packages-body");
     if (packagesBody) packagesBody.innerHTML = `<tr><td colspan="6">${escapeHtml(text)}</td></tr>`;
     const ordersBody = document.getElementById("orders-body");
-    if (ordersBody) ordersBody.innerHTML = `<tr><td colspan="12">${escapeHtml(text)}</td></tr>`;
+    if (ordersBody) ordersBody.innerHTML = `<tr><td colspan="13">${escapeHtml(text)}</td></tr>`;
     const storesBody = document.getElementById("stores-body");
     if (storesBody) storesBody.innerHTML = `<tr><td colspan="5">${escapeHtml(text)}</td></tr>`;
   }
 
-  function paintDashboard({ users, packages, orders, stores }) {
+  function paintPlatformStats(stats) {
+    if (!stats) {
+      const paid = ordersCache.filter((o) => o.payment_status === "paid");
+      stats = {
+        platform_earnings: paid.reduce((sum, o) => sum + Number(o.platform_margin || 0), 0),
+        order_margins: paid.reduce((sum, o) => sum + Number(o.platform_margin || 0), 0),
+        activation_fees: 0,
+        refunds: 0,
+        gross_customer_payments: paid.reduce((sum, o) => sum + Number(o.amount_paid || 0), 0),
+        paid_orders: paid.length,
+      };
+    }
+    const earnings = Number(stats.platform_earnings) || 0;
+    const gross = Number(stats.gross_customer_payments) || 0;
+    const margins = Number(stats.order_margins) || 0;
+    const activation = Number(stats.activation_fees) || 0;
+    const refunds = Number(stats.refunds) || 0;
+    document.getElementById("stat-revenue").textContent = formatCedi(earnings);
+    document.getElementById("stat-gross").textContent = formatCedi(gross);
+    document.getElementById("stat-margin").textContent = formatCedi(margins);
+    document.getElementById("stat-activation").textContent = formatCedi(activation);
+    document.getElementById("stat-refunds").textContent = formatCedi(refunds);
+    document.getElementById("stat-paid-orders").textContent = String(stats.paid_orders ?? 0);
+  }
+
+  function paintDashboard({ users, packages, orders, stores, platformStats }) {
     usersCache = users || [];
     packagesCache = packages || [];
     ordersCache = orders || [];
@@ -490,21 +515,18 @@
     document.getElementById("stat-users").textContent = String(usersCache.length);
     document.getElementById("stat-packages").textContent = String(packagesCache.length);
     document.getElementById("stat-orders").textContent = String(ordersCache.length);
-    const revenue = ordersCache
-      .filter((o) => o.payment_status === "paid")
-      .reduce((sum, o) => sum + Number(o.amount_paid || 0), 0);
-    document.getElementById("stat-revenue").textContent = formatCedi(revenue);
+    paintPlatformStats(platformStats);
 
     const retryable = ordersCache.filter((o) => o.retryable && o.fail_reason === "low_balance");
     document.getElementById("stat-retry").textContent = String(retryable.length);
     renderAdminOrders();
 
     document.getElementById("overview-orders").innerHTML = ordersCache.length
-      ? `<div class="table-wrap"><table class="orders-table"><thead><tr><th>Code</th><th>Source</th><th>Package</th><th>Paid</th><th>Delivery</th><th>Date</th><th>Time</th></tr></thead><tbody>${ordersCache
+      ? `<div class="table-wrap"><table class="orders-table"><thead><tr><th>Code</th><th>Source</th><th>Package</th><th>Paid</th><th>Platform</th><th>Delivery</th><th>Date</th><th>Time</th></tr></thead><tbody>${ordersCache
           .slice(0, 8)
           .map((o) => {
             const when = formatOrderDateTime(o.created_at);
-            return `<tr><td>${o.order_code}</td><td>${orderSourceLabel(o)}</td><td>${NETWORKS[o.network]?.name || o.network} ${o.gb}GB</td><td>${formatCedi(o.amount_paid)}</td><td>${o.delivery_status}</td><td>${when.date}</td><td>${when.time}</td></tr>`;
+            return `<tr><td>${o.order_code}</td><td>${orderSourceLabel(o)}</td><td>${NETWORKS[o.network]?.name || o.network} ${o.gb}GB</td><td>${formatCedi(o.amount_paid)}</td><td>${formatCedi(o.platform_margin || 0)}</td><td>${o.delivery_status}</td><td>${when.date}</td><td>${when.time}</td></tr>`;
           })
           .join("")}</tbody></table></div>`
       : `<div class="empty-state">No orders yet.</div>`;
@@ -554,6 +576,7 @@
     let orders = [];
     let stores = [];
     const rpcP = withTimeout(DataLogsAPI.adminDashboardData(), 8000);
+    const statsP = withTimeout(DataLogsAPI.adminPlatformStats(), 8000);
     const usersP = withTimeout(DataLogsAPI.allUsers(), 8000);
     const packagesP = withTimeout(
       DataLogsAPI.fetchPackages({ includeInactive: true, applyCustomPrices: false }),
@@ -561,12 +584,18 @@
     );
     const ordersP = withTimeout(DataLogsAPI.allOrders(), 8000);
     const storesP = withTimeout(DataLogsAPI.allStores(), 8000);
+    let platformStats = null;
     try {
       const bundle = await rpcP;
       users = bundle.users || [];
       packages = (bundle.packages || []).map(mapAdminPackage);
       orders = bundle.orders || [];
       stores = bundle.stores || [];
+      try {
+        platformStats = await statsP;
+      } catch {
+        platformStats = null;
+      }
     } catch (bundleErr) {
       const results = await Promise.allSettled([usersP, packagesP, ordersP, storesP]);
       const [usersRes, packagesRes, ordersRes, storesRes] = results;
@@ -582,7 +611,7 @@
     }
 
     try {
-      paintDashboard({ users, packages, orders, stores });
+      paintDashboard({ users, packages, orders, stores, platformStats });
     } catch (err) {
       showLoadError(err.message || "Could not render dashboard data.");
       return;
@@ -633,6 +662,7 @@
           <td>${NETWORKS[o.network]?.name || o.network} ${o.gb} GB</td>
           <td>${escapeHtml(o.recipient_number)}</td>
           <td>${formatCedi(o.amount_paid)}</td>
+          <td>${formatCedi(o.platform_margin || 0)}</td>
           <td>${o.payment_status}</td>
           <td>
             <select data-delivery="${o.id}">
@@ -648,7 +678,7 @@
         </tr>`;
           })
           .join("")
-      : `<tr><td colspan="12">No orders in this view.</td></tr>`;
+      : `<tr><td colspan="13">No orders in this view.</td></tr>`;
   }
 
   async function showUserDetail(userId) {
@@ -1543,6 +1573,40 @@
     } catch (err) {
       error.hidden = false;
       error.textContent = err.message || "Could not download the flyer.";
+    }
+  });
+
+  document.getElementById("reset-platform-revenue")?.addEventListener("click", async () => {
+    const msg = document.getElementById("reset-platform-revenue-msg");
+    if (msg) msg.hidden = true;
+    if (!window.confirm("Clear all logged platform earnings? Orders and payments stay — only the earnings log resets to GH₵ 0.")) {
+      return;
+    }
+    try {
+      await DataLogsAPI.resetPlatformRevenue();
+      ordersCache = ordersCache.map((o) => ({ ...o, platform_margin: 0 }));
+      paintPlatformStats({
+        platform_earnings: 0,
+        order_margins: 0,
+        activation_fees: 0,
+        refunds: 0,
+        gross_customer_payments: ordersCache
+          .filter((o) => o.payment_status === "paid")
+          .reduce((sum, o) => sum + Number(o.amount_paid || 0), 0),
+        paid_orders: ordersCache.filter((o) => o.payment_status === "paid").length,
+      });
+      renderAdminOrders();
+      if (msg) {
+        msg.hidden = false;
+        msg.style.color = "var(--success)";
+        msg.textContent = "Earnings log reset. Platform earnings are now GH₵ 0.00. New orders will log margin again.";
+      }
+    } catch (err) {
+      if (msg) {
+        msg.hidden = false;
+        msg.style.color = "var(--danger)";
+        msg.textContent = err.message || "Could not reset earnings. Apply the platform revenue SQL first.";
+      }
     }
   });
 

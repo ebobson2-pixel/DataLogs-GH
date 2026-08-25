@@ -282,6 +282,10 @@ const DataLogsAPI = (() => {
       p_recipient_number: recipientNumber,
     });
     if (error) throw error;
+    // Start provider send immediately; checkout may also await fulfill (idempotent).
+    if (data?.id) {
+      fulfillOrder(data.id).catch(() => {});
+    }
     return data;
   }
 
@@ -377,6 +381,18 @@ const DataLogsAPI = (() => {
     if (error) throw error;
     const payload = typeof data === "string" ? JSON.parse(data) : data;
     return payload || { users: [], packages: [], orders: [], stores: [] };
+  }
+
+  async function adminPlatformStats() {
+    const { data, error } = await client.rpc("admin_platform_stats");
+    if (error) throw error;
+    return typeof data === "string" ? JSON.parse(data) : data || {};
+  }
+
+  async function resetPlatformRevenue() {
+    const { data, error } = await client.rpc("reset_platform_revenue");
+    if (error) throw error;
+    return typeof data === "string" ? JSON.parse(data) : data || {};
   }
 
   async function getWallet(agentId) {
@@ -847,6 +863,8 @@ const DataLogsAPI = (() => {
     updateUserRole,
     allStores,
     adminDashboardData,
+    adminPlatformStats,
+    resetPlatformRevenue,
     getWallet,
     getWalletTransactions,
     getWithdrawals,

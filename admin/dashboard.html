@@ -70,9 +70,24 @@
             <article class="stat-card"><span>Users</span><strong id="stat-users">0</strong></article>
             <article class="stat-card"><span>Packages</span><strong id="stat-packages">0</strong></article>
             <article class="stat-card"><span>Orders</span><strong id="stat-orders">0</strong></article>
-            <article class="stat-card"><span>Revenue</span><strong id="stat-revenue">GH&#8373; 0.00</strong></article>
+            <article class="stat-card"><span>Platform earnings</span><strong id="stat-revenue">GH&#8373; 0.00</strong></article>
+            <article class="stat-card"><span>Gross sales</span><strong id="stat-gross">GH&#8373; 0.00</strong></article>
             <article class="stat-card"><span>Provider wallet</span><strong id="stat-provider">GH&#8373; &mdash;</strong></article>
             <article class="stat-card"><span>Needs retry</span><strong id="stat-retry">0</strong></article>
+          </div>
+          <div class="panel-card" id="earnings-breakdown-card">
+            <h3>Earnings breakdown</h3>
+            <p class="hint">Only platform margin and activation fees count as your earnings. Paystack fees, agent profits, and wallet top-ups are excluded.</p>
+            <div class="stat-grid" style="margin-top:12px">
+              <article class="stat-card"><span>Data margin</span><strong id="stat-margin">GH&#8373; 0.00</strong></article>
+              <article class="stat-card"><span>Activation fees</span><strong id="stat-activation">GH&#8373; 0.00</strong></article>
+              <article class="stat-card"><span>Refunds</span><strong id="stat-refunds">GH&#8373; 0.00</strong></article>
+              <article class="stat-card"><span>Paid orders</span><strong id="stat-paid-orders">0</strong></article>
+            </div>
+            <div class="hero-actions" style="margin-top:14px">
+              <button class="btn btn-ghost" type="button" id="reset-platform-revenue">Reset earnings log</button>
+            </div>
+            <p class="hint" id="reset-platform-revenue-msg" hidden style="margin-top:8px"></p>
           </div>
           <div class="panel-card">
             <h3>Latest orders</h3>
@@ -165,6 +180,7 @@
                     <th>Package</th>
                     <th>Number</th>
                     <th>Paid</th>
+                    <th>Platform</th>
                     <th>Payment</th>
                     <th>Delivery</th>
                     <th>Provider</th>
@@ -173,7 +189,7 @@
                     <th></th>
                   </tr>
                 </thead>
-                <tbody id="orders-body"><tr><td colspan="12">Loading&hellip;</td></tr></tbody>
+                <tbody id="orders-body"><tr><td colspan="13">Loading&hellip;</td></tr></tbody>
               </table>
             </div>
           </div>
@@ -499,13 +515,13 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="../js/config.js"></script>
   <script src="../js/data.js?v=5"></script>
-  <script src="../js/api.js?v=19"></script>
+  <script src="../js/api.js?v=21"></script>
   <script src="../js/notifications.js?v=2"></script>
   <script src="../js/paystack.js?v=2"></script>
   <script src="../js/refunds.js?v=2"></script>
   <script src="../js/theme.js"></script>
   <script src="../js/dash-icons.js?v=1"></script>
   <script src="../js/flyer.js?v=8"></script>
-  <script src="dashboard.js?v=21"></script>
+  <script src="dashboard.js?v=23"></script>
 </body>
 </html>
