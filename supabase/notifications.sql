@@ -40,7 +40,7 @@ create table if not exists public.notification_preferences (
   wallet_activity boolean not null default true,
   refund_updates boolean not null default true,
   dispute_updates boolean not null default true,
-  promotional boolean not null default false,
+  promotional boolean not null default true,
   updated_at timestamptz not null default now()
 );
 
@@ -914,3 +914,14 @@ create trigger payments_notify_au
   for each row execute function public.trg_notify_payment_success();
 
 notify pgrst, 'reload schema';
+
+-- Realtime unread badges for any signed-in user
+do $$
+begin
+  begin
+    alter publication supabase_realtime add table public.notifications;
+  exception
+    when duplicate_object then null;
+    when undefined_object then null;
+  end;
+end $$;
