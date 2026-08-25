@@ -105,10 +105,13 @@
     shell.classList.remove("mobile-open");
   });
 
-  document.getElementById("logout-btn").addEventListener("click", async () => {
+  async function doSignOut() {
     await DataLogsAPI.signOut();
     window.location.href = "auth.html";
-  });
+  }
+
+  document.getElementById("logout-btn")?.addEventListener("click", doSignOut);
+  document.getElementById("account-logout-btn")?.addEventListener("click", doSignOut);
 
   document.querySelectorAll("[data-panel]").forEach((btn) => {
     btn.addEventListener("click", () => showPanel(btn.dataset.panel));

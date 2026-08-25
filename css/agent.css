@@ -507,6 +507,8 @@
   padding: 8px 2px 0;
   border-top: 1px solid var(--line);
   margin-top: 8px;
+  flex-shrink: 0;
+  background: inherit;
 }
 
 .side-user {
@@ -1036,6 +1038,44 @@
     box-shadow: var(--shadow);
     z-index: 50;
     padding-top: max(10px, env(safe-area-inset-top));
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .dash-sidebar .side-nav {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .dash-sidebar .side-foot {
+    flex-shrink: 0;
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    margin-top: auto;
+    padding-top: 10px;
+    padding-bottom: 4px;
+    background: var(--bg-elevated);
+  }
+
+  .plug-dash .dash-sidebar .side-foot {
+    background: var(--plug-surface);
+  }
+
+  .dash-sidebar .side-group {
+    display: none;
+  }
+
+  .dash-sidebar .side-link {
+    padding: 8px 10px;
+  }
+
+  .dash-sidebar .side-user {
+    padding: 4px;
   }
 
   .dash-shell.mobile-open .dash-sidebar {
@@ -2443,7 +2483,7 @@
   right: 0;
   bottom: 0;
   z-index: 50;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(6, 1fr);
   gap: 2px;
   padding: 8px 8px calc(8px + env(safe-area-inset-bottom));
   background: var(--plug-surface);
