@@ -845,7 +845,7 @@
               <tr>
                 <td>${isStoreSale(o) ? "Store" : "Wholesale"}</td>
                 <td>${NETWORKS[o.network]?.name || o.network} ${o.gb} GB</td>
-                <td>${o.recipient_number}</td>
+                <td>${escapeHtml(o.recipient_number || "")}</td>
                 <td>${formatCedi(o.amount_paid)}</td>
                 <td>${new Date(o.created_at).toLocaleString()}</td>
               </tr>`
@@ -944,7 +944,7 @@
         <td>${o.order_code}</td>
         <td>${isStoreSale(o) ? "Store sale" : "Wholesale"}</td>
         <td>${NETWORKS[o.network]?.name || o.network} ${o.gb} GB</td>
-        <td>${o.recipient_number}</td>
+        <td>${escapeHtml(o.recipient_number || "")}</td>
         <td>${formatCedi(o.amount_paid)}</td>
         <td>${publicDeliveryLabel(o.delivery_status)}</td>
         <td>${new Date(o.created_at).toLocaleString()}</td>
@@ -984,7 +984,7 @@
       .map(
         (c) => `
       <tr>
-        <td>${c.number}</td>
+        <td>${escapeHtml(c.number || "")}</td>
         <td>${c.orders}</td>
         <td>${formatCedi(c.spent)}</td>
         <td>${new Date(c.last).toLocaleString()}</td>
@@ -1423,7 +1423,7 @@
         (w) => `
       <tr>
         <td>${formatCedi(w.amount)}</td>
-        <td>${w.momo_number}${w.account_name ? ` · ${escapeHtml(w.account_name)}` : ""}</td>
+        <td>${escapeHtml(w.momo_number || "")}${w.account_name ? ` · ${escapeHtml(w.account_name)}` : ""}</td>
         <td>${netName[w.network] || w.network || "—"}</td>
         <td>${w.status}</td>
         <td>${new Date(w.created_at).toLocaleString()}</td>

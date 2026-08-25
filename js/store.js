@@ -111,10 +111,23 @@
     }
   }
 
+  function safeImageUrl(value) {
+    const raw = String(value || "").trim();
+    if (!raw) return "";
+    try {
+      const url = new URL(raw, window.location.origin);
+      if (url.protocol !== "https:" && url.protocol !== "http:") return "";
+      return url.href;
+    } catch {
+      return "";
+    }
+  }
+
   function paintCover(store) {
     const bg = document.getElementById("store-cover-bg");
-    if (bg && store.banner_url) {
-      bg.style.backgroundImage = `linear-gradient(180deg, rgba(251,251,248,0.72), rgba(251,251,248,0.96)), url('${String(store.banner_url).replace(/'/g, "%27")}')`;
+    const banner = safeImageUrl(store.banner_url);
+    if (bg && banner) {
+      bg.style.backgroundImage = `linear-gradient(180deg, rgba(251,251,248,0.72), rgba(251,251,248,0.96)), url(${JSON.stringify(banner)})`;
     }
   }
 

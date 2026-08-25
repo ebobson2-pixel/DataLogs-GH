@@ -29,6 +29,8 @@ Deno.serve(async (req) => {
     if (error) throw error;
     if (!order) return json({ ok: false, message: "Order not found" }, 404);
 
+    await authorizeFulfill(req, admin, order, action);
+
     if (action === "retry") {
       await requireAdmin(req, admin);
       if (order.fail_reason !== "low_balance" || !order.retryable) {
@@ -47,6 +49,65 @@ Deno.serve(async (req) => {
     return json({ ok: false, message: err.message || "Fulfillment failed" }, 400);
   }
 });
+
+function isServiceRole(req: Request) {
+  const header = req.headers.get("Authorization") || "";
+  const jwt = header.replace(/^Bearer\s+/i, "");
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+  return !!(serviceKey && jwt && jwt === serviceKey);
+}
+
+async function getRequestUser(req: Request) {
+  const header = req.headers.get("Authorization") || "";
+  const jwt = header.replace(/^Bearer\s+/i, "");
+  if (!jwt || jwt.length < 40) return null;
+  if (isServiceRole(req)) return null;
+  const url = Deno.env.get("SUPABASE_URL")!;
+  const anon = Deno.env.get("SUPABASE_ANON_KEY") || Deno.env.get("SUPABASE_PUBLISHABLE_KEY") || "";
+  const userClient = createClient(url, anon || Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, {
+    global: { headers: { Authorization: header } },
+    auth: { persistSession: false },
+  });
+  const { data, error } = await userClient.auth.getUser(jwt);
+  if (error || !data.user) return null;
+  return data.user;
+}
+
+async function authorizeFulfill(
+  req: Request,
+  admin: ReturnType<typeof createClient>,
+  order: Record<string, unknown>,
+  action: string,
+) {
+  if (isServiceRole(req)) return;
+
+  if (action !== "retry" && order.payment_status !== "paid") {
+    throw new Error("Order is not paid");
+  }
+
+  const user = await getRequestUser(req);
+  if (!user) throw new Error("Sign-in required to fulfill this order");
+
+  const { data: profile } = await admin.from("profiles").select("role").eq("id", user.id).maybeSingle();
+  if (profile?.role === "admin") return;
+
+  if (action === "retry") throw new Error("Admins only");
+
+  if (order.buyer_id && order.buyer_id === user.id) return;
+
+  // Guest checkouts: only the payment owner may trigger client-side fulfill
+  if (!order.buyer_id) {
+    const { data: pay } = await admin
+      .from("payments")
+      .select("user_id, status")
+      .eq("order_id", order.id)
+      .eq("status", "success")
+      .maybeSingle();
+    if (pay?.user_id && pay.user_id === user.id) return;
+  }
+
+  throw new Error("Not allowed to fulfill this order");
+}
 
 function json(payload: Record<string, unknown>, status = 200) {
   return new Response(JSON.stringify(payload), {

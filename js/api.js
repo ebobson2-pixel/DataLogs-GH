@@ -272,16 +272,8 @@ const DataLogsAPI = (() => {
     return data;
   }
 
-  async function placeOrder({ packageId, recipientNumber, paymentMethod, pricingTier, agentStoreId }) {
-    const { data, error } = await client.rpc("place_order", {
-      p_package_id: packageId,
-      p_recipient_number: recipientNumber,
-      p_payment_method: paymentMethod,
-      p_pricing_tier: pricingTier || "retail",
-      p_agent_store_id: agentStoreId || null,
-    });
-    if (error) throw error;
-    return data;
+  async function placeOrder() {
+    throw new Error("Direct orders are disabled. Pay with MoMo/card or wallet checkout.");
   }
 
   async function placeOrderWithWallet({ packageId, recipientNumber }) {
