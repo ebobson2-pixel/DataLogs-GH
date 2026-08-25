@@ -5,4 +5,5 @@ window.DATALOGS_CONFIG = {
   siteUrl: "https://datalogs.shop",
   apiBase: "https://datalogsgh.shop/api/v1",
   paystackPublicKey: "pk_live_a6115c2faf85c27266aa8f5eaca7161dadda6c0e",
+  whatsappChannelUrl: "https://whatsapp.com/channel/0029VbD5RH017Ems2Rpz523p",
 };

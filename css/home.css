@@ -1,10 +1,10 @@
 /* Homepage redesign */
-.home-page {
+.home-page #main {
   overflow-x: clip;
 }
 
 .home-page #whatsapp-fab-root {
-  z-index: 120;
+  z-index: 9999;
 }
 
 .home-hero {

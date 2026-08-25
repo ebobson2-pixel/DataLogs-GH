@@ -2102,48 +2102,51 @@ body.pay-open {
 
 /* WhatsApp channel floating button */
 #whatsapp-fab-root {
-  position: fixed;
-  left: max(16px, env(safe-area-inset-left));
-  bottom: max(16px, env(safe-area-inset-bottom));
-  z-index: 95;
+  position: fixed !important;
+  left: max(16px, env(safe-area-inset-left)) !important;
+  bottom: max(16px, env(safe-area-inset-bottom)) !important;
+  right: auto !important;
+  top: auto !important;
+  z-index: 9999 !important;
+  pointer-events: auto !important;
 }
 
 .wa-fab {
-  display: grid;
+  display: grid !important;
   place-items: center;
-  width: 56px;
-  height: 56px;
+  width: 58px;
+  height: 58px;
   border-radius: 50%;
   background: #25d366;
-  color: #fff;
-  text-decoration: none;
-  box-shadow: 0 10px 28px rgba(37, 211, 102, 0.45);
+  color: #fff !important;
+  text-decoration: none !important;
+  box-shadow: 0 10px 28px rgba(37, 211, 102, 0.5);
 }
 
 .wa-fab svg {
-  width: 30px;
-  height: 30px;
+  width: 32px;
+  height: 32px;
   display: block;
 }
 
 .wa-fab:hover {
   filter: brightness(1.06);
-  color: #fff;
+  color: #fff !important;
 }
 
 .store-body #whatsapp-fab-root {
-  bottom: max(88px, calc(16px + env(safe-area-inset-bottom)));
+  bottom: max(88px, calc(16px + env(safe-area-inset-bottom))) !important;
 }
 
 @media (max-width: 560px) {
   .wa-fab {
-    width: 52px;
-    height: 52px;
+    width: 54px;
+    height: 54px;
   }
 
   .wa-fab svg {
-    width: 28px;
-    height: 28px;
+    width: 30px;
+    height: 30px;
   }
 
   .nav-links {
