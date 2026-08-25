@@ -21,6 +21,14 @@
 
   function mount(url) {
     if (!url) return;
+
+    const homeBtn = document.getElementById("home-wa-btn");
+    if (homeBtn) {
+      homeBtn.href = url;
+      homeBtn.hidden = false;
+    }
+
+    if (document.getElementById("whatsapp-fab-root")) return;
     const root = document.createElement("div");
     root.id = "whatsapp-fab-root";
     root.innerHTML = `
@@ -33,11 +41,22 @@
     document.body.appendChild(root);
   }
 
-  function start() {
-    if (!window.DataLogsAPI?.getSiteSettings) return;
-    DataLogsAPI.getSiteSettings()
+  function load(attempt) {
+    const api = window.DataLogsAPI;
+    if (!api?.getSiteSettings) {
+      if ((attempt || 0) < 20) {
+        setTimeout(() => load((attempt || 0) + 1), 150);
+      }
+      return;
+    }
+    api
+      .getSiteSettings()
       .then((settings) => mount(safeHref(settings?.whatsapp_channel_url || "")))
       .catch(() => {});
+  }
+
+  function start() {
+    load(0);
   }
 
   if (document.readyState === "loading") {

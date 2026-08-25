@@ -1,6 +1,21 @@
 /* Homepage redesign */
 .home-page {
-  overflow-x: hidden;
+  overflow-x: clip;
+}
+
+.home-page #whatsapp-fab-root {
+  z-index: 120;
+}
+
+.home-wa-btn {
+  background: #25d366 !important;
+  border-color: #25d366 !important;
+  color: #fff !important;
+}
+
+.home-wa-btn:hover {
+  filter: brightness(1.06);
+  color: #fff !important;
 }
 
 .home-hero {
