@@ -217,6 +217,9 @@ begin
     amount := pkg.retail_price;
   end if;
 
+  -- Buyers pay package price + 3% Paystack fee on MoMo/card charges.
+  amount := round((amount * 1.03)::numeric, 2);
+
   if abs(amount - pay.amount) > 0.05 then
     raise exception 'Paid amount does not match package price';
   end if;

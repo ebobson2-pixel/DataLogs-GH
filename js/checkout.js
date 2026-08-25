@@ -229,17 +229,46 @@
     });
   }
 
+  function packageBasePrice() {
+    return Number(state.pkg?.price) || 0;
+  }
+
+  function payTotals(includeFee) {
+    const base = packageBasePrice();
+    if (!includeFee) {
+      return { base, fee: 0, total: base };
+    }
+    const fee = paystackFeeAmount(base);
+    return { base, fee, total: totalWithPaystackFee(base) };
+  }
+
+  function payBreakdownHtml(includeFee) {
+    const { base, fee, total } = payTotals(includeFee);
+    if (!includeFee) {
+      return `<p class="hint">${formatCedi(base)} · ${state.pkg.gb} GB to ${state.number}</p>`;
+    }
+    return `
+      <div class="pay-breakdown" aria-label="Payment breakdown">
+        <div><span>Package</span><strong>${formatCedi(base)}</strong></div>
+        <div><span>Paystack fee (3%)</span><strong>${formatCedi(fee)}</strong></div>
+        <div class="pay-breakdown-total"><span>Total</span><strong>${formatCedi(total)}</strong></div>
+      </div>
+    `;
+  }
+
   function renderMethod() {
     const wallet =
       state.tier === "agent"
         ? choiceCard("wallet", "₵", "Pay from wallet", "Use your DataLogs GH balance")
         : "";
+    const base = packageBasePrice();
     modal.innerHTML = `
       <div class="modal-top">
         <div>
           <div class="pill">Choose a way to pay</div>
           <h3 id="checkout-title">How do you want to pay?</h3>
-          <p class="hint">${formatCedi(state.pkg.price)} · ${state.pkg.gb} GB to ${state.number}</p>
+          <p class="hint">${formatCedi(base)} · ${state.pkg.gb} GB to ${state.number}</p>
+          <p class="hint">MoMo and card payments include a 3% Paystack fee.</p>
         </div>
         <button class="close-btn" type="button" data-close aria-label="Close">×</button>
       </div>
@@ -274,11 +303,14 @@
   }
 
   function renderPay() {
+    const useFee = state.method !== "wallet";
+    const { total } = payTotals(useFee);
     modal.innerHTML = `
       <div class="modal-top">
         <div>
           <div class="pill">${state.method === "wallet" ? "Wallet" : state.method === "card" ? "Card" : "Mobile Money"}</div>
-          <h3 id="checkout-title">Pay ${formatCedi(state.pkg.price)}</h3>
+          <h3 id="checkout-title">Pay ${formatCedi(total)}</h3>
+          ${payBreakdownHtml(useFee)}
           <p class="hint">Sending ${state.pkg.gb} GB to ${state.number} on ${networkName()}</p>
         </div>
         <button class="close-btn" type="button" data-close aria-label="Close">×</button>
@@ -289,7 +321,7 @@
         <div class="hero-actions" style="margin-top:12px">
           <button class="btn btn-ghost" type="button" data-back>Back</button>
           <button class="btn btn-primary btn-full" type="submit">${
-            state.method === "wallet" ? "Pay from wallet" : `Pay ${formatCedi(state.pkg.price)}`
+            state.method === "wallet" ? "Pay from wallet" : `Pay ${formatCedi(total)}`
           }</button>
         </div>
       </form>
@@ -639,7 +671,13 @@
         <div><span>Network</span><strong>${networkName()}</strong></div>
         <div><span>Bundle</span><strong>${state.pkg.gb} GB</strong></div>
         <div><span>Recipient</span><strong>${state.number}</strong></div>
-        <div><span>Amount</span><strong>${formatCedi(order.amount_paid)}</strong></div>
+        <div><span>Package</span><strong>${formatCedi(packageBasePrice())}</strong></div>
+        ${
+          state.method !== "wallet"
+            ? `<div><span>Paystack fee (3%)</span><strong>${formatCedi(paystackFeeAmount(packageBasePrice()))}</strong></div>`
+            : ""
+        }
+        <div><span>Total paid</span><strong>${formatCedi(order.amount_paid)}</strong></div>
         <div><span>Status</span><strong>${publicDeliveryLabel(order.delivery_status)}</strong></div>
         <div><span>Method</span><strong>${receiptData.method}</strong></div>
       </div>

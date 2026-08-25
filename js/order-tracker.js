@@ -116,7 +116,7 @@
     const failed = status === "failed";
     const steps = [
       { label: "Processing", done: true, active: !paid && !done && !failed },
-      { label: "Payment confirmed", done: paid || done, active: paid && !done && !failed },
+      { label: "Payment confirmed", done: paid || done, active: false },
       { label: "Provider processing", done: done, active: paid && !done && !failed },
       { label: failed ? "Failed" : "Data delivered", done: done || failed, active: failed },
     ];

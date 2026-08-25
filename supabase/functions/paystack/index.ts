@@ -128,14 +128,19 @@ async function startCharge(req: Request, admin: ReturnType<typeof createAdmin>, 
       p_buyer_id: user?.id || null,
     });
     if (error) throw error;
-    amount = Number(quoted);
-    if (!amount || amount <= 0) throw new Error("Could not price this package");
+    const packageAmount = Number(quoted);
+    if (!packageAmount || packageAmount <= 0) throw new Error("Could not price this package");
+    const paystackFee = Math.round(packageAmount * 0.03 * 100) / 100;
+    amount = Math.round((packageAmount + paystackFee) * 100) / 100;
     metadata = {
       package_id: packageId,
       recipient_number: recipient,
       pricing_tier: pricingTier,
       agent_store_id: storeId,
       buyer_id: user?.id || null,
+      package_amount: packageAmount,
+      paystack_fee: paystackFee,
+      paystack_fee_rate: 0.03,
     };
   }
 

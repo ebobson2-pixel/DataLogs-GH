@@ -88,6 +88,20 @@ function roundCedi(amount) {
   return Math.round(Number(amount) * 100) / 100;
 }
 
+const PAYSTACK_FEE_RATE = 0.03;
+
+function paystackFeeAmount(baseAmount) {
+  const base = Number(baseAmount);
+  if (!Number.isFinite(base) || base <= 0) return 0;
+  return roundCedi(base * PAYSTACK_FEE_RATE);
+}
+
+function totalWithPaystackFee(baseAmount) {
+  const base = Number(baseAmount);
+  if (!Number.isFinite(base) || base <= 0) return 0;
+  return roundCedi(base + paystackFeeAmount(base));
+}
+
 function defaultStoreProfit(pkg) {
   const retail = Number(pkg.retail ?? pkg.price);
   const base = Number(pkg.agentPrice);

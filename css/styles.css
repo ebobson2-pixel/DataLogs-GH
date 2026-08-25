@@ -1559,6 +1559,40 @@ body.pay-open {
   margin: 16px 0;
 }
 
+.pay-breakdown {
+  display: grid;
+  gap: 6px;
+  margin: 10px 0 4px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--input-bg);
+  border: 1px solid var(--line);
+  font-size: 0.9rem;
+}
+
+.pay-breakdown > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--muted);
+}
+
+.pay-breakdown strong {
+  color: var(--text);
+}
+
+.pay-breakdown-total {
+  margin-top: 2px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+  font-weight: 600;
+}
+
+.pay-breakdown-total span,
+.pay-breakdown-total strong {
+  color: var(--text);
+}
+
 .receipt div {
   display: flex;
   justify-content: space-between;
@@ -1894,8 +1928,8 @@ body.pay-open {
 }
 
 .track-card.is-delivered .track-status {
-  background: rgba(125, 255, 154, 0.16);
-  color: var(--success);
+  background: rgba(21, 128, 61, 0.18);
+  color: #15803d;
 }
 
 .track-timeline {
@@ -1915,8 +1949,10 @@ body.pay-open {
   font-size: 0.82rem;
 }
 
-.track-timeline li.done {
-  color: var(--success);
+.track-timeline li.done,
+.track-timeline li.done.active,
+.track-card.is-delivered .track-timeline li.done {
+  color: #15803d;
 }
 
 .track-timeline li.active {
@@ -1930,6 +1966,12 @@ body.pay-open {
   border-radius: 50%;
   background: currentColor;
   box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.12);
+}
+
+.track-timeline li.done .track-timeline-dot,
+.track-card.is-delivered .track-timeline-dot {
+  background: #15803d;
+  box-shadow: 0 0 0 3px rgba(21, 128, 61, 0.22);
 }
 
 .refund-timeline {
