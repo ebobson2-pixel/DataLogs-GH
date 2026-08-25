@@ -315,13 +315,72 @@
     }
   }
 
-  function paintHeroActions(contactWa, contactTel) {
+  function subagentSignupUrl(store) {
+    const ref = store?.slug || store?.agent_id;
+    if (!ref) return "agent/auth.html";
+    return `agent/auth.html?ref=${encodeURIComponent(ref)}`;
+  }
+
+  function paintSubagentCta(store) {
+    const section = document.getElementById("store-subagent");
+    const link = document.getElementById("store-subagent-link");
+    const copy = document.getElementById("store-subagent-copy");
+    const enabled = !!store?.subagents_enabled;
+    if (section) section.hidden = !enabled;
+    if (!enabled) {
+      document.getElementById("store-mobile-subagent")?.remove();
+      document.getElementById("store-nav-subagent")?.remove();
+      document.getElementById("store-footer-subagent")?.remove();
+      return;
+    }
+    const href = subagentSignupUrl(store);
+    if (link) {
+      link.href = href;
+      link.textContent = "Become a subagent";
+    }
+    if (copy) {
+      copy.textContent = `Join ${store.name || "this store"} as a reseller. Register free, set your selling prices, and earn on every sale.`;
+    }
+
+    const deskNav = document.querySelector(".store-hub-nav");
+    if (deskNav && !document.getElementById("store-nav-subagent")) {
+      const a = document.createElement("a");
+      a.id = "store-nav-subagent";
+      a.href = "#store-subagent";
+      a.textContent = "Become a subagent";
+      deskNav.appendChild(a);
+    }
+
+    const mobileNav = document.getElementById("store-mobile-nav");
+    if (mobileNav && !document.getElementById("store-mobile-subagent")) {
+      const a = document.createElement("a");
+      a.id = "store-mobile-subagent";
+      a.href = href;
+      a.textContent = "Become a subagent";
+      mobileNav.appendChild(a);
+    }
+
+    const footerNav = document.querySelector(".store-hub-footer-links");
+    if (footerNav && !document.getElementById("store-footer-subagent")) {
+      const a = document.createElement("a");
+      a.id = "store-footer-subagent";
+      a.href = href;
+      a.textContent = "Become a subagent";
+      footerNav.appendChild(a);
+    }
+  }
+
+  function paintHeroActions(contactWa, contactTel, store) {
     const el = document.getElementById("store-hero-actions");
     if (!el) return;
+    const subCta = store?.subagents_enabled
+      ? `<a class="store-btn store-btn--ghost" href="${subagentSignupUrl(store)}">Become a subagent</a>`
+      : "";
     el.innerHTML = `
       <a class="store-btn store-btn--yellow" href="#store-data">Buy data now</a>
       ${contactWa ? `<a class="store-btn store-btn--wa" href="${contactWa}" target="_blank" rel="noopener">WhatsApp</a>` : ""}
       ${contactTel ? `<a class="store-btn store-btn--ghost" href="${contactTel}">Call store</a>` : ""}
+      ${subCta}
       <button class="store-btn store-btn--ghost" type="button" id="store-hero-share">Share store</button>`;
     el.querySelector("#store-hero-share")?.addEventListener("click", shareStore);
   }
@@ -658,7 +717,8 @@
     paintLogo(store);
     paintCover(store);
     paintMeta(store);
-    paintHeroActions(contactWa, contactTel);
+    paintHeroActions(contactWa, contactTel, store);
+    paintSubagentCta(store);
     paintFilters();
     paintDeals();
     paintCatalog();

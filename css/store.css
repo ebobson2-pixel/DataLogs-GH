@@ -1676,6 +1676,51 @@
   margin-top: 22px;
 }
 
+.store-subagent-cta {
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+.store-subagent-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 24px 28px;
+  border-radius: 20px;
+  border: 1px solid var(--store-line);
+  background:
+    linear-gradient(120deg, rgba(251, 191, 36, 0.14), transparent 55%),
+    var(--store-card);
+}
+
+.store-subagent-card h2 {
+  margin: 4px 0 8px;
+  font-size: clamp(1.25rem, 3vw, 1.7rem);
+}
+
+.store-subagent-card .hint {
+  margin: 0;
+  max-width: 36rem;
+}
+
+.store-subagent-card .store-btn {
+  flex-shrink: 0;
+}
+
+@media (max-width: 720px) {
+  .store-subagent-card {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 20px;
+  }
+
+  .store-subagent-card .store-btn {
+    width: 100%;
+    text-align: center;
+  }
+}
+
 .store-btn--yellow {
   background: var(--store-accent);
   color: #000;
