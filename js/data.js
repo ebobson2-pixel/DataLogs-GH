@@ -143,7 +143,7 @@ function validateGhanaNumber(value, network) {
   if (match.id !== network) {
     return {
       ok: false,
-      message: `That looks like a ${match.name} number. Choose a ${match.name} package, or enter a ${NETWORKS[network].name} number.`,
+      message: `That number is ${match.name}, but this package is ${NETWORKS[network].name}. Change the number or choose a ${match.name} package before payment.`,
     };
   }
   return { ok: true, pretty: `${local.slice(0, 3)} ${local.slice(3, 6)} ${local.slice(6)}` };

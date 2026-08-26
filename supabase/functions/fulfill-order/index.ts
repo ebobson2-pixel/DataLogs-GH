@@ -146,6 +146,18 @@ function providerNetworks(local: string) {
   return [local];
 }
 
+/** Fixed SwiftData network ids — skip GET /packages on the hot path. */
+function primaryProviderNetwork(local: string) {
+  return providerNetworks(local)[0] || local;
+}
+
+function isUnknownPackageError(payload: Record<string, unknown>) {
+  const blob = `${payload._http || ""} ${JSON.stringify(payload || {})}`.toLowerCase();
+  return (
+    /unknown package|package not found|invalid (network|package)|no package|size_gb|not available/.test(blob)
+  );
+}
+
 function localPhone(raw: string) {
   let digits = String(raw || "").replace(/\D/g, "");
   if (digits.startsWith("233") && digits.length === 12) digits = "0" + digits.slice(3);
@@ -192,7 +204,7 @@ async function swiftJson(path: string, init: RequestInit = {}) {
   return { ...payload, _http: res.status, _ok: res.ok };
 }
 
-async function resolveProviderNetwork(localNetwork: string, gb: number) {
+async function resolveProviderNetworkFromCatalog(localNetwork: string, gb: number) {
   const wanted = providerNetworks(localNetwork);
   const catalog = await swiftJson("/packages", { method: "GET" });
   const packages = (catalog.packages as Array<Record<string, unknown>>) || [];
@@ -203,6 +215,34 @@ async function resolveProviderNetwork(localNetwork: string, gb: number) {
   return wanted[0];
 }
 
+async function buyDataWithNetworkFallback(phone: string, localNetwork: string, gb: number, reference: string) {
+  const candidates = providerNetworks(localNetwork);
+  let network = primaryProviderNetwork(localNetwork);
+  let payload = await swiftJson("/buy-data", {
+    method: "POST",
+    body: JSON.stringify({ phone, network, size_gb: gb, reference }),
+  });
+
+  // If primary map misses (e.g. AT ishare vs bigtime), try alternates then catalog once.
+  if ((!payload._ok || payload.success === false) && isUnknownPackageError(payload)) {
+    for (const alt of candidates.slice(1)) {
+      network = alt;
+      payload = await swiftJson("/buy-data", {
+        method: "POST",
+        body: JSON.stringify({ phone, network, size_gb: gb, reference }),
+      });
+      if (payload._ok && payload.success !== false) return { network, payload };
+    }
+    network = await resolveProviderNetworkFromCatalog(localNetwork, gb);
+    payload = await swiftJson("/buy-data", {
+      method: "POST",
+      body: JSON.stringify({ phone, network, size_gb: gb, reference }),
+    });
+  }
+
+  return { network, payload };
+}
+
 async function buyAndStore(admin: ReturnType<typeof createClient>, order: Record<string, unknown>, isRetry: boolean) {
   const phone = localPhone(String(order.recipient_number || ""));
   if (!/^0\d{9}$/.test(phone)) {
@@ -210,12 +250,8 @@ async function buyAndStore(admin: ReturnType<typeof createClient>, order: Record
   }
 
   const gb = Number(order.gb);
-  const network = await resolveProviderNetwork(String(order.network), gb);
   const reference = String(order.order_code);
-  const payload = await swiftJson("/buy-data", {
-    method: "POST",
-    body: JSON.stringify({ phone, network, size_gb: gb, reference }),
-  });
+  const { network, payload } = await buyDataWithNetworkFallback(phone, String(order.network), gb, reference);
 
   if (!payload._ok || payload.success === false) {
     const low = isLowBalance(Number(payload._http), payload);

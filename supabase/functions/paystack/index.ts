@@ -121,6 +121,21 @@ async function startCharge(req: Request, admin: ReturnType<typeof createAdmin>, 
     if (!packageId || !recipient) throw new Error("Package and recipient are required");
     if (pricingTier === "agent" && !user) throw new Error("Sign in as an agent to buy wholesale");
 
+    const { data: pkgRow, error: pkgErr } = await admin
+      .from("packages")
+      .select("id, network, active")
+      .eq("id", packageId)
+      .maybeSingle();
+    if (pkgErr) throw pkgErr;
+    if (!pkgRow?.active) throw new Error("Package not found");
+
+    const { data: prettyRecipient, error: matchErr } = await admin.rpc("assert_recipient_matches_package", {
+      p_recipient: recipient,
+      p_package_id: packageId,
+    });
+    if (matchErr) throw new Error(matchErr.message || "Recipient number does not match this package network");
+    const normalizedRecipient = String(prettyRecipient || recipient);
+
     const { data: quoted, error } = await admin.rpc("quote_order_amount", {
       p_package_id: packageId,
       p_pricing_tier: pricingTier,
@@ -134,13 +149,14 @@ async function startCharge(req: Request, admin: ReturnType<typeof createAdmin>, 
     amount = Math.round((packageAmount + paystackFee) * 100) / 100;
     metadata = {
       package_id: packageId,
-      recipient_number: recipient,
+      recipient_number: normalizedRecipient,
       pricing_tier: pricingTier,
       agent_store_id: storeId,
       buyer_id: user?.id || null,
       package_amount: packageAmount,
       paystack_fee: paystackFee,
       paystack_fee_rate: 0.03,
+      package_network: pkgRow.network,
     };
   }
 
@@ -207,15 +223,32 @@ async function submit(
   return present(admin, reference, data, charged.message);
 }
 
+function fulfillInBackground(orderId: string) {
+  const url = Deno.env.get("SUPABASE_URL");
+  const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!url || !key || !orderId) return;
+  fetch(`${url}/functions/v1/fulfill-order`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${key}`,
+      apikey: key,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ action: "fulfill", orderId }),
+  }).catch(() => {});
+}
+
 async function paymentStatus(admin: ReturnType<typeof createAdmin>, reference: string) {
   if (!reference) throw new Error("Missing payment reference");
   const { data: row } = await admin.from("payments").select("*").eq("reference", reference).maybeSingle();
   if (!row) throw new Error("Payment not found");
+  let justCompleted = false;
   if (row.status === "pending") {
     const verified = await paystack(`/transaction/verify/${encodeURIComponent(reference)}`, null, "GET");
     const status = String(verified.data?.status || "");
     if (status === "success") {
       await admin.rpc("complete_confirmed_payment", { p_reference: reference }).catch(() => {});
+      justCompleted = true;
     } else if (status === "failed" || status === "abandoned") {
       await admin.from("payments").update({ status: status === "failed" ? "failed" : "abandoned" }).eq("reference", reference);
     }
@@ -225,6 +258,10 @@ async function paymentStatus(admin: ReturnType<typeof createAdmin>, reference: s
   if (fresh?.order_id) {
     const { data } = await admin.from("orders").select("*").eq("id", fresh.order_id).maybeSingle();
     order = data;
+    // Kick SwiftData once, as soon as this request creates the paid order.
+    if (justCompleted && order?.id) {
+      fulfillInBackground(String(order.id));
+    }
   }
   return {
     ok: true,
