@@ -108,7 +108,6 @@
     const s = String(status || "").toLowerCase();
     if (s === "completed") return "🟢";
     if (s === "failed") return "🔴";
-    if (s === "pending") return "🟡";
     return "🔵";
   }
 
@@ -129,20 +128,35 @@
   function timelineHtml(order) {
     const status = String(order.delivery_status || "").toLowerCase();
     const paid = String(order.payment_status).toLowerCase() === "paid";
-    const done = status === "completed";
+    const delivered = status === "completed";
     const failed = status === "failed";
+
+    // Only completed steps are green. The current step is blue.
+    // Future steps (including undelivered "Data delivered") stay uncolored.
     const steps = [
-      { label: "Processing", done: true, active: !paid && !done && !failed },
-      { label: "Payment confirmed", done: paid || done, active: false },
-      { label: "Provider processing", done: done, active: paid && !done && !failed },
-      { label: failed ? "Failed" : "Data delivered", done: done || failed, active: failed },
+      {
+        label: "Processing",
+        state: paid || delivered || failed ? "done" : "active",
+      },
+      {
+        label: "Payment confirmed",
+        state: paid || delivered ? "done" : "pending",
+      },
+      {
+        label: "Provider processing",
+        state: delivered ? "done" : paid && !failed ? "active" : failed ? "done" : "pending",
+      },
+      failed
+        ? { label: "Failed", state: "failed" }
+        : { label: "Data delivered", state: delivered ? "done" : "pending" },
     ];
+
     return `
       <ol class="track-timeline" aria-label="Order progress">
         ${steps
           .map(
             (step) => `
-          <li class="${step.done ? "done" : ""} ${step.active ? "active" : ""} ${failed && step.label === "Failed" ? "failed" : ""}">
+          <li class="track-step track-step--${step.state}">
             <span class="track-timeline-dot" aria-hidden="true"></span>
             <span>${step.label}</span>
           </li>`
@@ -224,7 +238,8 @@
     errorEl.hidden = true;
     const normalized = normalizeOrderCode(code);
     try {
-      const rows = await trackByCode(normalized || code);
+      let rows = await trackByCode(normalized || code);
+      rows = await refreshDelivery(rows, { mode: "code", value: normalized || code });
       renderOrders(rows || []);
       pollMode = "code";
       pollValue = normalized || code;
@@ -240,7 +255,8 @@
   async function lookupPhone(phone, { silent } = {}) {
     errorEl.hidden = true;
     try {
-      const orders = await trackByPhone(phone);
+      let orders = await trackByPhone(phone);
+      orders = await refreshDelivery(orders, { mode: "phone", value: phone });
       renderOrders(orders || []);
       pollMode = "phone";
       pollValue = phone;
@@ -251,6 +267,46 @@
         results.innerHTML = "";
       }
     }
+  }
+
+  async function refreshDelivery(orders, ctx = {}) {
+    const list = Array.isArray(orders) ? orders : [];
+    const pending = list.filter((o) => {
+      const s = String(o.delivery_status || "").toLowerCase();
+      return s === "processing" || s === "pending";
+    });
+    if (!pending.length) return list;
+
+    for (const order of pending.slice(0, 5)) {
+      try {
+        if (typeof window.DataLogsAPI?.syncOrderDelivery === "function") {
+          await window.DataLogsAPI.syncOrderDelivery(order.order_code);
+        } else {
+          await syncDeliveryFallback(order.order_code);
+        }
+      } catch {
+        /* keep showing current status if sync fails */
+      }
+    }
+
+    if (ctx.mode === "phone" && ctx.value) return trackByPhone(ctx.value);
+    if (ctx.mode === "code" && ctx.value) return trackByCode(ctx.value);
+    if (list[0]?.order_code) return trackByCode(list[0].order_code);
+    return list;
+  }
+
+  async function syncDeliveryFallback(orderCode) {
+    const cfg = window.DATALOGS_CONFIG;
+    if (!cfg?.supabaseUrl || !cfg?.supabaseAnonKey) return;
+    await fetch(`${cfg.supabaseUrl}/functions/v1/fulfill-order`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: cfg.supabaseAnonKey,
+        Authorization: `Bearer ${cfg.supabaseAnonKey}`,
+      },
+      body: JSON.stringify({ action: "sync_status", orderCode }),
+    });
   }
 
   async function trackByPhone(phone) {

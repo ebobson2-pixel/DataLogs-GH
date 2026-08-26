@@ -1917,14 +1917,14 @@ body.pay-open {
   font-weight: 700;
   padding: 4px 8px;
   border-radius: 999px;
-  background: var(--yellow-soft);
-  color: var(--yellow);
+  background: rgba(37, 99, 235, 0.14);
+  color: #2563eb;
   flex-shrink: 0;
 }
 
 .track-card.is-processing .track-status {
-  background: var(--yellow-soft);
-  color: var(--yellow);
+  background: rgba(37, 99, 235, 0.14);
+  color: #2563eb;
 }
 
 .track-card.is-delivered .track-status {
@@ -1940,24 +1940,58 @@ body.pay-open {
   gap: 8px;
 }
 
-.track-timeline li {
+.track-timeline li,
+.track-timeline .track-step {
   display: grid;
   grid-template-columns: 14px 1fr;
   gap: 10px;
   align-items: center;
   color: var(--muted);
   font-size: 0.82rem;
+  font-weight: 500;
 }
 
-.track-timeline li.done,
-.track-timeline li.done.active,
-.track-card.is-delivered .track-timeline li.done {
+/* Pending / not reached — no status colour */
+.track-timeline .track-step--pending {
+  color: var(--muted);
+}
+
+.track-timeline .track-step--pending .track-timeline-dot {
+  background: var(--muted);
+  opacity: 0.45;
+  box-shadow: none;
+}
+
+/* Current in-progress step — blue */
+.track-timeline .track-step--active {
+  color: #2563eb;
+  font-weight: 600;
+}
+
+.track-timeline .track-step--active .track-timeline-dot {
+  background: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+}
+
+/* Finished steps — green */
+.track-timeline .track-step--done {
   color: #15803d;
 }
 
-.track-timeline li.active {
-  color: var(--yellow);
+.track-timeline .track-step--done .track-timeline-dot {
+  background: #15803d;
+  box-shadow: 0 0 0 3px rgba(21, 128, 61, 0.22);
+}
+
+/* Failed end state — red only on the failed step */
+.track-timeline .track-step--failed {
+  color: #b91c1c;
   font-weight: 600;
+}
+
+.track-timeline .track-step--failed .track-timeline-dot {
+  background: #b91c1c;
+  box-shadow: 0 0 0 3px rgba(185, 28, 28, 0.2);
 }
 
 .track-timeline-dot {
@@ -1965,13 +1999,6 @@ body.pay-open {
   height: 10px;
   border-radius: 50%;
   background: currentColor;
-  box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.12);
-}
-
-.track-timeline li.done .track-timeline-dot,
-.track-card.is-delivered .track-timeline-dot {
-  background: #15803d;
-  box-shadow: 0 0 0 3px rgba(21, 128, 61, 0.22);
 }
 
 .refund-timeline {

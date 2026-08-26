@@ -22,6 +22,11 @@ Deno.serve(async (req) => {
       return json({ ok: true, balance: bal.balance ?? bal.data?.balance ?? 0, currency: bal.currency || "GHS" });
     }
 
+    // Public track refresh: poll provider and flip delivery_status to delivered when done.
+    if (action === "sync_status" || action === "sync") {
+      return json(await syncOrderStatus(admin, body));
+    }
+
     const orderId = body.orderId || body.order_id;
     if (!orderId) return json({ ok: false, message: "Missing orderId" }, 400);
 
@@ -49,6 +54,58 @@ Deno.serve(async (req) => {
     return json({ ok: false, message: err.message || "Fulfillment failed" }, 400);
   }
 });
+
+async function syncOrderStatus(admin: ReturnType<typeof createClient>, body: Record<string, unknown>) {
+  const orderId = body.orderId || body.order_id;
+  const rawCode = String(body.orderCode || body.order_code || body.code || "").trim();
+  let order: Record<string, unknown> | null = null;
+
+  if (orderId) {
+    const { data, error } = await admin.from("orders").select("*").eq("id", orderId).maybeSingle();
+    if (error) throw error;
+    order = data;
+  } else if (rawCode) {
+    const code = normalizeOrderCode(rawCode);
+    const { data, error } = await admin
+      .from("orders")
+      .select("*")
+      .ilike("order_code", code)
+      .maybeSingle();
+    if (error) throw error;
+    order = data;
+  } else {
+    return { ok: false, message: "Missing order code" };
+  }
+
+  if (!order) return { ok: false, message: "Order not found" };
+  if (String(order.payment_status) !== "paid") {
+    return { ok: true, order, message: "Payment not confirmed yet" };
+  }
+  if (String(order.delivery_status) === "delivered") {
+    return { ok: true, order, skipped: true, message: "Already delivered" };
+  }
+
+  // Prefer polling an existing provider submission.
+  if (order.provider_ref && order.fail_reason !== "low_balance") {
+    const polled = await pollAndStore(admin, order);
+    return { ok: true, order: polled, synced: true };
+  }
+
+  // Paid but never sent / stuck — send (or re-send after low balance).
+  const result = await buyAndStore(admin, order, false);
+  return { ...result, synced: true };
+}
+
+function normalizeOrderCode(raw: string) {
+  let code = String(raw || "")
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, "");
+  if (!code) return "";
+  if (/^[0-9A-F]{8}$/.test(code)) code = "DL" + code;
+  if (/^DL[0-9A-F]{8}$/.test(code)) return "DL-" + code.slice(2);
+  if (code.startsWith("DL") && code.length > 2) return "DL-" + code.slice(2);
+  return code;
+}
 
 function isServiceRole(req: Request) {
   const header = req.headers.get("Authorization") || "";
@@ -177,9 +234,22 @@ function isLowBalance(status: number, payload: unknown) {
 }
 
 function mapDelivery(status: string | undefined) {
-  const s = String(status || "").toLowerCase();
-  if (s === "completed" || s === "success" || s === "delivered") return "delivered";
-  if (s === "failed" || s === "error" || s === "cancelled") return "failed";
+  const s = String(status || "").toLowerCase().trim();
+  if (
+    s === "completed" ||
+    s === "complete" ||
+    s === "success" ||
+    s === "successful" ||
+    s === "delivered" ||
+    s === "sent" ||
+    s === "done" ||
+    s === "ok"
+  ) {
+    return "delivered";
+  }
+  if (s === "failed" || s === "error" || s === "cancelled" || s === "canceled" || s === "rejected") {
+    return "failed";
+  }
   return "processing";
 }
 

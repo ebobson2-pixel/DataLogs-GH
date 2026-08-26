@@ -298,6 +298,25 @@ const DataLogsAPI = (() => {
     return data;
   }
 
+  async function syncOrderDelivery(orderCode) {
+    const cfg = window.DATALOGS_CONFIG;
+    if (!cfg?.supabaseUrl || !cfg?.supabaseAnonKey) throw new Error("Tracking sync unavailable");
+    const session = await getSession();
+    const token = session?.access_token || cfg.supabaseAnonKey;
+    const res = await fetch(`${cfg.supabaseUrl}/functions/v1/fulfill-order`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: cfg.supabaseAnonKey,
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ action: "sync_status", orderCode }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || data.ok === false) throw new Error(data.message || "Could not refresh delivery status");
+    return data;
+  }
+
   async function providerBalance() {
     const invoke = client.functions.invoke("fulfill-order", {
       body: { action: "balance" },
@@ -855,6 +874,7 @@ const DataLogsAPI = (() => {
     placeOrder,
     placeOrderWithWallet,
     fulfillOrder,
+    syncOrderDelivery,
     providerBalance,
     myOrders,
     allOrders,
