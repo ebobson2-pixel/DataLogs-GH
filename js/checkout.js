@@ -283,6 +283,12 @@
     modal.querySelector("[data-back]").addEventListener("click", () => openStep("number"));
     modal.querySelectorAll("[data-method]").forEach((btn) => {
       btn.addEventListener("click", () => {
+        const networkCheck = validateGhanaNumber(state.number, state.pkg.network);
+        if (!networkCheck.ok) {
+          openStep("number");
+          return;
+        }
+        state.number = networkCheck.pretty;
         state.method = btn.dataset.method;
         btn.classList.add("picked");
         setTimeout(() => openStep("pay"), 180);
@@ -499,6 +505,21 @@
   }
 
   async function renderProcess() {
+    const networkCheck = validateGhanaNumber(state.number, state.pkg.network);
+    if (!networkCheck.ok) {
+      modal.innerHTML = `
+        <div class="pay-fields-in">
+          <div class="pill">${escapeHtml(networkName())} ${state.pkg.gb} GB</div>
+          <h3 id="checkout-title">Wrong network number</h3>
+          <p class="error">${escapeHtml(networkCheck.message)}</p>
+          <p class="hint">Payment was blocked. Enter a ${escapeHtml(networkName())} number for this package.</p>
+          <button class="btn btn-primary btn-full" type="button" data-fix-number>Edit recipient number</button>
+        </div>`;
+      modal.querySelector("[data-fix-number]")?.addEventListener("click", () => openStep("number"));
+      return;
+    }
+    state.number = networkCheck.pretty;
+
     modal.innerHTML = waitVisual("Confirming payment…", "Stay on this page. We wait for Paystack to confirm before sending data.");
     try {
       if (state.method === "wallet") {
@@ -568,7 +589,7 @@
     }
     const started = Date.now();
     while (Date.now() - started < 180000) {
-      await wait(3000);
+      await wait(1000);
       const status = await DataLogsPay.status(state.reference);
       if (status.status === "failed" || status.status === "abandoned") {
         throw new Error("Payment was not completed.");
@@ -603,7 +624,6 @@
     modal.querySelector('[data-step="net"]')?.classList.add("done");
     modal.querySelector('[data-step="net"]')?.classList.remove("active");
     modal.querySelector('[data-step="send"]')?.classList.add("active");
-    await wait(400);
     modal.querySelector('[data-step="send"]')?.classList.add("done");
     state.fulfill = fulfill;
     window.DataLogsCustomer?.saveRecentOrder?.(state.order, state.pkg, {
@@ -686,7 +706,7 @@
         <button class="btn btn-ghost" type="button" data-track-order>Track</button>
         <button class="btn btn-ghost" type="button" data-receipt-dl>Receipt</button>
         <button class="btn btn-ghost" type="button" data-receipt-share>Share</button>
-        ${failed || !completed ? `<a class="btn btn-ghost" href="${state.storeId ? "../customer/refunds.html" : "customer/refunds.html"}?order=${encodeURIComponent(order.order_code)}">Get help</a>` : ""}
+        ${failed || !completed ? `<a class="btn btn-ghost" href="customer/refunds.html?order=${encodeURIComponent(order.order_code)}">Get help</a>` : ""}
       </div>
       <button class="btn btn-ghost btn-full" type="button" data-close style="margin-top:8px">Done</button>
     `;

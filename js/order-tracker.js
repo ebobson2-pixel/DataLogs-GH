@@ -1,9 +1,15 @@
 (function orderTrackerWidget() {
-  if (document.getElementById("order-tracker-root")) return;
-  if (document.body.classList.contains("dash-body")) return;
+  if (document.body.classList.contains("dash-body") && !document.getElementById("order-tracker-root")) return;
 
-  const root = document.createElement("div");
-  root.id = "order-tracker-root";
+  let root = document.getElementById("order-tracker-root");
+  if (root?.querySelector("#track-fab")) return;
+
+  if (!root) {
+    root = document.createElement("div");
+    root.id = "order-tracker-root";
+    document.body.appendChild(root);
+  }
+
   root.innerHTML = `
     <button class="track-fab" type="button" id="track-fab" aria-label="Track your order">Track order</button>
     <div class="track-panel" id="track-panel" hidden>
@@ -32,7 +38,6 @@
       <div class="track-results" id="track-results"></div>
     </div>
   `;
-  document.body.appendChild(root);
 
   const fab = root.querySelector("#track-fab");
   const panel = root.querySelector("#track-panel");
@@ -46,6 +51,17 @@
   let pollMode = null;
   let pollValue = "";
   let activeTab = "code";
+
+  function normalizeOrderCode(raw) {
+    let code = String(raw || "")
+      .toUpperCase()
+      .replace(/[^A-Z0-9]/g, "");
+    if (!code) return "";
+    if (/^[0-9A-F]{8}$/.test(code)) code = "DL" + code;
+    if (/^DL[0-9A-F]{8}$/.test(code)) return "DL-" + code.slice(2);
+    if (code.startsWith("DL") && code.length > 2) return "DL-" + code.slice(2);
+    return code;
+  }
 
   function openPanel() {
     panel.hidden = false;
@@ -67,7 +83,8 @@
   }
 
   function refundHelpUrl(orderCode) {
-    const base = document.body.classList.contains("store-body") ? "../customer/refunds.html" : "customer/refunds.html";
+    // store.html and main pages both live at site root
+    const base = "customer/refunds.html";
     return `${base}?order=${encodeURIComponent(orderCode || "")}`;
   }
 
@@ -197,18 +214,20 @@
     });
     results.querySelectorAll("[data-support]").forEach((btn) => {
       btn.addEventListener("click", () => {
-        window.location.href = "contact.html";
+        const prefix = document.body.classList.contains("store-body") || location.pathname.includes("/store") ? "" : "";
+        window.location.href = `${prefix}contact.html`.replace(/^\//, "") || "contact.html";
       });
     });
   }
 
   async function lookupCode(code, { silent } = {}) {
     errorEl.hidden = true;
+    const normalized = normalizeOrderCode(code);
     try {
-      const rows = await trackByCode(code);
+      const rows = await trackByCode(normalized || code);
       renderOrders(rows || []);
       pollMode = "code";
-      pollValue = code;
+      pollValue = normalized || code;
     } catch (err) {
       if (!silent) {
         errorEl.hidden = false;
@@ -301,9 +320,10 @@
     close: closePanel,
     openWithCode(code) {
       setTab("code");
-      codeInput.value = code;
+      const normalized = normalizeOrderCode(code) || code;
+      codeInput.value = normalized;
       openPanel();
-      lookupCode(code);
+      lookupCode(normalized);
     },
   };
 })();
