@@ -1,5 +1,29 @@
 -- Public order tracking: expose retry metadata and clearer messages after admin/provider retries.
 
+create or replace function public.normalize_order_code(p_code text)
+returns text
+language plpgsql
+immutable
+as $$
+declare
+  code text := upper(regexp_replace(trim(coalesce(p_code, '')), '[^A-Z0-9]', '', 'g'));
+begin
+  if code = '' then
+    return null;
+  end if;
+  if code ~ '^[0-9A-F]{8}$' then
+    return 'DL-' || code;
+  end if;
+  if code ~ '^DL[0-9A-F]{8}$' then
+    return 'DL-' || substr(code, 3);
+  end if;
+  if code like 'DL%' and length(code) > 2 then
+    return 'DL-' || substr(code, 3);
+  end if;
+  return code;
+end;
+$$;
+
 drop function if exists public.track_status_message(text, text, text);
 drop function if exists public.track_status_message(text, text, text, int, timestamptz);
 
@@ -54,6 +78,7 @@ returns table (
   status_message text,
   retry_count int,
   last_retry_at timestamptz,
+  retry_pending boolean,
   agent_store_id uuid,
   created_at timestamptz,
   updated_at timestamptz
@@ -97,6 +122,11 @@ begin
     ),
     coalesce(ord.retry_count, 0)::int,
     ord.last_retry_at,
+    (
+      coalesce(ord.retryable, false)
+      and ord.delivery_status = 'failed'
+      and ord.fail_reason = 'low_balance'
+    )::boolean,
     ord.agent_store_id,
     ord.created_at,
     ord.updated_at
@@ -132,6 +162,7 @@ returns table (
   status_message text,
   retry_count int,
   last_retry_at timestamptz,
+  retry_pending boolean,
   agent_store_id uuid,
   created_at timestamptz,
   updated_at timestamptz
@@ -175,6 +206,11 @@ begin
     ),
     coalesce(ord.retry_count, 0)::int,
     ord.last_retry_at,
+    (
+      coalesce(ord.retryable, false)
+      and ord.delivery_status = 'failed'
+      and ord.fail_reason = 'low_balance'
+    )::boolean,
     ord.agent_store_id,
     ord.created_at,
     ord.updated_at
@@ -187,6 +223,7 @@ begin
 end;
 $$;
 
+grant execute on function public.normalize_order_code(text) to anon, authenticated;
 grant execute on function public.track_status_message(text, text, text, int, timestamptz) to anon, authenticated;
 grant execute on function public.track_orders_by_phone(text) to anon, authenticated;
 grant execute on function public.track_order_by_code(text) to anon, authenticated;

@@ -636,7 +636,7 @@
   }
 
   function canRetry(order) {
-    return !!(order.retryable && order.fail_reason === "low_balance");
+    return String(order.payment_status) === "paid" && String(order.delivery_status) === "failed";
   }
 
   function renderAdminOrders() {

@@ -38,8 +38,8 @@ Deno.serve(async (req) => {
 
     if (action === "retry") {
       await requireAdmin(req, admin);
-      if (order.fail_reason !== "low_balance" || !order.retryable) {
-        return json({ ok: false, message: "Only low-balance failures can be retried." }, 400);
+      if (String(order.payment_status) !== "paid" || String(order.delivery_status) !== "failed") {
+        return json({ ok: false, message: "Only failed paid orders can be retried." }, 400);
       }
     } else if (order.delivery_status === "delivered") {
       return json({ ok: true, order, skipped: true, message: "Already delivered" });
@@ -86,20 +86,26 @@ async function syncOrderStatus(admin: ReturnType<typeof createClient>, body: Rec
   }
 
   // Poll provider first when we already submitted (covers admin retries and manual resends).
-  if (order.provider_ref) {
-    const polled = await pollAndStore(admin, order);
-    if (String(polled.delivery_status) !== "failed") {
-      return { ok: true, order: polled, synced: true };
+  const polled = await pollProviderOrder(admin, order);
+  if (polled && String(polled.delivery_status) !== "failed") {
+    return { ok: true, order: polled, synced: true };
+  }
+  if (polled) order = polled;
+
+  if (String(order.delivery_status) === "failed") {
+    if (order.retryable && order.fail_reason === "low_balance") {
+      const result = await buyAndStore(admin, order, true);
+      return { ...result, synced: true };
     }
-    order = polled;
+    return {
+      ok: true,
+      order,
+      synced: true,
+      message: "Delivery failed",
+    };
   }
 
-  if (order.retryable && order.fail_reason === "low_balance") {
-    const result = await buyAndStore(admin, order, true);
-    return { ...result, synced: true };
-  }
-
-  if (!order.provider_ref && String(order.delivery_status) !== "failed") {
+  if (!order.provider_ref) {
     const result = await buyAndStore(admin, order, false);
     return { ...result, synced: true };
   }
@@ -108,7 +114,7 @@ async function syncOrderStatus(admin: ReturnType<typeof createClient>, body: Rec
     ok: true,
     order,
     synced: true,
-    message: String(order.delivery_status) === "failed" ? "Delivery failed" : "Status unchanged",
+    message: "Status unchanged",
   };
 }
 
@@ -381,21 +387,37 @@ async function buyAndStore(admin: ReturnType<typeof createClient>, order: Record
 }
 
 async function pollAndStore(admin: ReturnType<typeof createClient>, order: Record<string, unknown>) {
-  const ref = String(order.provider_ref);
+  const ref = String(order.provider_ref || order.order_code || "");
+  if (!ref) return order;
   const polled = await swiftJson(`/orders/${encodeURIComponent(ref)}`, { method: "GET" });
   const providerOrder = (polled.order as Record<string, unknown>) || polled;
   const status = String(providerOrder.status || order.provider_status || "processing");
+  const patch = {
+    provider_ref: providerOrder.reference || order.provider_ref || ref,
+    provider_status: status,
+    delivery_status: mapDelivery(status),
+    provider_error: mapDelivery(status) === "failed" ? String(providerOrder.message || order.provider_error || "") : null,
+    fail_reason: mapDelivery(status) === "failed" ? order.fail_reason || "provider_error" : null,
+    retryable: mapDelivery(status) === "failed" ? order.retryable : false,
+  };
   const { data, error } = await admin
     .from("orders")
-    .update({
-      provider_status: status,
-      delivery_status: mapDelivery(status),
-    })
+    .update(patch)
     .eq("id", order.id)
     .select()
     .single();
   if (error) throw error;
   return data;
+}
+
+async function pollProviderOrder(admin: ReturnType<typeof createClient>, order: Record<string, unknown>) {
+  const ref = String(order.provider_ref || order.order_code || "");
+  if (!ref) return null;
+  try {
+    return await pollAndStore(admin, order);
+  } catch {
+    return null;
+  }
 }
 
 async function saveFailure(

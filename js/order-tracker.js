@@ -134,8 +134,12 @@
   function orderNeedsLivePoll(order) {
     const status = String(order?.delivery_status || "").toLowerCase();
     if (status === "processing" || status === "pending") return true;
-    if (status === "failed" && Number(order?.retry_count || 0) > 0) return true;
+    if (status === "failed" && (Number(order?.retry_count || 0) > 0 || order?.retry_pending)) return true;
     return false;
+  }
+
+  function retryActive(order) {
+    return Number(order?.retry_count || 0) > 0 || !!order?.retry_pending;
   }
 
   function timelineHtml(order) {
@@ -143,7 +147,7 @@
     const paid = String(order.payment_status).toLowerCase() === "paid";
     const delivered = status === "completed";
     const failed = status === "failed";
-    const retried = Number(order.retry_count || 0) > 0;
+    const retried = retryActive(order);
 
     // Only completed steps are green. The current step is blue.
     // Future steps (including undelivered "Data delivered") stay uncolored.
@@ -164,8 +168,14 @@
 
     if (retried) {
       steps.push({
-        label: failed ? "Retry failed" : delivered ? "Retry sent" : "Retry in progress",
-        state: failed ? "failed" : delivered ? "done" : "active",
+        label: failed
+          ? order.retry_pending
+            ? "Retry pending"
+            : "Retry failed"
+          : delivered
+            ? "Retry sent"
+            : "Retry in progress",
+        state: failed ? (order.retry_pending ? "active" : "failed") : delivered ? "done" : "active",
       });
     } else if (failed) {
       steps.push({ label: "Failed", state: "failed" });
@@ -209,9 +219,10 @@
           const when = formatOrderDateTime(o.created_at);
           const network = NETWORKS[o.network]?.name || o.network;
           const status = String(o.delivery_status || "processing");
-          const retried = Number(o.retry_count || 0) > 0;
+          const retried = retryActive(o);
           let statusText = status === "completed" ? "Delivered" : status === "failed" ? "Failed" : "Processing";
           if (retried && status === "processing") statusText = "Retry in progress";
+          if (retried && status === "failed" && o.retry_pending) statusText = "Retry pending";
           const label = `${statusEmoji(status)} ${statusText}`;
           const paidLabel = String(o.payment_status).toLowerCase() === "paid" ? "Paid" : "Confirming payment";
           const canBuyAgain = !!o.package_id;
