@@ -125,31 +125,55 @@
     return order.source || "DataLogs GH";
   }
 
+  function formatRetryWhen(iso) {
+    if (!iso) return "";
+    const when = formatOrderDateTime(iso);
+    return `${when.date} · ${when.time}`;
+  }
+
+  function orderNeedsLivePoll(order) {
+    const status = String(order?.delivery_status || "").toLowerCase();
+    if (status === "processing" || status === "pending") return true;
+    if (status === "failed" && Number(order?.retry_count || 0) > 0) return true;
+    return false;
+  }
+
   function timelineHtml(order) {
     const status = String(order.delivery_status || "").toLowerCase();
     const paid = String(order.payment_status).toLowerCase() === "paid";
     const delivered = status === "completed";
     const failed = status === "failed";
+    const retried = Number(order.retry_count || 0) > 0;
 
     // Only completed steps are green. The current step is blue.
     // Future steps (including undelivered "Data delivered") stay uncolored.
     const steps = [
       {
         label: "Processing",
-        state: paid || delivered || failed ? "done" : "active",
+        state: paid || delivered || failed || retried ? "done" : "active",
       },
       {
         label: "Payment confirmed",
-        state: paid || delivered ? "done" : "pending",
+        state: paid || delivered || failed ? "done" : "pending",
       },
       {
         label: "Provider processing",
-        state: delivered ? "done" : paid && !failed ? "active" : failed ? "done" : "pending",
+        state: delivered || retried ? "done" : paid && !failed ? "active" : failed ? "done" : "pending",
       },
-      failed
-        ? { label: "Failed", state: "failed" }
-        : { label: "Data delivered", state: delivered ? "done" : "pending" },
     ];
+
+    if (retried) {
+      steps.push({
+        label: failed ? "Retry failed" : delivered ? "Retry sent" : "Retry in progress",
+        state: failed ? "failed" : delivered ? "done" : "active",
+      });
+    } else if (failed) {
+      steps.push({ label: "Failed", state: "failed" });
+    }
+
+    if (!failed) {
+      steps.push({ label: "Data delivered", state: delivered ? "done" : "pending" });
+    }
 
     return `
       <ol class="track-timeline" aria-label="Order progress">
@@ -185,9 +209,13 @@
           const when = formatOrderDateTime(o.created_at);
           const network = NETWORKS[o.network]?.name || o.network;
           const status = String(o.delivery_status || "processing");
-          const label = `${statusEmoji(status)} ${status === "completed" ? "Delivered" : status === "failed" ? "Failed" : "Processing"}`;
+          const retried = Number(o.retry_count || 0) > 0;
+          let statusText = status === "completed" ? "Delivered" : status === "failed" ? "Failed" : "Processing";
+          if (retried && status === "processing") statusText = "Retry in progress";
+          const label = `${statusEmoji(status)} ${statusText}`;
           const paidLabel = String(o.payment_status).toLowerCase() === "paid" ? "Paid" : "Confirming payment";
           const canBuyAgain = !!o.package_id;
+          const retryWhen = formatRetryWhen(o.last_retry_at);
           return `
           <article class="track-card ${statusClass(o.delivery_status)}">
             <div class="track-card-top">
@@ -204,6 +232,7 @@
               ${detailRow("Recipient", escapeHtml(o.recipient_number || "—"))}
               ${detailRow("Amount paid", formatCedi(o.amount_paid))}
               ${detailRow("Payment", `${paidLabel} · ${methodLabel(o.payment_method)}`)}
+              ${retried ? detailRow("Retries", `${o.retry_count}${retryWhen ? ` · last ${retryWhen}` : ""}`) : ""}
               ${detailRow("Ordered", `${when.date} · ${when.time}`)}
             </div>
             <div class="track-actions">
@@ -243,12 +272,15 @@
       renderOrders(rows || []);
       pollMode = "code";
       pollValue = normalized || code;
+      startPoll("code", pollValue, rows);
+      return rows;
     } catch (err) {
       if (!silent) {
         errorEl.hidden = false;
         errorEl.textContent = err.message || "Could not find that order.";
         results.innerHTML = "";
       }
+      return [];
     }
   }
 
@@ -260,12 +292,15 @@
       renderOrders(orders || []);
       pollMode = "phone";
       pollValue = phone;
+      startPoll("phone", pollValue, orders);
+      return orders;
     } catch (err) {
       if (!silent) {
         errorEl.hidden = false;
         errorEl.textContent = err.message || "Could not load orders.";
         results.innerHTML = "";
       }
+      return [];
     }
   }
 
@@ -273,7 +308,10 @@
     const list = Array.isArray(orders) ? orders : [];
     const pending = list.filter((o) => {
       const s = String(o.delivery_status || "").toLowerCase();
-      return s === "processing" || s === "pending";
+      const paid = String(o.payment_status || "").toLowerCase() === "paid";
+      if (s === "processing" || s === "pending") return true;
+      if (s === "failed" && paid) return true;
+      return false;
     });
     if (!pending.length) return list;
 
@@ -347,20 +385,29 @@
     btn.addEventListener("click", () => setTab(btn.dataset.trackTab));
   });
 
+  function startPoll(mode, value, orders) {
+    stopPoll();
+    if (!value) return;
+    const needsPoll = !orders || !orders.length || orders.some(orderNeedsLivePoll);
+    if (!needsPoll) return;
+    pollTimer = setInterval(() => {
+      if (mode === "phone") lookupPhone(value, { silent: true });
+      else lookupCode(value, { silent: true });
+    }, 8000);
+  }
+
   formCode.addEventListener("submit", async (event) => {
     event.preventDefault();
     results.innerHTML = `<p class="track-empty">Looking up order…</p>`;
     await lookupCode(codeInput.value.trim());
-    stopPoll();
-    if (pollValue) pollTimer = setInterval(() => lookupCode(pollValue, { silent: true }), 8000);
+    startPoll("code", pollValue);
   });
 
   formPhone.addEventListener("submit", async (event) => {
     event.preventDefault();
     results.innerHTML = `<p class="track-empty">Checking live status…</p>`;
     await lookupPhone(phoneInput.value.trim());
-    stopPoll();
-    if (pollValue) pollTimer = setInterval(() => lookupPhone(pollValue, { silent: true }), 8000);
+    startPoll("phone", pollValue);
   });
 
   const params = new URLSearchParams(window.location.search);

@@ -85,15 +85,31 @@ async function syncOrderStatus(admin: ReturnType<typeof createClient>, body: Rec
     return { ok: true, order, skipped: true, message: "Already delivered" };
   }
 
-  // Prefer polling an existing provider submission.
-  if (order.provider_ref && order.fail_reason !== "low_balance") {
+  // Poll provider first when we already submitted (covers admin retries and manual resends).
+  if (order.provider_ref) {
     const polled = await pollAndStore(admin, order);
-    return { ok: true, order: polled, synced: true };
+    if (String(polled.delivery_status) !== "failed") {
+      return { ok: true, order: polled, synced: true };
+    }
+    order = polled;
   }
 
-  // Paid but never sent / stuck — send (or re-send after low balance).
-  const result = await buyAndStore(admin, order, false);
-  return { ...result, synced: true };
+  if (order.retryable && order.fail_reason === "low_balance") {
+    const result = await buyAndStore(admin, order, true);
+    return { ...result, synced: true };
+  }
+
+  if (!order.provider_ref && String(order.delivery_status) !== "failed") {
+    const result = await buyAndStore(admin, order, false);
+    return { ...result, synced: true };
+  }
+
+  return {
+    ok: true,
+    order,
+    synced: true,
+    message: String(order.delivery_status) === "failed" ? "Delivery failed" : "Status unchanged",
+  };
 }
 
 function normalizeOrderCode(raw: string) {

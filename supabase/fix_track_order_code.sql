@@ -40,6 +40,8 @@ returns table (
   source text,
   store_name text,
   status_message text,
+  retry_count int,
+  last_retry_at timestamptz,
   agent_store_id uuid,
   created_at timestamptz,
   updated_at timestamptz
@@ -74,7 +76,15 @@ begin
       else 'Main website'::text
     end,
     store.name::text,
-    public.track_status_message(ord.delivery_status, ord.payment_status, ord.fail_reason),
+    public.track_status_message(
+      ord.delivery_status,
+      ord.payment_status,
+      ord.fail_reason,
+      coalesce(ord.retry_count, 0),
+      ord.last_retry_at
+    ),
+    coalesce(ord.retry_count, 0)::int,
+    ord.last_retry_at,
     ord.agent_store_id,
     ord.created_at,
     ord.updated_at
