@@ -27,6 +27,33 @@ Deno.serve(async (req) => {
       return json(await syncOrderStatus(admin, body));
     }
 
+    if (action === "record_retry") {
+      await requireAdmin(req, admin);
+      const orderId = body.orderId || body.order_id;
+      if (!orderId) return json({ ok: false, message: "Missing orderId" }, 400);
+      const { data: order, error } = await admin.from("orders").select("*").eq("id", orderId).maybeSingle();
+      if (error) throw error;
+      if (!order) return json({ ok: false, message: "Order not found" }, 404);
+      if (String(order.payment_status) !== "paid" || String(order.delivery_status) !== "failed") {
+        return json({ ok: false, message: "Only failed paid orders can be marked as retried." }, 400);
+      }
+      const { data, error: updErr } = await admin
+        .from("orders")
+        .update({
+          delivery_status: "processing",
+          fail_reason: null,
+          retryable: false,
+          provider_error: null,
+          retry_count: Number(order.retry_count || 0) + 1,
+          last_retry_at: new Date().toISOString(),
+        })
+        .eq("id", order.id)
+        .select()
+        .single();
+      if (updErr) throw updErr;
+      return json({ ok: true, order: data, message: "Retry recorded — customer can track progress now." });
+    }
+
     const orderId = body.orderId || body.order_id;
     if (!orderId) return json({ ok: false, message: "Missing orderId" }, 400);
 
@@ -390,16 +417,27 @@ async function pollAndStore(admin: ReturnType<typeof createClient>, order: Recor
   const ref = String(order.provider_ref || order.order_code || "");
   if (!ref) return order;
   const polled = await swiftJson(`/orders/${encodeURIComponent(ref)}`, { method: "GET" });
+  if (!polled._ok && Number(polled._http) === 404) return null;
   const providerOrder = (polled.order as Record<string, unknown>) || polled;
+  if (!providerOrder.status && !polled._ok) return null;
+  const wasFailed = String(order.delivery_status) === "failed";
   const status = String(providerOrder.status || order.provider_status || "processing");
-  const patch = {
+  const delivery = mapDelivery(status);
+  const patch: Record<string, unknown> = {
     provider_ref: providerOrder.reference || order.provider_ref || ref,
     provider_status: status,
-    delivery_status: mapDelivery(status),
-    provider_error: mapDelivery(status) === "failed" ? String(providerOrder.message || order.provider_error || "") : null,
-    fail_reason: mapDelivery(status) === "failed" ? order.fail_reason || "provider_error" : null,
-    retryable: mapDelivery(status) === "failed" ? order.retryable : false,
+    delivery_status: delivery,
+    provider_error: delivery === "failed" ? String(providerOrder.message || order.provider_error || "") : null,
+    fail_reason: delivery === "failed" ? order.fail_reason || "provider_error" : null,
+    retryable: delivery === "failed" ? order.retryable : false,
   };
+  if (wasFailed && delivery !== "failed") {
+    patch.last_retry_at = new Date().toISOString();
+    patch.retry_count = Number(order.retry_count || 0) + 1;
+    patch.fail_reason = null;
+    patch.provider_error = null;
+    patch.retryable = false;
+  }
   const { data, error } = await admin
     .from("orders")
     .update(patch)

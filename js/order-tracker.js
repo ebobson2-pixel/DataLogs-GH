@@ -139,7 +139,7 @@
   }
 
   function retryActive(order) {
-    return Number(order?.retry_count || 0) > 0 || !!order?.retry_pending;
+    return !!order?.is_retried || Number(order?.retry_count || 0) > 0 || !!order?.retry_pending;
   }
 
   function timelineHtml(order) {
@@ -223,6 +223,7 @@
           let statusText = status === "completed" ? "Delivered" : status === "failed" ? "Failed" : "Processing";
           if (retried && status === "processing") statusText = "Retry in progress";
           if (retried && status === "failed" && o.retry_pending) statusText = "Retry pending";
+          if (retried && status === "completed") statusText = "Delivered after retry";
           const label = `${statusEmoji(status)} ${statusText}`;
           const paidLabel = String(o.payment_status).toLowerCase() === "paid" ? "Paid" : "Confirming payment";
           const canBuyAgain = !!o.package_id;
@@ -243,7 +244,7 @@
               ${detailRow("Recipient", escapeHtml(o.recipient_number || "—"))}
               ${detailRow("Amount paid", formatCedi(o.amount_paid))}
               ${detailRow("Payment", `${paidLabel} · ${methodLabel(o.payment_method)}`)}
-              ${retried ? detailRow("Retries", `${o.retry_count}${retryWhen ? ` · last ${retryWhen}` : ""}`) : ""}
+              ${retried ? detailRow("Retries", `${o.retry_count || 1}${retryWhen ? ` · last ${retryWhen}` : ""}`) : ""}
               ${detailRow("Ordered", `${when.date} · ${when.time}`)}
             </div>
             <div class="track-actions">

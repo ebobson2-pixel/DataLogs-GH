@@ -649,7 +649,8 @@
             const buyer = o.profiles ? o.profiles.full_name || o.profiles.email : "Guest";
             const when = formatOrderDateTime(o.created_at);
             const retryBtn = canRetry(o)
-              ? `<button class="btn btn-primary" type="button" data-retry-order="${o.id}">Retry</button>`
+              ? `<button class="btn btn-primary" type="button" data-retry-order="${o.id}">Retry API</button>
+                 <button class="btn btn-ghost" type="button" data-mark-retried="${o.id}">Mark retried</button>`
               : "";
             const providerNote = o.fail_reason === "low_balance"
               ? "Low balance"
@@ -1069,6 +1070,24 @@
   });
 
   document.getElementById("orders-body").addEventListener("click", async (event) => {
+    const markBtn = event.target.closest("[data-mark-retried]");
+    if (markBtn) {
+      const error = document.getElementById("retry-error");
+      error.hidden = true;
+      markBtn.disabled = true;
+      markBtn.textContent = "Saving…";
+      try {
+        await DataLogsAPI.recordOrderRetry(markBtn.dataset.markRetried);
+        await refreshAll();
+      } catch (err) {
+        error.hidden = false;
+        error.textContent = err.message || "Could not mark order as retried.";
+        markBtn.disabled = false;
+        markBtn.textContent = "Mark retried";
+      }
+      return;
+    }
+
     const btn = event.target.closest("[data-retry-order]");
     if (!btn) return;
     const error = document.getElementById("retry-error");
@@ -1086,7 +1105,7 @@
       error.hidden = false;
       error.textContent = err.message || "Retry failed.";
       btn.disabled = false;
-      btn.textContent = "Retry";
+      btn.textContent = "Retry API";
     }
   });
 

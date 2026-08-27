@@ -298,6 +298,14 @@ const DataLogsAPI = (() => {
     return data;
   }
 
+  async function recordOrderRetry(orderId) {
+    const { data, error } = await client.rpc("admin_record_order_retry", {
+      p_order_id: orderId,
+    });
+    if (error) throw error;
+    return data;
+  }
+
   async function syncOrderDelivery(orderCode) {
     const cfg = window.DATALOGS_CONFIG;
     if (!cfg?.supabaseUrl || !cfg?.supabaseAnonKey) throw new Error("Tracking sync unavailable");
@@ -874,6 +882,7 @@ const DataLogsAPI = (() => {
     placeOrder,
     placeOrderWithWallet,
     fulfillOrder,
+    recordOrderRetry,
     syncOrderDelivery,
     providerBalance,
     myOrders,
