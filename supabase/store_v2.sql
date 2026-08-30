@@ -171,6 +171,14 @@ begin
 
   v_store_id := (store_json->>'id')::uuid;
   v_agent_id := (store_json->>'agent_id')::uuid;
+  if not coalesce((select packages_available from public.site_settings where id = 1 limit 1), true) then
+    return jsonb_build_object(
+      'store', store_json,
+      'packages', '[]'::jsonb,
+      'best_sellers', '[]'::jsonb,
+      'reviews', '[]'::jsonb
+    );
+  end if;
   select coalesce(array_agg(n::text), array['mtn','airteltigo','telecel']::text[])
     into networks
   from jsonb_array_elements_text(coalesce(store_json->'networks', '[]'::jsonb)) as n;

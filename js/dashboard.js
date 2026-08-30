@@ -2036,7 +2036,9 @@
 
   // Overview labels already set in HTML
   try {
-    packages = await DataLogsAPI.fetchPackages();
+    const settings = await DataLogsAPI.getSiteSettings().catch(() => ({}));
+    window.__PACKAGES_AVAILABLE = settings?.packages_available !== false;
+    packages = window.__PACKAGES_AVAILABLE ? await DataLogsAPI.fetchPackages() : [];
     window.__PACKAGES = packages;
     const prices = await DataLogsAPI.getAgentStorePrices(profile.id);
     priceMap = new Map(prices.map((p) => [p.package_id, Number(p.profit)]));

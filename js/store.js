@@ -209,6 +209,10 @@
   function paintCatalog() {
     const grid = document.getElementById("store-packages");
     if (!grid) return;
+    if (!packagesAvailable()) {
+      grid.innerHTML = `<div class="store-empty">${PACKAGES_UNAVAILABLE_MSG}</div>`;
+      return;
+    }
     const list = filteredPackages();
     const networks = state.store?.networks || NETWORK_ORDER;
 
@@ -695,6 +699,13 @@
     }
 
     let catalog;
+    try {
+      const settings = await DataLogsAPI.getSiteSettings();
+      window.__PACKAGES_AVAILABLE = settings?.packages_available !== false;
+    } catch {
+      window.__PACKAGES_AVAILABLE = true;
+    }
+
     try {
       catalog = await DataLogsAPI.getStoreCatalog(state.slug);
     } catch (err) {

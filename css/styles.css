@@ -2472,3 +2472,28 @@ body.pay-open {
   clip: rect(0, 0, 0, 0);
   border: 0;
 }
+
+.packages-availability-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.packages-availability-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+}
+
+.packages-unavailable {
+  color: var(--muted, #888);
+  font-size: 1.05rem;
+  padding: 24px 0;
+}
+
+.is-inactive-row {
+  opacity: 0.55;
+}

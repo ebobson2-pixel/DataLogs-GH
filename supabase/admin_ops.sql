@@ -264,6 +264,8 @@ begin
     raise exception 'This account is blocked';
   end if;
 
+  perform public.assert_packages_available();
+
   if p_pricing_tier not in ('retail', 'agent') then
     raise exception 'Invalid pricing tier';
   end if;

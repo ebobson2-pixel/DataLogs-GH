@@ -90,6 +90,16 @@ function roundCedi(amount) {
 
 const PAYSTACK_FEE_RATE = 0.03;
 
+const PACKAGES_UNAVAILABLE_MSG = "Packages unavailable.";
+
+function packagesAvailable() {
+  return window.__PACKAGES_AVAILABLE !== false;
+}
+
+function packagesUnavailableHTML() {
+  return `<p class="hint packages-unavailable">${PACKAGES_UNAVAILABLE_MSG}</p>`;
+}
+
 function paystackFeeAmount(baseAmount) {
   const base = Number(baseAmount);
   if (!Number.isFinite(base) || base <= 0) return 0;

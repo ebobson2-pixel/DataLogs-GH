@@ -661,6 +661,7 @@ const DataLogsAPI = (() => {
     withdrawalThreshold,
     agentActivationFeeEnabled,
     agentActivationFee,
+    packagesAvailable,
   }) {
     const { data, error } = await client.rpc("update_site_settings", {
       p_whatsapp_channel_url: whatsappChannelUrl || "",
@@ -672,6 +673,7 @@ const DataLogsAPI = (() => {
         agentActivationFeeEnabled == null ? null : !!agentActivationFeeEnabled,
       p_agent_activation_fee:
         agentActivationFee == null || agentActivationFee === "" ? null : Number(agentActivationFee),
+      p_packages_available: packagesAvailable == null ? null : !!packagesAvailable,
     });
     if (error) throw error;
     return data;

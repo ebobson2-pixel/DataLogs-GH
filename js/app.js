@@ -115,7 +115,14 @@
   }
 
   try {
-    window.__PACKAGES = await DataLogsAPI.fetchPackages();
+    const settings = await DataLogsAPI.getSiteSettings();
+    window.__PACKAGES_AVAILABLE = settings?.packages_available !== false;
+  } catch {
+    window.__PACKAGES_AVAILABLE = true;
+  }
+
+  try {
+    window.__PACKAGES = packagesAvailable() ? await DataLogsAPI.fetchPackages() : [];
   } catch (err) {
     console.error(err);
     window.__PACKAGES = [];
@@ -197,6 +204,13 @@ function packageCardHTML(item) {
 }
 
 function renderPackages(grid, network, limit) {
+  if (!packagesAvailable()) {
+    grid.classList.remove("package-groups");
+    grid.classList.add("package-grid");
+    grid.innerHTML = packagesUnavailableHTML();
+    return;
+  }
+
   const perNetworkLimit = Number(grid.dataset.limitPerNetwork || 0);
   const useGrouped =
     network === "all" &&

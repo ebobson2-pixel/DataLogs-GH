@@ -248,7 +248,13 @@ function publicOrder(row: Record<string, unknown>) {
   };
 }
 
+async function packagesAvailable(admin: ReturnType<typeof createClient>) {
+  const { data } = await admin.from("site_settings").select("packages_available").eq("id", 1).maybeSingle();
+  return data?.packages_available !== false;
+}
+
 async function listPackages(admin: ReturnType<typeof createClient>, agentId: string, network: string | null) {
+  if (!(await packagesAvailable(admin))) return [];
   let query = admin
     .from("packages")
     .select("id, network, gb, agent_price, retail_price, validity")
@@ -284,6 +290,7 @@ function ghanaNumber(raw: string, network: string) {
 }
 
 async function placeOrder(admin: ReturnType<typeof createClient>, agent: { id: string }, body: Record<string, unknown>) {
+  if (!(await packagesAvailable(admin))) throw new Error("Packages unavailable");
   const recipient = String(body.recipient || body.recipient_number || body.phone || "").trim();
   if (!recipient) throw new Error("recipient is required");
 

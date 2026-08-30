@@ -108,6 +108,49 @@
     document.getElementById("user-detail-view").classList.remove("is-hidden");
   }
 
+  async function loadPackagesAvailability() {
+    const toggle = document.getElementById("packages-available-toggle");
+    if (!toggle) return;
+    try {
+      const settings = await DataLogsAPI.getSiteSettings();
+      toggle.checked = settings?.packages_available !== false;
+    } catch {
+      toggle.checked = true;
+    }
+  }
+
+  async function savePackagesAvailability(enabled) {
+    const error = document.getElementById("packages-availability-error");
+    if (error) error.hidden = true;
+    const settings = await DataLogsAPI.getSiteSettings().catch(() => ({}));
+    await DataLogsAPI.updateSiteSettings({
+      whatsappChannelUrl: settings?.whatsapp_channel_url || "",
+      supportContact: settings?.support_contact || "",
+      supportLabel: settings?.support_label || "Support",
+      withdrawalThreshold: settings?.withdrawal_threshold ?? 13,
+      agentActivationFeeEnabled: settings?.agent_activation_fee_enabled,
+      agentActivationFee: settings?.agent_activation_fee ?? 0,
+      packagesAvailable: enabled,
+    });
+  }
+
+  document.getElementById("packages-available-toggle")?.addEventListener("change", async (event) => {
+    const toggle = event.target;
+    const error = document.getElementById("packages-availability-error");
+    toggle.disabled = true;
+    try {
+      await savePackagesAvailability(toggle.checked);
+    } catch (err) {
+      toggle.checked = !toggle.checked;
+      if (error) {
+        error.hidden = false;
+        error.textContent = err.message || "Could not update package sales setting.";
+      }
+    } finally {
+      toggle.disabled = false;
+    }
+  });
+
   const form = document.getElementById("package-form");
   form?.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -118,6 +161,7 @@
       const existing = await DataLogsAPI.fetchPackages({ includeInactive: true });
       const sameNetwork = existing.filter((p) => p.network === data.network && p.id !== data.id);
       const sortOrder = Math.round(Number(data.gb) * 10);
+      const editing = existing.find((p) => p.id === data.id);
       await DataLogsAPI.upsertPackage({
         id: data.id || undefined,
         network: data.network,
@@ -127,10 +171,11 @@
         validity: "Non expiry",
         tag: null,
         sort_order: sortOrder || sameNetwork.length + 1,
-        active: true,
+        active: document.getElementById("package-active")?.checked !== false,
       });
       form.reset();
       document.getElementById("package-id").value = "";
+      document.getElementById("package-active").checked = true;
       await refreshAll();
     } catch (err) {
       error.hidden = false;
@@ -142,6 +187,8 @@
     form?.reset();
     const idInput = document.getElementById("package-id");
     if (idInput) idInput.value = "";
+    const activeInput = document.getElementById("package-active");
+    if (activeInput) activeInput.checked = true;
   });
 
   async function loadSettingsForm() {
@@ -434,20 +481,21 @@
     if (!body) return;
     const list = filteredPackages();
     if (!packagesCache.length) {
-      body.innerHTML = `<tr><td colspan="6">No packages yet.</td></tr>`;
+      body.innerHTML = `<tr><td colspan="7">No packages yet.</td></tr>`;
       return;
     }
     if (!list.length) {
-      body.innerHTML = `<tr><td colspan="6">No packages for this network filter.</td></tr>`;
+      body.innerHTML = `<tr><td colspan="7">No packages for this network filter.</td></tr>`;
       return;
     }
     body.innerHTML = list
       .map((p) => {
         const agent = Number(p.defaultAgentPrice ?? p.agentPrice);
         const retail = Number(p.retail);
+        const isActive = p.active !== false;
         const payload = JSON.stringify(p).replace(/'/g, "&#39;");
         return `
-      <tr data-package-row="${p.id}">
+      <tr data-package-row="${p.id}" class="${isActive ? "" : "is-inactive-row"}">
         <td>${NETWORKS[p.network]?.name || p.network}</td>
         <td>${p.gb}</td>
         <td>
@@ -457,6 +505,12 @@
           <input class="price-inline-input" type="number" min="0" step="0.01" data-pkg-agent="${p.id}" value="${agent}">
         </td>
         <td>${p.validity || "Non expiry"}</td>
+        <td>
+          <label class="checkbox-inline">
+            <input type="checkbox" data-toggle-package="${p.id}" ${isActive ? "checked" : ""}>
+            ${isActive ? "On" : "Off"}
+          </label>
+        </td>
         <td>
           <button class="btn btn-ghost" type="button" data-edit-package='${payload}'>Edit</button>
           <button class="btn btn-ghost" type="button" data-delete-package="${p.id}">Delete</button>
@@ -473,7 +527,7 @@
     const usersBody = document.getElementById("users-body");
     if (usersBody) usersBody.innerHTML = `<div class="empty-state">${escapeHtml(text)}</div>`;
     const packagesBody = document.getElementById("packages-body");
-    if (packagesBody) packagesBody.innerHTML = `<tr><td colspan="6">${escapeHtml(text)}</td></tr>`;
+    if (packagesBody) packagesBody.innerHTML = `<tr><td colspan="7">${escapeHtml(text)}</td></tr>`;
     const ordersBody = document.getElementById("orders-body");
     if (ordersBody) ordersBody.innerHTML = `<tr><td colspan="13">${escapeHtml(text)}</td></tr>`;
     const storesBody = document.getElementById("stores-body");
@@ -616,6 +670,8 @@
       showLoadError(err.message || "Could not render dashboard data.");
       return;
     }
+
+    loadPackagesAvailability().catch(() => {});
 
     if (selectedUserId) {
       try {
@@ -938,6 +994,7 @@
     if (ok) ok.hidden = true;
     updateAdminMarkupCopy();
     renderPackagesTable();
+    await loadPackagesAvailability();
   });
 
   function roundCedi(value) {
@@ -1035,7 +1092,7 @@
           validity: pkg.validity || "Non expiry",
           tag: pkg.tag || null,
           sort_order: pkg.sortOrder ?? pkg.sort_order ?? Math.round(Number(pkg.gb) * 10),
-          active: pkg.active !== false,
+          active: row.querySelector(`[data-toggle-package="${id}"]`)?.checked !== false,
         };
       });
       await DataLogsAPI.upsertPackages(payloads);
@@ -1059,6 +1116,8 @@
       form.gb.value = p.gb;
       form.retail_price.value = p.retail;
       form.agent_price.value = p.defaultAgentPrice ?? p.agentPrice;
+      const activeInput = document.getElementById("package-active");
+      if (activeInput) activeInput.checked = p.active !== false;
       showPanel("packages");
       return;
     }
@@ -1066,6 +1125,39 @@
     if (delBtn && confirm("Delete this package?")) {
       await DataLogsAPI.deletePackage(delBtn.dataset.deletePackage);
       await refreshAll();
+    }
+  });
+
+  document.getElementById("packages-body").addEventListener("change", async (event) => {
+    const toggle = event.target.closest("[data-toggle-package]");
+    if (!toggle) return;
+    const pkg = packagesCache.find((p) => p.id === toggle.dataset.togglePackage);
+    if (!pkg) return;
+    const error = document.getElementById("package-bulk-error");
+    if (error) error.hidden = true;
+    toggle.disabled = true;
+    try {
+      await DataLogsAPI.upsertPackage({
+        id: pkg.id,
+        network: pkg.network,
+        gb: pkg.gb,
+        retail_price: pkg.retail ?? pkg.price,
+        agent_price: pkg.defaultAgentPrice ?? pkg.agentPrice,
+        validity: pkg.validity || "Non expiry",
+        tag: pkg.tag || null,
+        sort_order: pkg.sortOrder ?? pkg.sort_order ?? Math.round(Number(pkg.gb) * 10),
+        active: toggle.checked,
+      });
+      pkg.active = toggle.checked;
+      renderPackagesTable();
+    } catch (err) {
+      toggle.checked = !toggle.checked;
+      if (error) {
+        error.hidden = false;
+        error.textContent = err.message || "Could not update package availability.";
+      }
+    } finally {
+      toggle.disabled = false;
     }
   });
 

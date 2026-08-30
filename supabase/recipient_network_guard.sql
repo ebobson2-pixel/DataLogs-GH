@@ -120,6 +120,8 @@ begin
     raise exception 'This account is blocked';
   end if;
 
+  perform public.assert_packages_available();
+
   select * into pkg from public.packages where id = p_package_id and active = true;
   if not found then
     raise exception 'Package not found';

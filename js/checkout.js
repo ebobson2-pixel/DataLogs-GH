@@ -17,6 +17,10 @@
 
   document.addEventListener("datalogs:buy-again", (event) => {
     const detail = event.detail || {};
+    if (!packagesAvailable()) {
+      alert(PACKAGES_UNAVAILABLE_MSG);
+      return;
+    }
     const pkg = getPackage(detail.packageId);
     if (!pkg) return;
     state.pkg = { ...pkg };
@@ -49,6 +53,10 @@
   document.addEventListener("click", (event) => {
     const trigger = event.target.closest("[data-buy]");
     if (!trigger) return;
+    if (!packagesAvailable()) {
+      alert(PACKAGES_UNAVAILABLE_MSG);
+      return;
+    }
     const pkg = getPackage(trigger.dataset.buy);
     if (!pkg) return;
     state.pkg = { ...pkg };
