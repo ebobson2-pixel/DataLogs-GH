@@ -994,7 +994,6 @@
     if (ok) ok.hidden = true;
     updateAdminMarkupCopy();
     renderPackagesTable();
-    await loadPackagesAvailability();
   });
 
   function roundCedi(value) {
