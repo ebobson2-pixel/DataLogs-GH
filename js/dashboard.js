@@ -905,8 +905,14 @@
   }
 
   function renderWholesale() {
+    const grid = document.getElementById("wholesale-grid");
+    if (!grid) return;
+    if (!packagesAvailable()) {
+      grid.innerHTML = packagesUnavailableHTML();
+      return;
+    }
     const list = packagesFor(wholesaleFilter, packages);
-    document.getElementById("wholesale-grid").innerHTML = list
+    grid.innerHTML = list
       .map((item) => {
         const saved = item.retail - item.agentPrice;
         return `

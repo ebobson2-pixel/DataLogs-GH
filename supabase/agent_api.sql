@@ -139,6 +139,8 @@ begin
     raise exception 'Only agents can place API orders';
   end if;
 
+  perform public.assert_packages_available();
+
   select * into pkg from public.packages where id = p_package_id and active = true;
   if not found then
     raise exception 'Package not found';

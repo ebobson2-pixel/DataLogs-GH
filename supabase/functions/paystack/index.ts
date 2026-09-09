@@ -121,6 +121,15 @@ async function startCharge(req: Request, admin: ReturnType<typeof createAdmin>, 
     if (!packageId || !recipient) throw new Error("Package and recipient are required");
     if (pricingTier === "agent" && !user) throw new Error("Sign in as an agent to buy wholesale");
 
+    const { data: sales } = await admin
+      .from("site_settings")
+      .select("packages_available")
+      .eq("id", 1)
+      .maybeSingle();
+    if (sales?.packages_available === false) {
+      throw new Error("Packages unavailable");
+    }
+
     const { data: pkgRow, error: pkgErr } = await admin
       .from("packages")
       .select("id, network, active")

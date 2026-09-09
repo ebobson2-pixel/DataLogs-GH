@@ -307,6 +307,8 @@ begin
     return jsonb_build_object('ok', true, 'payment', to_jsonb(pay), 'kind', 'agent_activation', 'activated', true);
   end if;
 
+  perform public.assert_packages_available();
+
   package_id := (meta->>'package_id')::uuid;
   recipient := meta->>'recipient_number';
   pricing_tier := coalesce(meta->>'pricing_tier', 'retail');
@@ -440,6 +442,8 @@ begin
   if exists (select 1 from public.profiles p where p.id = auth.uid() and coalesce(p.blocked, false)) then
     raise exception 'This account is blocked';
   end if;
+
+  perform public.assert_packages_available();
 
   select * into pkg from public.packages where id = p_package_id and active = true;
   if not found then
